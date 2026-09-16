@@ -1,59 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:link_mobile/services/api_service.dart';
-import 'package:link_mobile/screens/login_screen.dart';
-import 'package:link_mobile/screens/main_navigation_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
-void main() async {
+import 'core/session.dart';
+import 'core/theme.dart';
+import 'features/auth/auth_screens.dart';
+import 'features/shell.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Set iOS system bar style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
-    ),
-  );
-
-  // Initialize API service and load session if saved
-  await ApiService().init();
-
-  runApp(const LinkHRApp());
+  await initializeDateFormatting('ru');
+  Intl.defaultLocale = 'ru';
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+  await Session.instance.restore();
+  runApp(const LinkApp());
 }
 
-class LinkHRApp extends StatelessWidget {
-  const LinkHRApp({super.key});
+class LinkApp extends StatelessWidget {
+  const LinkApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Link HR',
+      title: 'Link',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7052BA),
-          primary: const Color(0xFF7052BA),
-          secondary: const Color(0xFF4EBE71),
-        ),
-        useMaterial3: true,
-        fontFamily: '.SF Pro Text',
-        scaffoldBackgroundColor: const Color(0xFFF8F9FC),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          iconTheme: IconThemeData(color: Color(0xFF0F172A)),
-          titleTextStyle: TextStyle(
-            color: Color(0xFF0F172A),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      home: ApiService().isLoggedIn
-          ? const MainNavigationScreen()
-          : const LoginScreen(),
+      theme: buildTheme(),
+      locale: const Locale('ru'),
+      supportedLocales: const [Locale('ru'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      home: const RootGate(),
+    );
+  }
+}
+
+class RootGate extends StatefulWidget {
+  const RootGate({super.key});
+
+  @override
+  State<RootGate> createState() => _RootGateState();
+}
+
+class _RootGateState extends State<RootGate> with WidgetsBindingObserver {
+  final _session = Session.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    if (_session.phase != SessionPhase.signedOut) {
+      _session.refresh().catchError((_) {});
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _session.biometricLock && _session.phase == SessionPhase.ready) {
+      _session.unlocked = false;
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _session,
+      builder: (context, _) {
+        final Widget screen = switch (_session.phase) {
+          SessionPhase.signedOut => const LoginScreen(),
+          SessionPhase.loading => const BootScreen(),
+          SessionPhase.noEmployee => const NoEmployeeScreen(),
+          SessionPhase.ready =>
+            _session.biometricLock && !_session.unlocked ? const LockScreen() : const Shell(),
+        };
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 240),
+          switchInCurve: Curves.easeOutQuart,
+          child: KeyedSubtree(key: ValueKey(screen.runtimeType), child: screen),
+        );
+      },
     );
   }
 }

@@ -7,20 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Link HR</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Используется для фотофиксации прихода/ухода и прикрепления фото чеков к расходам</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Используется для определения местоположения сотрудника при чекине на рабочем месте</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Используется для загрузки подтверждающих документов и файлов</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Используется для быстрой биометрической авторизации в Link HR</string>
+	<string>Link</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -28,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>link_mobile</string>
+	<string>Link</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -39,6 +26,21 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Используется для фотофиксации прихода/ухода и прикрепления фото чеков к расходам</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Используется для быстрой биометрической авторизации в Link HR</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Используется для определения местоположения сотрудника при чекине на рабочем месте</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Используется для записи голосового описания задач</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Используется для загрузки подтверждающих документов и файлов</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
