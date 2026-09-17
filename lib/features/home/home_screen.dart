@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/premium.dart';
 import '../../core/api.dart';
@@ -66,14 +67,29 @@ class _HomeScreenState extends State<HomeScreen> {
     final now = DateTime.now();
     final me = _session.userId;
     try {
-      final today = await Checklists.today().catchError((_) => <ChecklistRun>[]);
+      final today = await Checklists.today().catchError(
+        (_) => <ChecklistRun>[],
+      );
       final r = await Future.wait<Object?>([
-        MonthSheet.loadRange(DateTime(now.year, 1), DateTime(now.year, now.month)),
+        MonthSheet.loadRange(
+          DateTime(now.year, 1),
+          DateTime(now.year, now.month),
+        ),
         Tasks.list().then<Object?>((v) => v).catchError((_) => <TaskItem>[]),
-        Checklists.runs(from: DateTime(now.year, 1, 1), to: now, user: me).then<Object?>((v) => v).catchError((_) => <ChecklistRun>[]),
-        Hr.checkins(limit: 3).then<Object?>((v) => v).catchError((_) => <Json>[]),
-        Hr.shiftAssignments().then<Object?>((v) => v).catchError((_) => <Json>[]),
-        Notices.mine(unreadOnly: true).then<Object?>((v) => v).catchError((_) => <Notice>[]),
+        Checklists.runs(
+          from: DateTime(now.year, 1, 1),
+          to: now,
+          user: me,
+        ).then<Object?>((v) => v).catchError((_) => <ChecklistRun>[]),
+        Hr.checkins(
+          limit: 3,
+        ).then<Object?>((v) => v).catchError((_) => <Json>[]),
+        Hr.shiftAssignments()
+            .then<Object?>((v) => v)
+            .catchError((_) => <Json>[]),
+        Notices.mine(
+          unreadOnly: true,
+        ).then<Object?>((v) => v).catchError((_) => <Notice>[]),
         People.byUser(),
       ]);
       if (!mounted) return;
@@ -89,7 +105,12 @@ class _HomeScreenState extends State<HomeScreen> {
         _shifts = r[4] as List<Json>;
         _unread = r[5] as List<Notice>;
         _people = r[6] as Map<String, PersonInfo>;
-        _achievements = Achievements.compute(sheets: sheets, tasks: tasks, runs: runs, me: me);
+        _achievements = Achievements.compute(
+          sheets: sheets,
+          tasks: tasks,
+          runs: runs,
+          me: me,
+        );
         _loading = false;
         _error = null;
       });
@@ -109,14 +130,19 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_popupOpen || !mounted) return;
     _popupOpen = true;
     try {
-      final notice = _unread.where((n) => !_shownNotices.contains(n.name)).firstOrNull;
+      final notice = _unread
+          .where((n) => !_shownNotices.contains(n.name))
+          .firstOrNull;
       if (notice != null) {
         _shownNotices.add(notice.name);
         await showNoticeDialog(context, notice, _people);
       }
       final seen = await Achievements.seen();
-      final fresh = _achievements.where((a) => a.unlocked && !seen.contains(a.id)).toList()
-        ..sort((a, b) => b.unlockedAt!.compareTo(a.unlockedAt!));
+      final fresh =
+          _achievements
+              .where((a) => a.unlocked && !seen.contains(a.id))
+              .toList()
+            ..sort((a, b) => b.unlockedAt!.compareTo(a.unlockedAt!));
       if (fresh.isNotEmpty && mounted) {
         await Achievements.markSeen(fresh.map((a) => a.id));
         if (mounted) await showAchievementDialog(context, fresh.first);
@@ -139,7 +165,8 @@ class _HomeScreenState extends State<HomeScreen> {
       total++;
       final status = (row['approval_status'] ?? row['status'] ?? '').toString();
       final docstatus = int.tryParse('${row['docstatus'] ?? 0}') ?? 0;
-      if (status == 'Approved' || (status.isEmpty && docstatus == 1)) approved++;
+      if (status == 'Approved' || (status.isEmpty && docstatus == 1))
+        approved++;
       if (status == 'Rejected' || docstatus == 2) declined++;
     }
     if (mounted) setState(() => _requests = (total, approved, declined));
@@ -157,26 +184,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final current = _sheets.lastOrNull;
-    final todayRecord = current?.days.where((d) => d.date == Fmt.dateOnly(now)).firstOrNull;
+    final todayRecord = current?.days
+        .where((d) => d.date == Fmt.dateOnly(now))
+        .firstOrNull;
     final lastTime = Fmt.parse(_lastLog?['time']);
-    final lastToday = lastTime != null && Fmt.dateOnly(lastTime) == Fmt.dateOnly(now);
+    final lastToday =
+        lastTime != null && Fmt.dateOnly(lastTime) == Fmt.dateOnly(now);
     final onShift = lastToday && _lastLog?['log_type'] == 'IN';
     final finished = lastToday && _lastLog?['log_type'] == 'OUT';
     final canCheckin = _session.checkinAllowed;
     final workStart = MonthSheet.workStartOf(_shifts);
-    final onTime = current == null ? 0 : current.count(DayMark.onTime) + current.count(DayMark.remote);
+    final onTime = current == null
+        ? 0
+        : current.count(DayMark.onTime) + current.count(DayMark.remote);
     final late = current?.count(DayMark.late) ?? 0;
-    final onTimePct = onTime + late == 0 ? null : (onTime * 100 / (onTime + late)).round();
+    final onTimePct = onTime + late == 0
+        ? null
+        : (onTime * 100 / (onTime + late)).round();
 
     final tasks = _session.hasFeature('tasks')
-        ? (_tasks.where((t) => t.allocatedTo == _session.userId && t.status == TaskStatus.inProgress).toList()
-          ..sort((a, b) => (a.due ?? DateTime(2100)).compareTo(b.due ?? DateTime(2100))))
+        ? (_tasks
+              .where(
+                (t) =>
+                    t.allocatedTo == _session.userId &&
+                    t.status == TaskStatus.inProgress,
+              )
+              .toList()
+            ..sort(
+              (a, b) =>
+                  (a.due ?? DateTime(2100)).compareTo(b.due ?? DateTime(2100)),
+            ))
         : <TaskItem>[];
     final runs = _session.hasFeature('checklists') ? _today : <ChecklistRun>[];
     final cards = <Widget>[
       for (final r in runs.take(4))
         SummaryTaskCard(
-          icon: CupertinoIcons.checkmark_square,
+          icon: AppIcons.checkmarkSquare,
           title: r.meta.title,
           pill: r.closed ? 'Выполнено' : 'Чеклист',
           pillTone: r.closed ? Tone.green : Tone.neutral,
@@ -186,10 +229,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       for (final t in tasks.take(6 - runs.take(4).length))
         SummaryTaskCard(
-          icon: t.hasVoice ? CupertinoIcons.mic : CupertinoIcons.doc_text,
+          icon: t.hasVoice ? AppIcons.mic : AppIcons.docText,
           title: t.title,
           pill: t.overdue ? 'Просрочено' : t.stage.label,
-          pillTone: t.overdue ? Tone.red : (t.stage == TaskStage.review ? Tone.violet : Tone.amber),
+          pillTone: t.overdue
+              ? Tone.red
+              : (t.stage == TaskStage.review ? Tone.violet : Tone.amber),
           subtitle: t.due == null ? null : 'До ${Fmt.long(t.due)}',
           progress: t.subtaskTotal == 0 ? null : t.subtaskDone / t.subtaskTotal,
           onTap: () => showTaskSheet(context, t, _people),
@@ -201,7 +246,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         bottom: false,
         child: _error != null && _sheets.isEmpty
-            ? PageScroll(onRefresh: _load, children: [ErrorState(error: _error!, onRetry: _load)])
+            ? PageScroll(
+                onRefresh: _load,
+                children: [ErrorState(error: _error!, onRetry: _load)],
+              )
             : PageScroll(
                 onRefresh: _load,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
@@ -224,44 +272,56 @@ class _HomeScreenState extends State<HomeScreen> {
                       actionLabel: !canCheckin
                           ? null
                           : onShift
-                              ? 'Уйти'
-                              : finished
-                                  ? 'Снова на работу'
-                                  : 'Отметиться',
-                      onAction: () => showCheckinSheet(context, onShift ? 'OUT' : 'IN'),
+                          ? 'Уйти'
+                          : finished
+                          ? 'Снова на работу'
+                          : 'Отметиться',
+                      onAction: () =>
+                          showCheckinSheet(context, onShift ? 'OUT' : 'IN'),
                     ),
                   const SizedBox(height: 12),
                   if (_loading)
                     const SkeletonCards(count: 2, height: 84)
                   else
-                    TileGrid(children: [
-                      StatTile(
-                        value: todayRecord?.firstIn == null ? '– –' : Fmt.time(todayRecord!.firstIn),
-                        label: todayRecord?.lateMinutes != null && todayRecord!.lateMinutes > 0
-                            ? 'Пришёл · опоздание ${formatLate(todayRecord.lateMinutes)}'
-                            : 'Пришёл',
-                        icon: CupertinoIcons.arrow_down_left_square,
-                        muted: todayRecord?.firstIn == null,
-                      ),
-                      StatTile(
-                        value: finished ? Fmt.time(lastTime) : '– –',
-                        label: onShift ? 'На работе' : 'Ушёл',
-                        icon: CupertinoIcons.arrow_up_right_square,
-                        muted: !finished,
-                      ),
-                      StatTile(
-                        value: onTimePct == null ? '– –' : '$onTimePct%',
-                        label: 'Вовремя в этом месяце',
-                        icon: CupertinoIcons.checkmark_square,
-                        muted: onTimePct == null,
-                      ),
-                      StatTile(
-                        value: '${current?.present ?? 0}',
-                        unit: Fmt.plural(current?.present ?? 0, 'день', 'дня', 'дней'),
-                        label: 'На работе в этом месяце',
-                        icon: CupertinoIcons.calendar,
-                      ),
-                    ]),
+                    TileGrid(
+                      children: [
+                        StatTile(
+                          value: todayRecord?.firstIn == null
+                              ? '– –'
+                              : Fmt.time(todayRecord!.firstIn),
+                          label:
+                              todayRecord?.lateMinutes != null &&
+                                  todayRecord!.lateMinutes > 0
+                              ? 'Пришёл · опоздание ${formatLate(todayRecord.lateMinutes)}'
+                              : 'Пришёл',
+                          icon: AppIcons.arrowDownLeftSquare,
+                          muted: todayRecord?.firstIn == null,
+                        ),
+                        StatTile(
+                          value: finished ? Fmt.time(lastTime) : '– –',
+                          label: onShift ? 'На работе' : 'Ушёл',
+                          icon: AppIcons.arrowUpRightSquare,
+                          muted: !finished,
+                        ),
+                        StatTile(
+                          value: onTimePct == null ? '– –' : '$onTimePct%',
+                          label: 'Вовремя в этом месяце',
+                          icon: AppIcons.checkmarkSquare,
+                          muted: onTimePct == null,
+                        ),
+                        StatTile(
+                          value: '${current?.present ?? 0}',
+                          unit: Fmt.plural(
+                            current?.present ?? 0,
+                            'день',
+                            'дня',
+                            'дней',
+                          ),
+                          label: 'На работе в этом месяце',
+                          icon: AppIcons.calendar,
+                        ),
+                      ],
+                    ),
                   SummarySection(
                     title: 'Статус заявок',
                     onSeeAll: () => pushPage(context, const RequestsScreen()),
@@ -275,39 +335,70 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SummarySection(
                     title: 'Задачи',
-                    onSeeAll: _session.hasFeature('tasks') ? () => ShellScope.maybeOf(context)?.goTo(ShellTab.tasks) : null,
+                    onSeeAll: _session.hasFeature('tasks')
+                        ? () =>
+                              ShellScope.maybeOf(context)?.goTo(ShellTab.tasks)
+                        : null,
                   ),
                   if (_loading)
                     const SkeletonCards(count: 2, height: 120)
                   else if (cards.isEmpty)
                     SurfaceCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                      child: Row(children: [
-                        const Icon(CupertinoIcons.checkmark_seal, color: AppColors.green, size: 22),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text('На сегодня задач нет', style: AppText.body.copyWith(color: AppColors.ink2))),
-                      ]),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            AppIcons.checkmarkSeal,
+                            color: AppColors.green,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'На сегодня задач нет',
+                              style: AppText.body.copyWith(
+                                color: AppColors.ink2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     )
                   else
                     TileGrid(children: cards),
                   SummarySection(
                     title: 'Последние отметки',
-                    onSeeAll: () => pushPage(context, const CheckinHistoryScreen()),
+                    onSeeAll: () =>
+                        pushPage(context, const CheckinHistoryScreen()),
                   ),
                   if (_loading)
                     const SkeletonCards(count: 1, height: 140)
                   else if (_recent.isEmpty)
                     SurfaceCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                      child: Text('Отметок пока нет. Нажмите «Отметиться», когда придёте на работу.',
-                          style: AppText.body.copyWith(color: AppColors.ink2)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      child: Text(
+                        'Отметок пока нет. Нажмите «Отметиться», когда придёте на работу.',
+                        style: AppText.body.copyWith(color: AppColors.ink2),
+                      ),
                     )
                   else
                     SurfaceCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                      child: Divided(children: [
-                        for (final l in _recent) CheckinLogTile(log: l, workStart: workStart),
-                      ]),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 2,
+                      ),
+                      child: Divided(
+                        children: [
+                          for (final l in _recent)
+                            CheckinLogTile(log: l, workStart: workStart),
+                        ],
+                      ),
                     ),
                 ],
               ),
@@ -317,7 +408,11 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.dateLine, required this.greeting, required this.unread});
+  const _Header({
+    required this.dateLine,
+    required this.greeting,
+    required this.unread,
+  });
 
   final String dateLine;
   final String greeting;
@@ -326,29 +421,47 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = Session.instance;
-    return Row(children: [
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(dateLine, style: AppText.label.copyWith(color: AppColors.ink3)),
-          const SizedBox(height: 2),
-          Text(greeting, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.bodyStrong),
-        ]),
-      ),
-      CircleButton(
-        icon: CupertinoIcons.bell,
-        label: unread > 0 ? 'Оповещения, новых: $unread' : 'Оповещения',
-        badge: unread > 0,
-        size: 48,
-        iconSize: 20,
-        onTap: () => pushPage(context, const NoticesScreen()),
-      ),
-      const SizedBox(width: 10),
-      Pressable(
-        onTap: () => ShellScope.maybeOf(context)?.goTo(ShellTab.profile),
-        scale: 0.92,
-        semanticLabel: 'Профиль',
-        child: AppAvatar(name: s.fullName, imageUrl: s.image, size: 48, border: false),
-      ),
-    ]);
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                dateLine,
+                style: AppText.label.copyWith(color: AppColors.ink3),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                greeting,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.bodyStrong,
+              ),
+            ],
+          ),
+        ),
+        CircleButton(
+          icon: AppIcons.bell,
+          label: unread > 0 ? 'Оповещения, новых: $unread' : 'Оповещения',
+          badge: unread > 0,
+          size: 48,
+          iconSize: 20,
+          onTap: () => pushPage(context, const NoticesScreen()),
+        ),
+        const SizedBox(width: 10),
+        Pressable(
+          onTap: () => ShellScope.maybeOf(context)?.goTo(ShellTab.profile),
+          scale: 0.92,
+          semanticLabel: 'Профиль',
+          child: AppAvatar(
+            name: s.fullName,
+            imageUrl: s.image,
+            size: 48,
+            border: false,
+          ),
+        ),
+      ],
+    );
   }
 }

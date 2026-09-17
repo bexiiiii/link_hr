@@ -15,11 +15,11 @@ abstract final class AppColors {
   static const ink3 = Color(0xFF66788E);
   static const ink4 = Color(0xFFB8C5D3);
 
-  /// Brand blue: primary buttons, active tab, check-in and links.
-  static const blue = Color(0xFF1769E0);
-  static const blueDeep = Color(0xFF0D54B6);
-  static const blueSoft = Color(0xFFE7F0FF);
-  static const blueGlow = Color(0xFFC9DDFF);
+  /// Brand blue (Telegram-like): primary buttons, active tab, check-in and links.
+  static const blue = Color(0xFF3390EC);
+  static const blueDeep = Color(0xFF2481CC);
+  static const blueSoft = Color(0xFFE8F3FD);
+  static const blueGlow = Color(0xFFCFE6FB);
 
   static const green = blue;
   static const greenDeep = blueDeep;

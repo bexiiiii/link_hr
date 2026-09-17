@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/chart.dart';
@@ -97,11 +98,7 @@ class TimePanel extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(
-                CupertinoIcons.clock,
-                size: 13,
-                color: AppColors.amber,
-              ),
+              const Icon(AppIcons.clock, size: 13, color: AppColors.amber),
             ] else if (arrived != null) ...[
               const SizedBox(width: 8),
               Text(
@@ -124,7 +121,8 @@ class TimePanel extends StatelessWidget {
                       workStart: MonthSheet.hhmm(workStart),
                     )),
       ),
-      for (final r in s.hasFeature('checklists') ? runs : const <ChecklistRun>[])
+      for (final r
+          in s.hasFeature('checklists') ? runs : const <ChecklistRun>[])
         _PlanRow(
           state: r.closed ? _Check.done : _Check.none,
           title: r.meta.title,
@@ -184,7 +182,7 @@ class TimePanel extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(CupertinoIcons.calendar, size: 20),
+            const Icon(AppIcons.calendar, size: 20),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +224,9 @@ class TimePanel extends StatelessWidget {
         Divided(
           children: [for (final r in rows) Reveal(index: i++, child: r)],
         ),
-        if (runs.isEmpty && Session.instance.isManager && Session.instance.hasFeature('checklists'))
+        if (runs.isEmpty &&
+            Session.instance.isManager &&
+            Session.instance.hasFeature('checklists'))
           Padding(
             padding: const EdgeInsets.only(top: 10, left: 4),
             child: Row(
@@ -359,7 +359,7 @@ class _PlanRow extends StatelessWidget {
             ),
             if (chevron)
               const Icon(
-                CupertinoIcons.chevron_right,
+                AppIcons.chevronRight,
                 size: 17,
                 color: AppColors.ink3,
               ),
@@ -493,7 +493,7 @@ class _StatsPanelState extends State<StatsPanel> {
           semanticLabel: 'Выбрать дату',
           child: Row(
             children: [
-              const Icon(CupertinoIcons.calendar, size: 22),
+              const Icon(AppIcons.calendar, size: 22),
               const SizedBox(width: 10),
               Text(
                 '${Fmt.long(_day)} г.',
@@ -702,7 +702,7 @@ class _PlanHistoryScreenState extends State<_PlanHistoryScreen> {
             const SkeletonCards(count: 4, height: 60)
           else if (_items!.isEmpty)
             const EmptyState(
-              icon: CupertinoIcons.chart_bar,
+              icon: AppIcons.chartBar,
               title: 'Планы ещё не заполнялись',
               message: 'Нажмите «Добавить план» во вкладке «Статистика».',
             )

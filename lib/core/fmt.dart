@@ -35,9 +35,11 @@ abstract final class Fmt {
     return d == null ? '' : DateFormat('EE, dd MMM', 'ru').format(d);
   }
 
-  static String todayLine(DateTime d) => _cap(DateFormat('EEEE, d MMMM', 'ru').format(d));
+  static String todayLine(DateTime d) =>
+      _cap(DateFormat('EEEE, d MMMM', 'ru').format(d));
 
-  static String monthYear(DateTime d) => _cap(DateFormat('LLLL y', 'ru').format(d));
+  static String monthYear(DateTime d) =>
+      _cap(DateFormat('LLLL y', 'ru').format(d));
 
   static String month(DateTime d) => _cap(DateFormat('LLLL', 'ru').format(d));
 
@@ -59,7 +61,8 @@ abstract final class Fmt {
 
   static String iso(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
-  static String isoDateTime(DateTime d) => DateFormat('yyyy-MM-dd HH:mm:ss').format(d);
+  static String isoDateTime(DateTime d) =>
+      DateFormat('yyyy-MM-dd HH:mm:ss').format(d);
 
   static String relative(Object? value) {
     final d = parse(value);
@@ -69,7 +72,8 @@ abstract final class Fmt {
     if (diff.inMinutes < 60) return '${diff.inMinutes} мин назад';
     if (diff.inHours < 24) return '${diff.inHours} ч назад';
     if (diff.inDays == 1) return 'вчера';
-    if (diff.inDays < 7) return '${diff.inDays} ${plural(diff.inDays, 'день', 'дня', 'дней')} назад';
+    if (diff.inDays < 7)
+      return '${diff.inDays} ${plural(diff.inDays, 'день', 'дня', 'дней')} назад';
     return date(d);
   }
 
@@ -79,17 +83,24 @@ abstract final class Fmt {
   }
 
   static String symbol(String? currency) =>
-      const {'KZT': '₸', 'RUB': '₽', 'USD': r'$', 'EUR': '€'}[currency] ?? (currency ?? '₸');
+      const {'KZT': '₸', 'RUB': '₽', 'USD': r'$', 'EUR': '€'}[currency] ??
+      (currency ?? '₸');
 
   static String money(Object? value, [String? currency]) {
     final n = number(value);
     final digits = n % 1 == 0 ? 0 : 2;
-    return NumberFormat.currency(locale: 'ru', symbol: symbol(currency), decimalDigits: digits).format(n);
+    return NumberFormat.currency(
+      locale: 'ru',
+      symbol: symbol(currency),
+      decimalDigits: digits,
+    ).format(n);
   }
 
   static String decimal(Object? value) {
     final n = number(value);
-    return n % 1 == 0 ? n.toInt().toString() : n.toStringAsFixed(1).replaceAll('.', ',');
+    return n % 1 == 0
+        ? n.toInt().toString()
+        : n.toStringAsFixed(1).replaceAll('.', ',');
   }
 
   static String days(Object? value) {
@@ -114,7 +125,8 @@ abstract final class Fmt {
     return '${(size / (1024 * 1024)).toStringAsFixed(1).replaceAll('.', ',')} МБ';
   }
 
-  static String _cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  static String _cap(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }
 
 String stripHtml(String? html) {

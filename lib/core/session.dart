@@ -16,7 +16,15 @@ class Session extends ChangeNotifier {
   static const _lockKey = 'link.biometricLock';
   static const _emailKey = 'link.lastEmail';
 
-  static const premiumFeatures = {'analysis', 'payroll_calc', 'checklists', 'tasks', 'notices', 'achievements', 'points'};
+  static const premiumFeatures = {
+    'analysis',
+    'payroll_calc',
+    'checklists',
+    'tasks',
+    'notices',
+    'achievements',
+    'points',
+  };
 
   final _api = Api.instance;
 
@@ -39,7 +47,8 @@ class Session extends ChangeNotifier {
   }
 
   bool get isPremium => plan == null || plan!['tier'] == 'premium';
-  int? get planDaysLeft => plan?['days_left'] is num ? (plan!['days_left'] as num).toInt() : null;
+  int? get planDaysLeft =>
+      plan?['days_left'] is num ? (plan!['days_left'] as num).toInt() : null;
   bool get planExpired => plan?['expired'] == true;
 
   /// Bumped whenever a screen mutates data other screens display.
@@ -50,21 +59,29 @@ class Session extends ChangeNotifier {
   String get userId => user?['name']?.toString() ?? '';
   String get employeeId => employee?['name']?.toString() ?? '';
   String get company => employee?['company']?.toString() ?? '';
-  String get fullName => (employee?['employee_name'] ?? user?['full_name'] ?? '').toString();
+  String get fullName =>
+      (employee?['employee_name'] ?? user?['full_name'] ?? '').toString();
   String get firstName {
-    final first = (employee?['first_name'] ?? user?['first_name'] ?? '').toString();
+    final first = (employee?['first_name'] ?? user?['first_name'] ?? '')
+        .toString();
     return first.isNotEmpty ? first : fullName.split(' ').first;
   }
 
   String? get image => (employee?['image'] ?? user?['user_image'])?.toString();
   String get designation => employee?['designation']?.toString() ?? '';
   String get department => employee?['department']?.toString() ?? '';
-  bool get isManager => roles.any((r) => const {'HR Manager', 'HR User', 'System Manager'}.contains(r));
-  List<String> get roles => (user?['roles'] as List? ?? const []).map((e) => e.toString()).toList();
+  bool get isManager => roles.any(
+    (r) => const {'HR Manager', 'HR User', 'System Manager'}.contains(r),
+  );
+  List<String> get roles =>
+      (user?['roles'] as List? ?? const []).map((e) => e.toString()).toList();
   bool get checkinAllowed => hr['allow_employee_checkin_from_mobile_app'] != 0;
-  bool get geolocationTracking => hr['allow_geolocation_tracking'] == 1 || hr['allow_geolocation_tracking'] == true;
+  bool get geolocationTracking =>
+      hr['allow_geolocation_tracking'] == 1 ||
+      hr['allow_geolocation_tracking'] == true;
   bool get preventSelfLeaveApproval =>
-      hr['prevent_self_leave_approval'] == 1 || hr['prevent_self_leave_approval'] == true;
+      hr['prevent_self_leave_approval'] == 1 ||
+      hr['prevent_self_leave_approval'] == true;
 
   Future<void> restore() async {
     _api.onSessionExpired = _expire;
@@ -104,7 +121,9 @@ class Session extends ChangeNotifier {
       final results = await Future.wait([
         _api.call('hrms.api.get_current_user_info'),
         _api.call('hrms.api.get_current_employee_info'),
-        _api.call('hrms.api.get_hr_settings').catchError((_) => <String, dynamic>{}),
+        _api
+            .call('hrms.api.get_hr_settings')
+            .catchError((_) => <String, dynamic>{}),
         _api.call('link.saas.get_plan').catchError((_) => null),
       ]);
       plan = (results[3] as Map?)?.cast<String, dynamic>();
@@ -113,22 +132,38 @@ class Session extends ChangeNotifier {
       hr = (results[2] as Map?)?.cast<String, dynamic>() ?? {};
       if (employee != null) {
         final extra = await Future.wait([
-          _api.list('Employee', fields: ['name', 'image'], filters: {'name': employeeId}, limit: 1),
-          _api.call('frappe.client.get_value', {
-            'doctype': 'Company',
-            'filters': company,
-            'fieldname': 'default_currency',
-          }).catchError((_) => null),
+          _api.list(
+            'Employee',
+            fields: ['name', 'image'],
+            filters: {'name': employeeId},
+            limit: 1,
+          ),
+          _api
+              .call('frappe.client.get_value', {
+                'doctype': 'Company',
+                'filters': company,
+                'fieldname': 'default_currency',
+              })
+              .catchError((_) => null),
         ]);
         final rows = extra[0] as List<Json>;
         if (rows.isNotEmpty) employee!['image'] = rows.first['image'];
         final cur = extra[1];
-        if (cur is Map && cur['default_currency'] != null) currency = cur['default_currency'].toString();
+        if (cur is Map && cur['default_currency'] != null)
+          currency = cur['default_currency'].toString();
       }
       phase = employee == null ? SessionPhase.noEmployee : SessionPhase.ready;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-          _profileKey, jsonEncode({'user': user, 'employee': employee, 'hr': hr, 'currency': currency, 'plan': plan}));
+        _profileKey,
+        jsonEncode({
+          'user': user,
+          'employee': employee,
+          'hr': hr,
+          'currency': currency,
+          'plan': plan,
+        }),
+      );
       notifyListeners();
     } on ApiException {
       if (!_api.hasSession) return;

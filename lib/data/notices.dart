@@ -60,7 +60,8 @@ abstract final class Notices {
     required DateTime when,
     List<PendingFile> files = const [],
   }) async {
-    final html = '<p>${escapeHtml(title)}</p>'
+    final html =
+        '<p>${escapeHtml(title)}</p>'
         '${body.trim().isEmpty ? '' : '<p>${escapeHtml(body.trim()).replaceAll('\n', '<br>')}</p>'}'
         '<p>Дата: ${Fmt.long(when)}, ${Fmt.time(when)}</p>';
     for (final user in recipients.toSet()) {
@@ -83,18 +84,22 @@ abstract final class Notices {
   }
 
   static Future<List<Notice>> mine({bool unreadOnly = false}) async {
-    final rows = await _api.list('ToDo',
-        fields: ['name', 'description', 'status', 'owner', 'date', 'creation'],
-        filters: [
-          ['_user_tags', 'like', '%${NoticeTags.notice}%'],
-          ['allocated_to', '=', Session.instance.userId],
-          if (unreadOnly) ['status', '=', 'Open'],
-          if (unreadOnly) ['date', '<=', Fmt.iso(DateTime.now())],
-        ],
-        orderBy: 'creation desc',
-        limit: 100);
+    final rows = await _api.list(
+      'ToDo',
+      fields: ['name', 'description', 'status', 'owner', 'date', 'creation'],
+      filters: [
+        ['_user_tags', 'like', '%${NoticeTags.notice}%'],
+        ['allocated_to', '=', Session.instance.userId],
+        if (unreadOnly) ['status', '=', 'Open'],
+        if (unreadOnly) ['date', '<=', Fmt.iso(DateTime.now())],
+      ],
+      orderBy: 'creation desc',
+      limit: 100,
+    );
     return rows.map((r) {
-      final lines = stripHtml(r['description']?.toString()).split('\n').where((l) => !l.startsWith('Дата:')).toList();
+      final lines = stripHtml(
+        r['description']?.toString(),
+      ).split('\n').where((l) => !l.startsWith('Дата:')).toList();
       return Notice(
         name: r['name'].toString(),
         title: lines.isEmpty ? 'Оповещение' : lines.first,
@@ -107,7 +112,8 @@ abstract final class Notices {
     }).toList();
   }
 
-  static Future<void> acknowledge(String name) => _api.setValue('ToDo', name, {'status': 'Closed'});
+  static Future<void> acknowledge(String name) =>
+      _api.setValue('ToDo', name, {'status': 'Closed'});
 
   static Future<void> requestSignature({
     required String doctype,
@@ -130,14 +136,24 @@ abstract final class Notices {
   }
 
   static Future<List<SignRequest>> signRequests() async {
-    final rows = await _api.list('ToDo',
-        fields: ['name', 'reference_type', 'reference_name', 'allocated_to', 'owner', 'status', 'modified'],
-        filters: [
-          ['_user_tags', 'like', '%${NoticeTags.sign}%'],
-          ['status', '!=', 'Cancelled'],
-        ],
-        orderBy: 'modified desc',
-        limit: 1000);
+    final rows = await _api.list(
+      'ToDo',
+      fields: [
+        'name',
+        'reference_type',
+        'reference_name',
+        'allocated_to',
+        'owner',
+        'status',
+        'modified',
+      ],
+      filters: [
+        ['_user_tags', 'like', '%${NoticeTags.sign}%'],
+        ['status', '!=', 'Cancelled'],
+      ],
+      orderBy: 'modified desc',
+      limit: 1000,
+    );
     return [
       for (final r in rows)
         SignRequest(
@@ -152,5 +168,6 @@ abstract final class Notices {
     ];
   }
 
-  static Future<void> sign(String name) => _api.setValue('ToDo', name, {'status': 'Closed'});
+  static Future<void> sign(String name) =>
+      _api.setValue('ToDo', name, {'status': 'Closed'});
 }

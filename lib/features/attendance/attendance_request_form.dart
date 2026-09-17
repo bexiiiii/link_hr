@@ -20,10 +20,14 @@ class AttendanceRequestForm extends StatefulWidget {
 class _AttendanceRequestFormState extends State<AttendanceRequestForm> {
   static const _reasons = ['Work From Home', 'On Duty'];
 
-  late final _explanation = TextEditingController(text: widget.doc?['explanation']?.toString());
+  late final _explanation = TextEditingController(
+    text: widget.doc?['explanation']?.toString(),
+  );
   late String _reason = widget.doc?['reason']?.toString() ?? 'Work From Home';
-  late DateTime? _from = Fmt.parse(widget.doc?['from_date']) ?? Fmt.dateOnly(DateTime.now());
-  late DateTime? _to = Fmt.parse(widget.doc?['to_date']) ?? Fmt.dateOnly(DateTime.now());
+  late DateTime? _from =
+      Fmt.parse(widget.doc?['from_date']) ?? Fmt.dateOnly(DateTime.now());
+  late DateTime? _to =
+      Fmt.parse(widget.doc?['to_date']) ?? Fmt.dateOnly(DateTime.now());
   late bool _halfDay = widget.doc?['half_day'] == 1;
   late DateTime? _halfDayDate = Fmt.parse(widget.doc?['half_day_date']);
   late bool _includeHolidays = widget.doc?['include_holidays'] == 1;
@@ -35,11 +39,18 @@ class _AttendanceRequestFormState extends State<AttendanceRequestForm> {
   @override
   void initState() {
     super.initState();
-    Hr.shiftTypes().then((rows) {
-      if (mounted) {
-        setState(() => _shifts = [for (final r in rows) SelectOption(r['name'].toString(), r['name'].toString())]);
-      }
-    }).catchError((_) {});
+    Hr.shiftTypes()
+        .then((rows) {
+          if (mounted) {
+            setState(
+              () => _shifts = [
+                for (final r in rows)
+                  SelectOption(r['name'].toString(), r['name'].toString()),
+              ],
+            );
+          }
+        })
+        .catchError((_) {});
   }
 
   @override
@@ -99,33 +110,40 @@ class _AttendanceRequestFormState extends State<AttendanceRequestForm> {
           onChanged: (i) => setState(() => _reason = _reasons[i]),
         ),
         const FormGap(),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: DateInput(
-              label: 'С',
-              required: true,
-              value: _from,
-              placeholder: 'Дата',
-              onChanged: (d) => setState(() {
-                _from = d;
-                if (_to == null || (d != null && _to!.isBefore(d))) _to = d;
-              }),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: DateInput(
+                label: 'С',
+                required: true,
+                value: _from,
+                placeholder: 'Дата',
+                onChanged: (d) => setState(() {
+                  _from = d;
+                  if (_to == null || (d != null && _to!.isBefore(d))) _to = d;
+                }),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DateInput(
-              label: 'По',
-              required: true,
-              value: _to,
-              minimum: _from,
-              placeholder: 'Дата',
-              onChanged: (d) => setState(() => _to = d),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DateInput(
+                label: 'По',
+                required: true,
+                value: _to,
+                minimum: _from,
+                placeholder: 'Дата',
+                onChanged: (d) => setState(() => _to = d),
+              ),
             ),
-          ),
-        ]),
+          ],
+        ),
         const FormGap(),
-        SwitchInput(label: 'Половина дня', value: _halfDay, onChanged: (v) => setState(() => _halfDay = v)),
+        SwitchInput(
+          label: 'Половина дня',
+          value: _halfDay,
+          onChanged: (v) => setState(() => _halfDay = v),
+        ),
         if (_halfDay && _from != null && _to != null && _from != _to) ...[
           const FormGap(),
           DateInput(

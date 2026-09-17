@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'app_icons.dart';
 
 import 'api.dart';
 import 'files.dart';
@@ -31,7 +32,12 @@ class PendingFile {
   }
 
   Future<Attachment> upload(String doctype, String docname) async {
-    final json = await Api.instance.uploadFile(bytes: bytes, fileName: name, doctype: doctype, docname: docname);
+    final json = await Api.instance.uploadFile(
+      bytes: bytes,
+      fileName: name,
+      doctype: doctype,
+      docname: docname,
+    );
     json['file_size'] ??= bytes.length;
     return Attachment.fromJson(json);
   }
@@ -39,11 +45,15 @@ class PendingFile {
 
 /// Camera, photo library or Files, the choices behind "Файл или фото".
 Future<PendingFile?> pickAttachment(BuildContext context) async {
-  final choice = await pickAction(context, title: 'Прикрепить', actions: const [
-    SheetAction('camera', 'Сделать фото'),
-    SheetAction('gallery', 'Выбрать из галереи'),
-    SheetAction('file', 'Выбрать файл'),
-  ]);
+  final choice = await pickAction(
+    context,
+    title: 'Прикрепить',
+    actions: const [
+      SheetAction('camera', 'Сделать фото'),
+      SheetAction('gallery', 'Выбрать из галереи'),
+      SheetAction('file', 'Выбрать файл'),
+    ],
+  );
   if (choice == null) return null;
   try {
     if (choice == 'file') {
@@ -60,14 +70,24 @@ Future<PendingFile?> pickAttachment(BuildContext context) async {
     return PendingFile(x.name, await x.readAsBytes());
   } catch (_) {
     if (context.mounted) {
-      showToast(context, 'Нет доступа к камере или файлам. Разрешите доступ в настройках iPhone.', error: true);
+      showToast(
+        context,
+        'Нет доступа к камере или файлам. Разрешите доступ в настройках iPhone.',
+        error: true,
+      );
     }
     return null;
   }
 }
 
 class DashedBox extends StatelessWidget {
-  const DashedBox({super.key, required this.child, this.onTap, this.height = 88, this.radius = AppRadius.field});
+  const DashedBox({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.height = 88,
+    this.radius = AppRadius.field,
+  });
 
   final Widget child;
   final VoidCallback? onTap;
@@ -81,7 +101,11 @@ class DashedBox extends StatelessWidget {
       scale: 0.985,
       child: CustomPaint(
         painter: _DashPainter(radius),
-        child: SizedBox(height: height, width: double.infinity, child: Center(child: child)),
+        child: SizedBox(
+          height: height,
+          width: double.infinity,
+          child: Center(child: child),
+        ),
       ),
     );
   }
@@ -94,7 +118,10 @@ class _DashPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)),
+      );
     final paint = Paint()
       ..color = AppColors.chipDot
       ..style = PaintingStyle.stroke
@@ -119,8 +146,10 @@ class VoiceClip {
   final Duration duration;
   final List<double> wave;
 
-  Future<PendingFile> toPending() async =>
-      PendingFile('voice_${DateTime.now().millisecondsSinceEpoch}.m4a', await File(path).readAsBytes());
+  Future<PendingFile> toPending() async => PendingFile(
+    'voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+    await File(path).readAsBytes(),
+  );
 }
 
 String clockOf(Duration d) {
@@ -141,20 +170,28 @@ class VoiceRecorder {
   bool recording = false;
   VoidCallback? onTick;
 
-  Duration get elapsed => _startedAt == null ? Duration.zero : DateTime.now().difference(_startedAt!);
+  Duration get elapsed => _startedAt == null
+      ? Duration.zero
+      : DateTime.now().difference(_startedAt!);
 
   Future<bool> start() async {
     if (!await _recorder.hasPermission()) return false;
     final dir = await getTemporaryDirectory();
-    final path = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _recorder.start(const RecordConfig(numChannels: 1, bitRate: 64000), path: path);
+    final path =
+        '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _recorder.start(
+      const RecordConfig(numChannels: 1, bitRate: 64000),
+      path: path,
+    );
     samples.clear();
     _startedAt = DateTime.now();
     recording = true;
-    _amp = _recorder.onAmplitudeChanged(const Duration(milliseconds: 110)).listen((a) {
-      samples.add(((a.current + 45) / 45).clamp(0.08, 1.0));
-      onTick?.call();
-    });
+    _amp = _recorder
+        .onAmplitudeChanged(const Duration(milliseconds: 110))
+        .listen((a) {
+          samples.add(((a.current + 45) / 45).clamp(0.08, 1.0));
+          onTick?.call();
+        });
     return true;
   }
 
@@ -164,7 +201,11 @@ class VoiceRecorder {
     final path = await _recorder.stop();
     recording = false;
     if (path == null || duration.inMilliseconds < 700) return null;
-    return VoiceClip(path: path, duration: duration, wave: _downsample(samples, 44));
+    return VoiceClip(
+      path: path,
+      duration: duration,
+      wave: _downsample(samples, 44),
+    );
   }
 
   Future<void> cancel() async {
@@ -190,15 +231,22 @@ class VoiceRecorder {
 }
 
 class Waveform extends StatelessWidget {
-  const Waveform({super.key, required this.values, this.progress = 0, this.height = 30});
+  const Waveform({
+    super.key,
+    required this.values,
+    this.progress = 0,
+    this.height = 30,
+  });
 
   final List<double> values;
   final double progress;
   final double height;
 
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: Size(double.infinity, height), painter: _WavePainter(values, progress));
+  Widget build(BuildContext context) => CustomPaint(
+    size: Size(double.infinity, height),
+    painter: _WavePainter(values, progress),
+  );
 }
 
 class _WavePainter extends CustomPainter {
@@ -222,20 +270,35 @@ class _WavePainter extends CustomPainter {
     for (var i = 0; i < values.length; i++) {
       final x = step * i + step / 2;
       final h = math.max(3.0, values[i] * size.height);
-      canvas.drawLine(Offset(x, (size.height - h) / 2), Offset(x, (size.height + h) / 2),
-          i / values.length <= progress ? played : rest);
+      canvas.drawLine(
+        Offset(x, (size.height - h) / 2),
+        Offset(x, (size.height + h) / 2),
+        i / values.length <= progress ? played : rest,
+      );
     }
     final dotX = (size.width * progress).clamp(4.0, size.width - 4);
-    canvas.drawCircle(Offset(dotX, size.height / 2), 5, Paint()..color = AppColors.ink);
+    canvas.drawCircle(
+      Offset(dotX, size.height / 2),
+      5,
+      Paint()..color = AppColors.ink,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _WavePainter old) => old.progress != progress || old.values != values;
+  bool shouldRepaint(covariant _WavePainter old) =>
+      old.progress != progress || old.values != values;
 }
 
 /// Play button + waveform + "00:00:08", for local recordings or attachments.
 class VoicePlayer extends StatefulWidget {
-  const VoicePlayer({super.key, this.localPath, this.remote, this.wave, this.duration, this.onDelete});
+  const VoicePlayer({
+    super.key,
+    this.localPath,
+    this.remote,
+    this.wave,
+    this.duration,
+    this.onDelete,
+  });
 
   final String? localPath;
   final Attachment? remote;
@@ -261,12 +324,20 @@ class _VoicePlayerState extends State<VoicePlayer> {
     super.initState();
     _path = widget.localPath;
     _subs
-      ..add(_player.onPositionChanged.listen((p) => setState(() => _position = p)))
-      ..add(_player.onDurationChanged.listen((d) => setState(() => _duration = d)))
-      ..add(_player.onPlayerComplete.listen((_) => setState(() {
+      ..add(
+        _player.onPositionChanged.listen((p) => setState(() => _position = p)),
+      )
+      ..add(
+        _player.onDurationChanged.listen((d) => setState(() => _duration = d)),
+      )
+      ..add(
+        _player.onPlayerComplete.listen(
+          (_) => setState(() {
             _playing = false;
             _position = Duration.zero;
-          })));
+          }),
+        ),
+      );
   }
 
   @override
@@ -289,7 +360,9 @@ class _VoicePlayerState extends State<VoicePlayer> {
         setState(() => _loading = true);
         final bytes = await Api.instance.download(widget.remote!.url);
         final dir = await getTemporaryDirectory();
-        final file = File('${dir.path}/${widget.remote!.name}_${widget.remote!.fileName}');
+        final file = File(
+          '${dir.path}/${widget.remote!.name}_${widget.remote!.fileName}',
+        );
         await file.writeAsBytes(bytes, flush: true);
         _path = file.path;
       }
@@ -297,7 +370,8 @@ class _VoicePlayerState extends State<VoicePlayer> {
       await _player.play(DeviceFileSource(_path!), position: _position);
       if (mounted) setState(() => _playing = true);
     } catch (e) {
-      if (mounted) showToast(context, 'Не удалось воспроизвести запись', error: true);
+      if (mounted)
+        showToast(context, 'Не удалось воспроизвести запись', error: true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -305,45 +379,74 @@ class _VoicePlayerState extends State<VoicePlayer> {
 
   @override
   Widget build(BuildContext context) {
-    final wave = widget.wave ?? fakeWave(widget.remote?.name ?? widget.localPath ?? 'voice');
-    final progress = _duration.inMilliseconds == 0 ? 0.0 : _position.inMilliseconds / _duration.inMilliseconds;
-    return Row(children: [
-      Pressable(
-        onTap: _toggle,
-        scale: 0.9,
-        semanticLabel: _playing ? 'Пауза' : 'Воспроизвести голосовое описание',
-        child: Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.ink, width: 2)),
-          child: _loading
-              ? const CupertinoActivityIndicator()
-              : Icon(_playing ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill, size: 20, color: AppColors.ink),
+    final wave =
+        widget.wave ??
+        fakeWave(widget.remote?.name ?? widget.localPath ?? 'voice');
+    final progress = _duration.inMilliseconds == 0
+        ? 0.0
+        : _position.inMilliseconds / _duration.inMilliseconds;
+    return Row(
+      children: [
+        Pressable(
+          onTap: _toggle,
+          scale: 0.9,
+          semanticLabel: _playing
+              ? 'Пауза'
+              : 'Воспроизвести голосовое описание',
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.ink, width: 2),
+            ),
+            child: _loading
+                ? const CupertinoActivityIndicator()
+                : Icon(
+                    _playing ? AppIcons.pauseFill : AppIcons.playFill,
+                    size: 20,
+                    color: AppColors.ink,
+                  ),
+          ),
         ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Waveform(values: wave, progress: progress.clamp(0, 1)),
-          const SizedBox(height: 2),
-          Text(clockOf(_playing || _position > Duration.zero ? _position : _duration),
-              style: AppText.caption.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
-        ]),
-      ),
-      if (widget.onDelete != null)
-        CupertinoButton(
-          padding: const EdgeInsets.all(8),
-          minimumSize: const Size(40, 40),
-          onPressed: widget.onDelete,
-          child: const Icon(CupertinoIcons.trash, size: 20, color: AppColors.red),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Waveform(values: wave, progress: progress.clamp(0, 1)),
+              const SizedBox(height: 2),
+              Text(
+                clockOf(
+                  _playing || _position > Duration.zero ? _position : _duration,
+                ),
+                style: AppText.caption.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
         ),
-    ]);
+        if (widget.onDelete != null)
+          CupertinoButton(
+            padding: const EdgeInsets.all(8),
+            minimumSize: const Size(40, 40),
+            onPressed: widget.onDelete,
+            child: const Icon(AppIcons.trash, size: 20, color: AppColors.red),
+          ),
+      ],
+    );
   }
 }
 
 /// Record-or-play control used in the task form.
 class VoiceField extends StatefulWidget {
-  const VoiceField({super.key, required this.clip, required this.onChanged, this.remote});
+  const VoiceField({
+    super.key,
+    required this.clip,
+    required this.onChanged,
+    this.remote,
+  });
 
   final VoiceClip? clip;
   final Attachment? remote;
@@ -376,7 +479,12 @@ class _VoiceFieldState extends State<VoiceField> {
     FocusScope.of(context).unfocus();
     final ok = await _recorder.start();
     if (!ok) {
-      if (mounted) showToast(context, 'Разрешите доступ к микрофону в настройках iPhone', error: true);
+      if (mounted)
+        showToast(
+          context,
+          'Разрешите доступ к микрофону в настройках iPhone',
+          error: true,
+        );
       return;
     }
     _timer = Timer.periodic(const Duration(milliseconds: 250), (_) {
@@ -402,33 +510,48 @@ class _VoiceFieldState extends State<VoiceField> {
     if (_recorder.recording) {
       final live = _recorder.samples.length > 44
           ? _recorder.samples.sublist(_recorder.samples.length - 44)
-          : [..._recorder.samples, ...List.filled(44 - _recorder.samples.length, 0.08)];
-      return Row(children: [
-        Container(width: 10, height: 10, decoration: const BoxDecoration(color: AppColors.red, shape: BoxShape.circle)),
-        const SizedBox(width: 10),
-        Text(clockOf(_recorder.elapsed), style: AppText.number),
-        const SizedBox(width: 12),
-        Expanded(child: Waveform(values: live, progress: 1, height: 26)),
-        const SizedBox(width: 8),
-        CupertinoButton(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          onPressed: () async {
-            _timer?.cancel();
-            await _recorder.cancel();
-            if (mounted) setState(() {});
-          },
-          child: const Text('Отмена', style: TextStyle(fontSize: 14, color: AppColors.ink3)),
-        ),
-        CircleButton(
-          icon: CupertinoIcons.stop_fill,
-          label: 'Остановить запись',
-          background: AppColors.charcoal,
-          foreground: Colors.white,
-          size: 44,
-          iconSize: 18,
-          onTap: _stop,
-        ),
-      ]);
+          : [
+              ..._recorder.samples,
+              ...List.filled(44 - _recorder.samples.length, 0.08),
+            ];
+      return Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: const BoxDecoration(
+              color: AppColors.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(clockOf(_recorder.elapsed), style: AppText.number),
+          const SizedBox(width: 12),
+          Expanded(child: Waveform(values: live, progress: 1, height: 26)),
+          const SizedBox(width: 8),
+          CupertinoButton(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            onPressed: () async {
+              _timer?.cancel();
+              await _recorder.cancel();
+              if (mounted) setState(() {});
+            },
+            child: const Text(
+              'Отмена',
+              style: TextStyle(fontSize: 14, color: AppColors.ink3),
+            ),
+          ),
+          CircleButton(
+            icon: AppIcons.stopFill,
+            label: 'Остановить запись',
+            background: AppColors.charcoal,
+            foreground: Colors.white,
+            size: 44,
+            iconSize: 18,
+            onTap: _stop,
+          ),
+        ],
+      );
     }
     if (widget.clip != null) {
       return VoicePlayer(
@@ -440,26 +563,40 @@ class _VoiceFieldState extends State<VoiceField> {
       );
     }
     if (widget.remote != null) {
-      return VoicePlayer(key: ValueKey(widget.remote!.name), remote: widget.remote);
+      return VoicePlayer(
+        key: ValueKey(widget.remote!.name),
+        remote: widget.remote,
+      );
     }
     return Pressable(
       onTap: _start,
       semanticLabel: 'Записать голосовое описание',
-      child: Row(children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: const BoxDecoration(color: AppColors.charcoal, shape: BoxShape.circle),
-          child: const Icon(CupertinoIcons.mic_fill, color: Colors.white, size: 20),
-        ),
-        const SizedBox(width: 12),
-        const Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Записать голосом', style: AppText.bodyStrong),
-            Text('Нажмите и опишите задачу своими словами', style: AppText.caption),
-          ]),
-        ),
-      ]),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: const BoxDecoration(
+              color: AppColors.charcoal,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(AppIcons.micFill, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Записать голосом', style: AppText.bodyStrong),
+                Text(
+                  'Нажмите и опишите задачу своими словами',
+                  style: AppText.caption,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

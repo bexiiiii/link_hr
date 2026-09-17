@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../core/app_icons.dart';
 
 import '../core/premium.dart';
 import '../core/motion.dart';
@@ -45,11 +46,11 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   final _visited = <int>{0};
 
   static const _items = [
-    (CupertinoIcons.house, CupertinoIcons.house_fill, 'Главная'),
-    (CupertinoIcons.clock, CupertinoIcons.clock_fill, 'Посещаемость'),
-    (CupertinoIcons.square_list, CupertinoIcons.square_list_fill, 'Задачи'),
-    (CupertinoIcons.folder, CupertinoIcons.folder_fill, 'Сервисы'),
-    (CupertinoIcons.gear, CupertinoIcons.gear_solid, 'Профиль и настройки'),
+    (AppIcons.house, AppIcons.houseFill, 'Главная'),
+    (AppIcons.clock, AppIcons.clockFill, 'Посещаемость'),
+    (AppIcons.squareList, AppIcons.squareListFill, 'Задачи'),
+    (AppIcons.folder, AppIcons.folderFill, 'Сервисы'),
+    (AppIcons.gear, AppIcons.gearSolid, 'Профиль и настройки'),
   ];
 
   @override

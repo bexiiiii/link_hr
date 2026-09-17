@@ -4,12 +4,19 @@ import 'package:flutter/material.dart';
 
 import 'theme.dart';
 
-bool reduceMotion(BuildContext context) => MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+bool reduceMotion(BuildContext context) =>
+    MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
 /// Fade + short rise on first build, staggered by [index]. Content is laid out
 /// immediately; only its opacity/offset animate, and reduced motion skips it.
 class Reveal extends StatefulWidget {
-  const Reveal({super.key, required this.child, this.index = 0, this.offset = 14, this.scale = false});
+  const Reveal({
+    super.key,
+    required this.child,
+    this.index = 0,
+    this.offset = 14,
+    this.scale = false,
+  });
 
   final Widget child;
   final int index;
@@ -21,9 +28,14 @@ class Reveal extends StatefulWidget {
 }
 
 class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
-  late final Animation<double> _t = CurvedAnimation(parent: _c, curve: Curves.easeOutQuart);
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 180),
+  );
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _c,
+    curve: Curves.easeOutQuart,
+  );
 
   @override
   void initState() {
@@ -52,7 +64,12 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
 }
 
 class AnimatedNumber extends StatelessWidget {
-  const AnimatedNumber({super.key, required this.value, required this.style, this.suffix = ''});
+  const AnimatedNumber({
+    super.key,
+    required this.value,
+    required this.style,
+    this.suffix = '',
+  });
 
   final num value;
   final TextStyle style;
@@ -62,7 +79,9 @@ class AnimatedNumber extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: value.toDouble()),
-      duration: reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 700),
+      duration: reduceMotion(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 700),
       curve: Curves.easeOutQuart,
       builder: (_, v, _) => Text('${v.round()}$suffix', style: style),
     );
@@ -79,10 +98,16 @@ class Confetti extends StatefulWidget {
   State<Confetti> createState() => _ConfettiState();
 }
 
-class _ConfettiState extends State<Confetti> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))
-    ..forward();
-  late final List<_Piece> _pieces = List.generate(widget.count, (i) => _Piece(math.Random(i * 7919)));
+class _ConfettiState extends State<Confetti>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  )..forward();
+  late final List<_Piece> _pieces = List.generate(
+    widget.count,
+    (i) => _Piece(math.Random(i * 7919)),
+  );
 
   @override
   void dispose() {
@@ -96,7 +121,10 @@ class _ConfettiState extends State<Confetti> with SingleTickerProviderStateMixin
     return IgnorePointer(
       child: AnimatedBuilder(
         animation: _c,
-        builder: (_, _) => CustomPaint(size: Size.infinite, painter: _ConfettiPainter(_pieces, _c.value)),
+        builder: (_, _) => CustomPaint(
+          size: Size.infinite,
+          painter: _ConfettiPainter(_pieces, _c.value),
+        ),
       ),
     );
   }
@@ -104,14 +132,19 @@ class _ConfettiState extends State<Confetti> with SingleTickerProviderStateMixin
 
 class _Piece {
   _Piece(math.Random r)
-      : x = r.nextDouble(),
-        drift = (r.nextDouble() - 0.5) * 0.3,
-        speed = 0.6 + r.nextDouble() * 0.6,
-        delay = r.nextDouble() * 0.25,
-        spin = r.nextDouble() * math.pi * 4,
-        size = 5 + r.nextDouble() * 6,
-        color = const [AppColors.green, AppColors.violet, Color(0xFFE9C46A), Color(0xFFE76F51), AppColors.charcoal][
-            r.nextInt(5)];
+    : x = r.nextDouble(),
+      drift = (r.nextDouble() - 0.5) * 0.3,
+      speed = 0.6 + r.nextDouble() * 0.6,
+      delay = r.nextDouble() * 0.25,
+      spin = r.nextDouble() * math.pi * 4,
+      size = 5 + r.nextDouble() * 6,
+      color = const [
+        AppColors.green,
+        AppColors.violet,
+        Color(0xFFE9C46A),
+        Color(0xFFE76F51),
+        AppColors.charcoal,
+      ][r.nextInt(5)];
 
   final double x, drift, speed, delay, spin, size;
   final Color color;
@@ -128,15 +161,25 @@ class _ConfettiPainter extends CustomPainter {
     for (final p in pieces) {
       final local = ((t - p.delay) / (1 - p.delay)).clamp(0.0, 1.0);
       if (local <= 0) continue;
-      final y = -20 + (size.height + 40) * Curves.easeIn.transform(local) * p.speed;
+      final y =
+          -20 + (size.height + 40) * Curves.easeIn.transform(local) * p.speed;
       final x = size.width * (p.x + p.drift * local);
-      final paint = Paint()..color = p.color.withValues(alpha: (1 - local).clamp(0, 1) * 0.9 + 0.1);
+      final paint = Paint()
+        ..color = p.color.withValues(
+          alpha: (1 - local).clamp(0, 1) * 0.9 + 0.1,
+        );
       canvas.save();
       canvas.translate(x, y);
       canvas.rotate(p.spin * local);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.45),
-            const Radius.circular(1.5)),
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset.zero,
+            width: p.size,
+            height: p.size * 0.45,
+          ),
+          const Radius.circular(1.5),
+        ),
         paint,
       );
       canvas.restore();
@@ -159,8 +202,10 @@ class Pulse extends StatefulWidget {
 }
 
 class _PulseState extends State<Pulse> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
-    ..repeat();
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat();
 
   @override
   void dispose() {

@@ -35,11 +35,15 @@ class DayLineChart extends StatefulWidget {
   State<DayLineChart> createState() => _DayLineChartState();
 }
 
-class _DayLineChartState extends State<DayLineChart> with SingleTickerProviderStateMixin {
+class _DayLineChartState extends State<DayLineChart>
+    with SingleTickerProviderStateMixin {
   static const step = 52.0;
   static const left = 34.0;
   final _scroll = ScrollController();
-  late final AnimationController _draw = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+  late final AnimationController _draw = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
 
   @override
   void initState() {
@@ -58,7 +62,8 @@ class _DayLineChartState extends State<DayLineChart> with SingleTickerProviderSt
     if (old.values != widget.values) {
       _draw.forward(from: reduceMotion(context) ? 1 : 0);
     }
-    if (old.selected != widget.selected || old.dates.length != widget.dates.length) {
+    if (old.selected != widget.selected ||
+        old.dates.length != widget.dates.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
     }
   }
@@ -66,9 +71,14 @@ class _DayLineChartState extends State<DayLineChart> with SingleTickerProviderSt
   void _scrollToSelected() {
     if (!_scroll.hasClients) return;
     final i = widget.selected ?? widget.dates.length - 1;
-    final target = (left + step * i - _scroll.position.viewportDimension / 2 + step / 2)
-        .clamp(0.0, _scroll.position.maxScrollExtent);
-    _scroll.animateTo(target, duration: const Duration(milliseconds: 360), curve: Curves.easeOutQuart);
+    final target =
+        (left + step * i - _scroll.position.viewportDimension / 2 + step / 2)
+            .clamp(0.0, _scroll.position.maxScrollExtent);
+    _scroll.animateTo(
+      target,
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutQuart,
+    );
   }
 
   @override
@@ -135,8 +145,17 @@ class _Painter extends CustomPainter {
   static const _top = 40.0;
   static const _bottom = 42.0;
 
-  void _text(Canvas c, String s, Offset at, TextStyle style, {bool center = false}) {
-    final tp = TextPainter(text: TextSpan(text: s, style: style), textDirection: TextDirection.ltr)..layout();
+  void _text(
+    Canvas c,
+    String s,
+    Offset at,
+    TextStyle style, {
+    bool center = false,
+  }) {
+    final tp = TextPainter(
+      text: TextSpan(text: s, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
     tp.paint(c, center ? at - Offset(tp.width / 2, 0) : at);
   }
 
@@ -148,7 +167,8 @@ class _Painter extends CustomPainter {
     var lo = minValue ?? 0;
     var hi = present.isEmpty ? 5.0 : present.reduce(math.max);
     if (reference != null) hi = math.max(hi, reference!);
-    if (minValue != null && present.isNotEmpty) lo = math.min(lo, present.reduce(math.min));
+    if (minValue != null && present.isNotEmpty)
+      lo = math.min(lo, present.reduce(math.min));
     hi = hi <= lo ? lo + 5 : lo + ((hi - lo) * 1.25).ceilToDouble();
     final chartH = size.height - _top - _bottom;
     double y(double v) => _top + chartH * (1 - (v - lo) / (hi - lo));
@@ -157,7 +177,11 @@ class _Painter extends CustomPainter {
     final grid = Paint()
       ..color = AppColors.line
       ..strokeWidth = 1;
-    const label = TextStyle(fontSize: 10, color: AppColors.ink3, fontWeight: FontWeight.w500);
+    const label = TextStyle(
+      fontSize: 10,
+      color: AppColors.ink3,
+      fontWeight: FontWeight.w500,
+    );
     for (var k = 0; k <= 5; k++) {
       final v = lo + (hi - lo) * k / 5;
       canvas.drawLine(Offset(left, y(v)), Offset(size.width, y(v)), grid);
@@ -172,25 +196,46 @@ class _Painter extends CustomPainter {
       }
       final d = dates[i];
       final isSel = i == selected;
-      _text(canvas, '${d.day}', Offset(x(i), size.height - _bottom + 8),
-          label.copyWith(fontSize: 12, color: isSel ? AppColors.ink : AppColors.ink3, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500),
-          center: true);
-      _text(canvas, _weekdays[d.weekday - 1], Offset(x(i), size.height - _bottom + 24),
-          label.copyWith(color: isSel ? AppColors.ink : AppColors.ink4, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500),
-          center: true);
+      _text(
+        canvas,
+        '${d.day}',
+        Offset(x(i), size.height - _bottom + 8),
+        label.copyWith(
+          fontSize: 12,
+          color: isSel ? AppColors.ink : AppColors.ink3,
+          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+        ),
+        center: true,
+      );
+      _text(
+        canvas,
+        _weekdays[d.weekday - 1],
+        Offset(x(i), size.height - _bottom + 24),
+        label.copyWith(
+          color: isSel ? AppColors.ink : AppColors.ink4,
+          fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+        ),
+        center: true,
+      );
     }
     if (reference != null) {
       final paint = Paint()
         ..color = AppColors.violet.withValues(alpha: 0.55)
         ..strokeWidth = 1.2;
       for (double dx = left; dx < size.width; dx += 8) {
-        canvas.drawLine(Offset(dx, y(reference!)), Offset(dx + 4, y(reference!)), paint);
+        canvas.drawLine(
+          Offset(dx, y(reference!)),
+          Offset(dx + 4, y(reference!)),
+          paint,
+        );
       }
     }
 
     // Line, revealed left to right.
     canvas.save();
-    canvas.clipRect(Rect.fromLTWH(0, 0, left + (size.width - left) * progress, size.height));
+    canvas.clipRect(
+      Rect.fromLTWH(0, 0, left + (size.width - left) * progress, size.height),
+    );
     final line = Paint()
       ..color = AppColors.charcoal
       ..strokeWidth = 1.6
@@ -205,15 +250,22 @@ class _Painter extends CustomPainter {
         continue;
       }
       final p = Offset(x(i), y(v));
-      path == null ? path = (Path()..moveTo(p.dx, p.dy)) : path.lineTo(p.dx, p.dy);
+      path == null
+          ? path = (Path()..moveTo(p.dx, p.dy))
+          : path.lineTo(p.dx, p.dy);
     }
     if (path != null) canvas.drawPath(path, line);
     for (var i = 0; i < values.length; i++) {
       final v = values[i];
       if (v == null) continue;
       final p = Offset(x(i), y(v));
-      if (i == selected) canvas.drawCircle(p, 9, Paint()..color = AppColors.chip);
-      canvas.drawCircle(p, i == selected ? 5 : 3.5, Paint()..color = AppColors.charcoal);
+      if (i == selected)
+        canvas.drawCircle(p, 9, Paint()..color = AppColors.chip);
+      canvas.drawCircle(
+        p,
+        i == selected ? 5 : 3.5,
+        Paint()..color = AppColors.charcoal,
+      );
     }
     canvas.restore();
 
@@ -221,21 +273,36 @@ class _Painter extends CustomPainter {
     if (sel != null && sel < values.length && values[sel] != null) {
       final p = Offset(x(sel), y(values[sel]!));
       final d = dates[sel];
-      final text = '${d.day}, ${_weekdays[d.weekday - 1]} · ${format(values[sel]!)}';
+      final text =
+          '${d.day}, ${_weekdays[d.weekday - 1]} · ${format(values[sel]!)}';
       final tp = TextPainter(
-        text: TextSpan(text: text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
         textDirection: TextDirection.ltr,
       )..layout();
       final w = tp.width + 20;
       final l = (p.dx - w / 2).clamp(left, size.width - w - 4);
       final top = math.max(2.0, p.dy - 42);
-      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(l, top, w, 28), const Radius.circular(10)),
-          Paint()..color = AppColors.charcoal.withValues(alpha: progress));
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(l, top, w, 28),
+          const Radius.circular(10),
+        ),
+        Paint()..color = AppColors.charcoal.withValues(alpha: progress),
+      );
       tp.paint(canvas, Offset(l + 10, top + (28 - tp.height) / 2));
     }
   }
 
   @override
   bool shouldRepaint(covariant _Painter old) =>
-      old.progress != progress || old.selected != selected || old.values != values;
+      old.progress != progress ||
+      old.selected != selected ||
+      old.values != values;
 }

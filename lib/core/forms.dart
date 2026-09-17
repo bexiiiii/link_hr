@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'app_icons.dart';
 
 import 'fmt.dart';
 import 'theme.dart';
@@ -275,17 +276,13 @@ class DateInput extends StatelessWidget {
                   child: const Padding(
                     padding: EdgeInsets.only(right: 10),
                     child: Icon(
-                      CupertinoIcons.xmark_circle_fill,
+                      AppIcons.xmarkCircleFill,
                       size: 20,
                       color: AppColors.ink4,
                     ),
                   ),
                 ),
-              const Icon(
-                CupertinoIcons.calendar,
-                size: 20,
-                color: AppColors.violet,
-              ),
+              const Icon(AppIcons.calendar, size: 20, color: AppColors.violet),
             ],
           ),
         ),
@@ -361,7 +358,7 @@ class SelectInput extends StatelessWidget {
                 const CupertinoActivityIndicator()
               else
                 const Icon(
-                  CupertinoIcons.chevron_down,
+                  AppIcons.chevronDown,
                   size: 18,
                   color: AppColors.ink3,
                 ),
@@ -500,7 +497,7 @@ class _SelectSheetState extends State<_SelectSheet> {
                             ),
                             if (isSelected)
                               const Icon(
-                                CupertinoIcons.checkmark_alt,
+                                AppIcons.checkmarkAlt,
                                 color: AppColors.violet,
                                 size: 22,
                               ),

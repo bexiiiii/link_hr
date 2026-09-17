@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/forms.dart';
@@ -15,7 +16,12 @@ import '../requests/request_detail_screen.dart';
 import '../requests/request_kind.dart';
 
 class _Item {
-  _Item({required this.type, required this.date, required this.amount, this.description = ''});
+  _Item({
+    required this.type,
+    required this.date,
+    required this.amount,
+    this.description = '',
+  });
 
   String type;
   DateTime date;
@@ -40,7 +46,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
   List<Json> _advances = [];
   final Set<String> _allocate = {};
 
-  late DateTime _posting = Fmt.parse(widget.doc?['posting_date']) ?? Fmt.dateOnly(DateTime.now());
+  late DateTime _posting =
+      Fmt.parse(widget.doc?['posting_date']) ?? Fmt.dateOnly(DateTime.now());
   late String? _approver = widget.doc?['expense_approver']?.toString();
   late final List<_Item> _items = [
     for (final e in (widget.doc?['expenses'] as List? ?? const []))
@@ -64,7 +71,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
   void initState() {
     super.initState();
     for (final a in (widget.doc?['advances'] as List? ?? const [])) {
-      if (Fmt.number(a['allocated_amount']) > 0) _allocate.add(a['employee_advance'].toString());
+      if (Fmt.number(a['allocated_amount']) > 0)
+        _allocate.add(a['employee_advance'].toString());
     }
     _loadMeta();
   }
@@ -86,20 +94,40 @@ class _ExpenseFormState extends State<ExpenseForm> {
       setState(() {
         _types = [
           for (final t in results[0] as List<Json>)
-            SelectOption(t['name'].toString(), t['name'].toString(), subtitle: stripHtml(t['description']?.toString())),
+            SelectOption(
+              t['name'].toString(),
+              t['name'].toString(),
+              subtitle: stripHtml(t['description']?.toString()),
+            ),
         ];
         _approvers = [
-          for (final a in (details['department_approvers'] as List? ?? const []))
-            SelectOption(a['name'].toString(), (a['full_name'] ?? a['name']).toString(), subtitle: a['name'].toString()),
+          for (final a
+              in (details['department_approvers'] as List? ?? const []))
+            SelectOption(
+              a['name'].toString(),
+              (a['full_name'] ?? a['name']).toString(),
+              subtitle: a['name'].toString(),
+            ),
         ];
         final def = details['expense_approver']?.toString();
-        if (def != null && def.isNotEmpty && !_approvers.any((o) => o.value == def)) {
-          _approvers.add(SelectOption(def, details['expense_approver_name']?.toString() ?? def, subtitle: def));
+        if (def != null &&
+            def.isNotEmpty &&
+            !_approvers.any((o) => o.value == def)) {
+          _approvers.add(
+            SelectOption(
+              def,
+              details['expense_approver_name']?.toString() ?? def,
+              subtitle: def,
+            ),
+          );
         }
         _approver ??= def;
-        _approverRequired = details['is_mandatory'] == 1 || details['is_mandatory'] == true;
+        _approverRequired =
+            details['is_mandatory'] == 1 || details['is_mandatory'] == true;
         _costCenter = results[2] as Json;
-        _advances = (results[3] as List<Json>).where((a) => _unclaimed(a) > 0).toList();
+        _advances = (results[3] as List<Json>)
+            .where((a) => _unclaimed(a) > 0)
+            .toList();
         _loading = false;
       });
     } catch (e) {
@@ -113,15 +141,20 @@ class _ExpenseFormState extends State<ExpenseForm> {
   }
 
   num _unclaimed(Json a) =>
-      Fmt.number(a['paid_amount']) - Fmt.number(a['claimed_amount']) - Fmt.number(a['return_amount']);
+      Fmt.number(a['paid_amount']) -
+      Fmt.number(a['claimed_amount']) -
+      Fmt.number(a['return_amount']);
 
   Future<void> _editItem([_Item? existing]) async {
     final result = await showModalBottomSheet<_Item?>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.bg,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-      builder: (_) => _ItemSheet(types: _types, item: existing, currency: _currency),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (_) =>
+          _ItemSheet(types: _types, item: existing, currency: _currency),
     );
     if (result == null) return;
     setState(() {
@@ -162,9 +195,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
       await persistRequest(context, RequestKind.expense, widget.doc, {
         'posting_date': Fmt.iso(_posting),
         'expense_approver': _approver,
-        if (_costCenter['cost_center'] != null) 'cost_center': _costCenter['cost_center'],
+        if (_costCenter['cost_center'] != null)
+          'cost_center': _costCenter['cost_center'],
         if (_costCenter['default_expense_claim_payable_account'] != null)
-          'payable_account': _costCenter['default_expense_claim_payable_account'],
+          'payable_account':
+              _costCenter['default_expense_claim_payable_account'],
         'expenses': [
           for (final i in _items)
             {
@@ -189,7 +224,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
   Widget build(BuildContext context) {
     return FormScaffold(
       title: widget.doc == null ? 'Авансовый отчёт' : 'Редактирование',
-      submitLabel: _items.isEmpty ? 'Отправить отчёт' : 'Отправить · ${Fmt.money(_total, _currency)}',
+      submitLabel: _items.isEmpty
+          ? 'Отправить отчёт'
+          : 'Отправить · ${Fmt.money(_total, _currency)}',
       loading: _loading,
       loadError: _loadError,
       onRetry: _loadMeta,
@@ -201,43 +238,64 @@ class _ExpenseFormState extends State<ExpenseForm> {
         if (_items.isNotEmpty)
           SurfaceCard(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-            child: Divided(children: [
-              for (final i in _items)
-                Dismissible(
-                  key: ObjectKey(i),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) => setState(() => _items.remove(i)),
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    child: const Icon(CupertinoIcons.trash, color: AppColors.red, size: 20),
-                  ),
-                  child: Pressable(
-                    onTap: () async {
-                      await _editItem(i);
-                      setState(() {});
-                    },
-                    scale: 0.99,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Row(children: [
-                        Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(i.type, style: AppText.bodyStrong),
-                            Text([Fmt.dayMonth(i.date), i.description].where((s) => s.isNotEmpty).join(' · '),
-                                maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption),
-                          ]),
+            child: Divided(
+              children: [
+                for (final i in _items)
+                  Dismissible(
+                    key: ObjectKey(i),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (_) => setState(() => _items.remove(i)),
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      child: const Icon(
+                        AppIcons.trash,
+                        color: AppColors.red,
+                        size: 20,
+                      ),
+                    ),
+                    child: Pressable(
+                      onTap: () async {
+                        await _editItem(i);
+                        setState(() {});
+                      },
+                      scale: 0.99,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(i.type, style: AppText.bodyStrong),
+                                  Text(
+                                    [
+                                      Fmt.dayMonth(i.date),
+                                      i.description,
+                                    ].where((s) => s.isNotEmpty).join(' · '),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppText.caption,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              Fmt.money(i.amount, _currency),
+                              style: AppText.number,
+                            ),
+                          ],
                         ),
-                        Text(Fmt.money(i.amount, _currency), style: AppText.number),
-                      ]),
+                      ),
                     ),
                   ),
-                ),
-            ]),
+              ],
+            ),
           ),
         const SizedBox(height: 10),
         PrimaryButton(
           label: 'Добавить расход',
-          icon: CupertinoIcons.plus,
+          icon: AppIcons.plus,
           kind: ButtonKind.soft,
           height: 50,
           onTap: _types.isEmpty ? null : () => _editItem(),
@@ -245,7 +303,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
         if (_items.length > 1)
           Padding(
             padding: const EdgeInsets.only(top: 8, left: 2),
-            child: Text('Смахните расход влево, чтобы удалить', style: AppText.caption),
+            child: Text(
+              'Смахните расход влево, чтобы удалить',
+              style: AppText.caption,
+            ),
           ),
         const FormGap(),
         DateInput(
@@ -271,7 +332,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
               label: '${a['name']} · ${Fmt.money(_unclaimed(a), _currency)}',
               subtitle: 'Выдан ${Fmt.long(a['posting_date'])}',
               value: _allocate.contains(a['name']),
-              onChanged: (v) => setState(() => v ? _allocate.add(a['name'].toString()) : _allocate.remove(a['name'])),
+              onChanged: (v) => setState(
+                () => v
+                    ? _allocate.add(a['name'].toString())
+                    : _allocate.remove(a['name']),
+              ),
             ),
             const SizedBox(height: 8),
           ],
@@ -296,8 +361,13 @@ class _ItemSheetState extends State<_ItemSheet> {
   late String? _type = widget.item?.type;
   late DateTime _date = widget.item?.date ?? Fmt.dateOnly(DateTime.now());
   late final _amount = TextEditingController(
-      text: widget.item == null ? '' : Fmt.decimal(widget.item!.amount).replaceAll(',', '.'));
-  late final _description = TextEditingController(text: widget.item?.description);
+    text: widget.item == null
+        ? ''
+        : Fmt.decimal(widget.item!.amount).replaceAll(',', '.'),
+  );
+  late final _description = TextEditingController(
+    text: widget.item?.description,
+  );
   String? _error;
 
   @override
@@ -308,7 +378,9 @@ class _ItemSheetState extends State<_ItemSheet> {
   }
 
   void _save() {
-    final amount = num.tryParse(_amount.text.replaceAll(',', '.').replaceAll(' ', ''));
+    final amount = num.tryParse(
+      _amount.text.replaceAll(',', '.').replaceAll(' ', ''),
+    );
     if (_type == null) {
       setState(() => _error = 'Выберите вид расхода');
       return;
@@ -326,60 +398,90 @@ class _ItemSheetState extends State<_ItemSheet> {
         ..description = _description.text.trim();
       Navigator.pop(context);
     } else {
-      Navigator.pop(context, _Item(type: _type!, date: _date, amount: amount, description: _description.text.trim()));
+      Navigator.pop(
+        context,
+        _Item(
+          type: _type!,
+          date: _date,
+          amount: amount,
+          description: _description.text.trim(),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 22, 20, MediaQuery.of(context).viewInsets.bottom + 16),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        22,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(widget.item == null ? 'Новый расход' : 'Расход', style: AppText.title),
-            const SizedBox(height: 18),
-            SelectInput(
-              label: 'Вид расхода',
-              required: true,
-              value: _type,
-              options: widget.types,
-              onChanged: (v) => setState(() => _type = v),
-            ),
-            const FormGap(),
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
-                child: AppTextField(
-                  label: 'Сумма, ${Fmt.symbol(widget.currency)}',
-                  controller: _amount,
-                  required: true,
-                  hint: '0',
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.item == null ? 'Новый расход' : 'Расход',
+                style: AppText.title,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DateInput(
-                  label: 'Дата',
-                  value: _date,
-                  maximum: DateTime.now(),
-                  onChanged: (d) => setState(() => _date = d ?? _date),
-                ),
+              const SizedBox(height: 18),
+              SelectInput(
+                label: 'Вид расхода',
+                required: true,
+                value: _type,
+                options: widget.types,
+                onChanged: (v) => setState(() => _type = v),
               ),
-            ]),
-            const FormGap(),
-            AppTextField(label: 'Описание', controller: _description, maxLines: 3, hint: 'Такси до аэропорта'),
-            if (_error != null) InlineError(_error!),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              label: widget.item == null ? 'Добавить' : 'Сохранить',
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _save();
-              },
-            ),
-          ]),
+              const FormGap(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      label: 'Сумма, ${Fmt.symbol(widget.currency)}',
+                      controller: _amount,
+                      required: true,
+                      hint: '0',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DateInput(
+                      label: 'Дата',
+                      value: _date,
+                      maximum: DateTime.now(),
+                      onChanged: (d) => setState(() => _date = d ?? _date),
+                    ),
+                  ),
+                ],
+              ),
+              const FormGap(),
+              AppTextField(
+                label: 'Описание',
+                controller: _description,
+                maxLines: 3,
+                hint: 'Такси до аэропорта',
+              ),
+              if (_error != null) InlineError(_error!),
+              const SizedBox(height: 20),
+              PrimaryButton(
+                label: widget.item == null ? 'Добавить' : 'Сохранить',
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _save();
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

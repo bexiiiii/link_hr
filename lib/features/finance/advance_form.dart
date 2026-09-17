@@ -19,10 +19,16 @@ class AdvanceForm extends StatefulWidget {
 }
 
 class _AdvanceFormState extends State<AdvanceForm> {
-  late final _purpose = TextEditingController(text: stripHtml(widget.doc?['purpose']?.toString()));
+  late final _purpose = TextEditingController(
+    text: stripHtml(widget.doc?['purpose']?.toString()),
+  );
   late final _amount = TextEditingController(
-      text: widget.doc == null ? '' : Fmt.decimal(widget.doc!['advance_amount']).replaceAll(',', '.'));
-  late DateTime _posting = Fmt.parse(widget.doc?['posting_date']) ?? Fmt.dateOnly(DateTime.now());
+    text: widget.doc == null
+        ? ''
+        : Fmt.decimal(widget.doc!['advance_amount']).replaceAll(',', '.'),
+  );
+  late DateTime _posting =
+      Fmt.parse(widget.doc?['posting_date']) ?? Fmt.dateOnly(DateTime.now());
   late String? _mode = widget.doc?['mode_of_payment']?.toString();
   late bool _repay = widget.doc?['repay_unclaimed_amount_from_salary'] == 1;
   String? _account;
@@ -34,9 +40,17 @@ class _AdvanceFormState extends State<AdvanceForm> {
   void initState() {
     super.initState();
     Hr.advanceAccount().then((a) => _account = a).catchError((_) => null);
-    Hr.modesOfPayment().then((rows) {
-      if (mounted) setState(() => _modes = [for (final r in rows) SelectOption(r['name'].toString(), r['name'].toString())]);
-    }).catchError((_) {});
+    Hr.modesOfPayment()
+        .then((rows) {
+          if (mounted)
+            setState(
+              () => _modes = [
+                for (final r in rows)
+                  SelectOption(r['name'].toString(), r['name'].toString()),
+              ],
+            );
+        })
+        .catchError((_) {});
   }
 
   @override
@@ -47,7 +61,9 @@ class _AdvanceFormState extends State<AdvanceForm> {
   }
 
   Future<void> _submit() async {
-    final amount = num.tryParse(_amount.text.replaceAll(',', '.').replaceAll(' ', ''));
+    final amount = num.tryParse(
+      _amount.text.replaceAll(',', '.').replaceAll(' ', ''),
+    );
     String? problem;
     if (_purpose.text.trim().isEmpty) {
       problem = 'Укажите цель аванса';

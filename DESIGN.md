@@ -1,6 +1,6 @@
 ---
 name: Link HR
-description: iOS HR app for companies in Kazakhstan. White surfaces, one clear blue, a floating pill navigation.
+description: iOS HR app for companies in Kazakhstan. White surfaces, Telegram-like blue, Phosphor icons, a floating pill navigation.
 colors:
   ground: "#F5F8FC"
   surface: "#FFFFFF"
@@ -10,10 +10,10 @@ colors:
   ink-2: "#43546A"
   ink-3: "#66788E"
   ink-4: "#B8C5D3"
-  blue: "#1769E0"
-  blue-pressed: "#0D54B6"
-  blue-soft: "#E7F0FF"
-  blue-glow: "#C9DDFF"
+  blue: "#3390EC"
+  blue-pressed: "#2481CC"
+  blue-soft: "#E8F3FD"
+  blue-glow: "#CFE6FB"
   orange: "#D9822B"
   orange-soft: "#FDF0E1"
   red: "#D94545"
@@ -73,10 +73,10 @@ components:
 | ink | #122033 | заголовки, значения и основные иконки |
 | ink-secondary | #43546A | вспомогательный текст |
 | ink-muted | #66788E | подписи и даты |
-| blue | #1769E0 | главное действие, активная вкладка и ссылки |
-| blue-pressed | #0D54B6 | нажатие и сильное состояние действия |
-| blue-soft | #E7F0FF | мягкий фон выбора и успеха |
-| blue-glow | #C9DDFF | ореол круглой кнопки отметки |
+| blue | #3390EC | главное действие, активная вкладка и ссылки |
+| blue-pressed | #2481CC | нажатие и сильное состояние действия |
+| blue-soft | #E8F3FD | мягкий фон выбора и успеха |
+| blue-glow | #CFE6FB | ореол круглой кнопки отметки |
 | amber / red | #D9822B / #D94545 | предупреждение, опоздание, ошибка, отказ |
 
 Правила: на обычном экране не больше одного синего заполненного действия, кроме активной вкладки. На синем фоне всегда белый текст или иконка. Технические названия, URL, API и платформа не показываются пользователю.

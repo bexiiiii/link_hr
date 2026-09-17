@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/fmt.dart';
 import '../../core/motion.dart';
@@ -13,13 +14,13 @@ import '../../data/tasks.dart';
 import '../../data/timesheet.dart';
 
 IconData achievementIcon(String id) => switch (id) {
-  'first_step' => CupertinoIcons.flag_fill,
-  'time_manager' => CupertinoIcons.alarm_fill,
-  'early_bird' => CupertinoIcons.sunrise_fill,
-  'task_closer' => CupertinoIcons.checkmark_seal_fill,
-  'checklist_master' => CupertinoIcons.list_bullet_indent,
-  'clean_month' => CupertinoIcons.star_fill,
-  _ => CupertinoIcons.rosette,
+  'first_step' => AppIcons.flagFill,
+  'time_manager' => AppIcons.alarmFill,
+  'early_bird' => AppIcons.sunriseFill,
+  'task_closer' => AppIcons.checkmarkSealFill,
+  'checklist_master' => AppIcons.listBulletIndent,
+  'clean_month' => AppIcons.starFill,
+  _ => AppIcons.rosette,
 };
 
 const _cardViolet = AppColors.blueSoft;
@@ -148,10 +149,7 @@ Future<void> showAchievementDialog(BuildContext context, Achievement a) {
                       child: IconButton(
                         tooltip: 'Закрыть',
                         onPressed: () => Navigator.pop(c),
-                        icon: const Icon(
-                          CupertinoIcons.xmark,
-                          color: AppColors.ink3,
-                        ),
+                        icon: const Icon(AppIcons.xmark, color: AppColors.ink3),
                       ),
                     ),
                     Center(
@@ -404,7 +402,7 @@ class AchievementDetailScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircleButton(
-                      icon: CupertinoIcons.share,
+                      icon: AppIcons.share,
                       label: 'Поделиться достижением',
                       onTap: () => SharePlus.instance.share(
                         ShareParams(
@@ -415,7 +413,7 @@ class AchievementDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     CircleButton(
-                      icon: CupertinoIcons.camera_circle,
+                      icon: AppIcons.cameraCircle,
                       label: 'Поделиться в сторис',
                       foreground: AppColors.blue,
                       onTap: () => SharePlus.instance.share(

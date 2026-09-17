@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/forms.dart';
 import '../../core/session.dart';
@@ -23,7 +24,7 @@ class BrandMark extends StatelessWidget {
         color: AppColors.blue,
         borderRadius: BorderRadius.circular(size * 0.26),
       ),
-      child: Icon(CupertinoIcons.link, size: size * 0.54, color: Colors.white),
+      child: Icon(AppIcons.link, size: size * 0.54, color: Colors.white),
     );
   }
 }
@@ -131,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   suffix: IconButton(
                     tooltip: _obscure ? 'Показать пароль' : 'Скрыть пароль',
                     icon: Icon(
-                      _obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                      _obscure ? AppIcons.eye : AppIcons.eyeSlash,
                       size: 20,
                       color: AppColors.ink3,
                     ),
@@ -336,7 +337,7 @@ class _LockScreenState extends State<LockScreen> {
               const Spacer(),
               PrimaryButton(
                 label: 'Разблокировать',
-                icon: CupertinoIcons.lock_open,
+                icon: AppIcons.lockOpen,
                 loading: _busy,
                 onTap: _unlock,
               ),
@@ -378,7 +379,7 @@ class _NoEmployeeScreenState extends State<NoEmployeeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               EmptyState(
-                icon: CupertinoIcons.person_crop_circle_badge_exclam,
+                icon: AppIcons.personCropCircleBadgeExclam,
                 title: 'Профиль сотрудника не найден',
                 message:
                     'Учётная запись ${s.userId} не привязана к активному сотруднику. Обратитесь в отдел кадров.',

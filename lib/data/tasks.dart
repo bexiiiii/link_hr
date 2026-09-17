@@ -26,10 +26,10 @@ enum TaskStatus {
   final String label;
 
   static TaskStatus fromRemote(String? s) => switch (s) {
-        'Closed' => TaskStatus.completed,
-        'Cancelled' => TaskStatus.onHold,
-        _ => TaskStatus.inProgress,
-      };
+    'Closed' => TaskStatus.completed,
+    'Cancelled' => TaskStatus.onHold,
+    _ => TaskStatus.inProgress,
+  };
 }
 
 enum TaskStage {
@@ -50,7 +50,13 @@ abstract final class TaskTags {
   static const voice = 'link-voice';
 
   /// Prefix shared by every non-task ToDo the app creates.
-  static const service = ['link-cl-', 'link-notice', 'link-sign', 'link-plan', 'link-pay'];
+  static const service = [
+    'link-cl-',
+    'link-notice',
+    'link-sign',
+    'link-plan',
+    'link-pay',
+  ];
 }
 
 const taskPriorities = ['Low', 'Medium', 'High'];
@@ -102,26 +108,32 @@ class TaskItem {
   bool get hasVoice => tags.contains(TaskTags.voice);
 
   TaskStage get stage => switch (status) {
-        TaskStatus.completed => TaskStage.done,
-        TaskStatus.onHold => TaskStage.archived,
-        _ when tags.contains(TaskTags.review) => TaskStage.review,
-        _ when tags.contains(TaskTags.work) => TaskStage.inWork,
-        _ => TaskStage.todo,
-      };
+    TaskStatus.completed => TaskStage.done,
+    TaskStatus.onHold => TaskStage.archived,
+    _ when tags.contains(TaskTags.review) => TaskStage.review,
+    _ when tags.contains(TaskTags.work) => TaskStage.inWork,
+    _ => TaskStage.todo,
+  };
 
   bool get overdue =>
-      status == TaskStatus.inProgress && due != null && Fmt.dateOnly(due!).isBefore(Fmt.dateOnly(DateTime.now()));
+      status == TaskStatus.inProgress &&
+      due != null &&
+      Fmt.dateOnly(due!).isBefore(Fmt.dateOnly(DateTime.now()));
 
   List<String> get people => {
-        if (allocatedTo.isNotEmpty) allocatedTo,
-        if (reviewer.isNotEmpty) reviewer,
-      }.toList();
+    if (allocatedTo.isNotEmpty) allocatedTo,
+    if (reviewer.isNotEmpty) reviewer,
+  }.toList();
 
   static (String, String) splitDescription(String? html) {
     final text = stripHtml(html);
     if (text.isEmpty) return ('Без названия', '');
     final newline = text.indexOf('\n');
-    if (newline > 0) return (text.substring(0, newline).trim(), text.substring(newline + 1).trim());
+    if (newline > 0)
+      return (
+        text.substring(0, newline).trim(),
+        text.substring(newline + 1).trim(),
+      );
     return (text, '');
   }
 
@@ -132,10 +144,18 @@ class TaskItem {
         : '<p>${escapeHtml(title.trim())}</p><p>${escapeHtml(body).replaceAll('\n', '<br>')}</p>';
   }
 
-  static Set<String> parseTags(Object? raw) =>
-      (raw?.toString() ?? '').split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toSet();
+  static Set<String> parseTags(Object? raw) => (raw?.toString() ?? '')
+      .split(',')
+      .map((t) => t.trim())
+      .where((t) => t.isNotEmpty)
+      .toSet();
 
-  factory TaskItem.fromJson(Json j, {List<Subtask> subtasks = const [], int total = 0, int done = 0}) {
+  factory TaskItem.fromJson(
+    Json j, {
+    List<Subtask> subtasks = const [],
+    int total = 0,
+    int done = 0,
+  }) {
     final (title, description) = splitDescription(j['description']?.toString());
     return TaskItem(
       name: j['name'].toString(),
@@ -152,7 +172,9 @@ class TaskItem {
       tags: parseTags(j['_user_tags']),
       subtasks: subtasks,
       subtaskTotal: subtasks.isNotEmpty ? subtasks.length : total,
-      subtaskDone: subtasks.isNotEmpty ? subtasks.where((s) => s.done).length : done,
+      subtaskDone: subtasks.isNotEmpty
+          ? subtasks.where((s) => s.done).length
+          : done,
     );
   }
 }
@@ -175,20 +197,28 @@ abstract final class Tasks {
   ];
 
   static List<List<Object>> get _taskFilters => [
-        ['reference_type', '!=', 'ToDo'],
-        for (final t in TaskTags.service) ['_user_tags', 'not like', '%$t%'],
-      ];
+    ['reference_type', '!=', 'ToDo'],
+    for (final t in TaskTags.service) ['_user_tags', 'not like', '%$t%'],
+  ];
 
   static Future<List<TaskItem>> list() async {
     final results = await Future.wait([
-      _api.list('ToDo', fields: _fields, filters: _taskFilters, orderBy: 'modified desc', limit: 500),
-      _api.list('ToDo',
-          fields: ['name', 'status', 'reference_name'],
-          filters: [
-            ['reference_type', '=', 'ToDo'],
-            ['status', '!=', 'Cancelled'],
-          ],
-          limit: 3000),
+      _api.list(
+        'ToDo',
+        fields: _fields,
+        filters: _taskFilters,
+        orderBy: 'modified desc',
+        limit: 500,
+      ),
+      _api.list(
+        'ToDo',
+        fields: ['name', 'status', 'reference_name'],
+        filters: [
+          ['reference_type', '=', 'ToDo'],
+          ['status', '!=', 'Cancelled'],
+        ],
+        limit: 3000,
+      ),
     ]);
     final counts = <String, (int, int)>{};
     for (final s in results[1]) {
@@ -205,22 +235,26 @@ abstract final class Tasks {
   static Future<TaskItem> get(String name) async {
     final results = await Future.wait([
       _api.doc('ToDo', name),
-      _api.list('ToDo',
-          fields: ['name', 'description', 'status'],
-          filters: [
-            ['reference_type', '=', 'ToDo'],
-            ['reference_name', '=', name],
-            ['status', '!=', 'Cancelled'],
-          ],
-          orderBy: 'creation asc',
-          limit: 500),
+      _api.list(
+        'ToDo',
+        fields: ['name', 'description', 'status'],
+        filters: [
+          ['reference_type', '=', 'ToDo'],
+          ['reference_name', '=', name],
+          ['status', '!=', 'Cancelled'],
+        ],
+        orderBy: 'creation asc',
+        limit: 500,
+      ),
     ]);
     final subtasks = (results[1] as List<Json>)
-        .map((s) => Subtask(
-              name: s['name'].toString(),
-              title: stripHtml(s['description']?.toString()),
-              done: s['status'] == 'Closed',
-            ))
+        .map(
+          (s) => Subtask(
+            name: s['name'].toString(),
+            title: stripHtml(s['description']?.toString()),
+            done: s['status'] == 'Closed',
+          ),
+        )
         .toList();
     return TaskItem.fromJson(results[0] as Json, subtasks: subtasks);
   }
@@ -238,7 +272,9 @@ abstract final class Tasks {
   }) async {
     final me = Session.instance.userId;
     final lines = text.trim().split('\n');
-    final title = lines.first.trim().isEmpty ? (voice != null ? 'Голосовая задача' : 'Новая задача') : lines.first.trim();
+    final title = lines.first.trim().isEmpty
+        ? (voice != null ? 'Голосовая задача' : 'Новая задача')
+        : lines.first.trim();
     final body = lines.skip(1).join('\n');
     final voiceFile = await voice?.toPending();
     final targets = executors.isEmpty ? [me] : executors;
@@ -277,14 +313,14 @@ abstract final class Tasks {
     required String priority,
     required String allocatedTo,
     String? reviewer,
-  }) =>
-      _api.setValue('ToDo', name, {
-        'description': TaskItem.composeDescription(title, description),
-        'date': due == null ? null : Fmt.iso(due),
-        'priority': priority,
-        if (allocatedTo.isNotEmpty) 'allocated_to': allocatedTo,
-        if (reviewer != null) 'assigned_by': reviewer.isEmpty ? Session.instance.userId : reviewer,
-      });
+  }) => _api.setValue('ToDo', name, {
+    'description': TaskItem.composeDescription(title, description),
+    'date': due == null ? null : Fmt.iso(due),
+    'priority': priority,
+    if (allocatedTo.isNotEmpty) 'allocated_to': allocatedTo,
+    if (reviewer != null)
+      'assigned_by': reviewer.isEmpty ? Session.instance.userId : reviewer,
+  });
 
   static Future<void> setStatus(String name, TaskStatus status) =>
       _api.setValue('ToDo', name, {'status': status.remote});
@@ -309,23 +345,33 @@ abstract final class Tasks {
       await setStatus(task.name, status);
       task.status = status;
     }
-    await tag(TaskTags.work, stage == TaskStage.inWork || stage == TaskStage.review);
+    await tag(
+      TaskTags.work,
+      stage == TaskStage.inWork || stage == TaskStage.review,
+    );
     await tag(TaskTags.review, stage == TaskStage.review);
   }
 
   static Future<void> setDue(String name, DateTime? due) =>
       _api.setValue('ToDo', name, {'date': due == null ? null : Fmt.iso(due)});
 
-  static Future<void> setAssignee(String name, String user) => _api.setValue('ToDo', name, {'allocated_to': user});
+  static Future<void> setAssignee(String name, String user) =>
+      _api.setValue('ToDo', name, {'allocated_to': user});
 
-  static Future<Subtask> addSubtask(String parent, String title, {String? allocatedTo}) async {
+  static Future<Subtask> addSubtask(
+    String parent,
+    String title, {
+    String? allocatedTo,
+  }) async {
     final doc = await _api.insert({
       'doctype': 'ToDo',
       'description': escapeHtml(title),
       'status': 'Open',
       'reference_type': 'ToDo',
       'reference_name': parent,
-      'allocated_to': (allocatedTo == null || allocatedTo.isEmpty) ? Session.instance.userId : allocatedTo,
+      'allocated_to': (allocatedTo == null || allocatedTo.isEmpty)
+          ? Session.instance.userId
+          : allocatedTo,
     });
     return Subtask(name: doc['name'].toString(), title: title, done: false);
   }
@@ -333,13 +379,21 @@ abstract final class Tasks {
   static Future<void> toggleSubtask(Subtask s, bool done) =>
       _api.setValue('ToDo', s.name, {'status': done ? 'Closed' : 'Open'});
 
-  static Future<void> removeSubtask(Subtask s) => _api.setValue('ToDo', s.name, {'status': 'Cancelled'});
+  static Future<void> removeSubtask(Subtask s) =>
+      _api.setValue('ToDo', s.name, {'status': 'Cancelled'});
 
   static Future<void> delete(String name) => _api.delete('ToDo', name);
 
   static Future<Attachment?> voiceOf(String name) async {
     final files = await Files.list('ToDo', name);
-    return files.where((f) => RegExp(r'\.(m4a|aac|mp3|wav|caf)$', caseSensitive: false).hasMatch(f.fileName)).lastOrNull;
+    return files
+        .where(
+          (f) => RegExp(
+            r'\.(m4a|aac|mp3|wav|caf)$',
+            caseSensitive: false,
+          ).hasMatch(f.fileName),
+        )
+        .lastOrNull;
   }
 
   /// People the current user works with most, by shared tasks.
@@ -348,10 +402,12 @@ abstract final class Tasks {
     final counts = <String, int>{};
     for (final t in tasks) {
       for (final id in {t.owner, t.allocatedTo, t.assignedBy}) {
-        if (id.isNotEmpty && id != me && id != 'Administrator') counts[id] = (counts[id] ?? 0) + 1;
+        if (id.isNotEmpty && id != me && id != 'Administrator')
+          counts[id] = (counts[id] ?? 0) + 1;
       }
     }
-    final sorted = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return sorted.take(limit).map((e) => e.key).toList();
   }
 
@@ -362,7 +418,10 @@ abstract final class Tasks {
       return {
         for (final e in list)
           if ((e['user_id'] ?? '').toString().isNotEmpty)
-            e['user_id'].toString(): (e['employee_name']?.toString() ?? e['user_id'].toString(), e['image']?.toString()),
+            e['user_id'].toString(): (
+              e['employee_name']?.toString() ?? e['user_id'].toString(),
+              e['image']?.toString(),
+            ),
       };
     } catch (_) {
       return {};

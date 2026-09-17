@@ -50,6 +50,7 @@ dependencies:
   share_plus: ^13.3.0
   pdfrx: ^2.4.8
   camera: ^0.12.1
+  phosphor_flutter: ^2.1.0
 
 dev_dependencies:
   flutter_test:

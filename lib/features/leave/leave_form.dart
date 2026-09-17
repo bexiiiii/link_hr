@@ -19,7 +19,9 @@ class LeaveForm extends StatefulWidget {
 }
 
 class _LeaveFormState extends State<LeaveForm> {
-  late final _reason = TextEditingController(text: stripHtml(widget.doc?['description']?.toString()));
+  late final _reason = TextEditingController(
+    text: stripHtml(widget.doc?['description']?.toString()),
+  );
   List<String> _types = [];
   List<SelectOption> _approvers = [];
   bool _approverRequired = false;
@@ -66,15 +68,29 @@ class _LeaveFormState extends State<LeaveForm> {
       setState(() {
         _types = results[0] as List<String>;
         _approvers = [
-          for (final a in (details['department_approvers'] as List? ?? const []))
-            SelectOption(a['name'].toString(), (a['full_name'] ?? a['name']).toString(), subtitle: a['name'].toString()),
+          for (final a
+              in (details['department_approvers'] as List? ?? const []))
+            SelectOption(
+              a['name'].toString(),
+              (a['full_name'] ?? a['name']).toString(),
+              subtitle: a['name'].toString(),
+            ),
         ];
         final def = details['leave_approver']?.toString();
-        if (def != null && def.isNotEmpty && !_approvers.any((o) => o.value == def)) {
-          _approvers.add(SelectOption(def, details['leave_approver_name']?.toString() ?? def, subtitle: def));
+        if (def != null &&
+            def.isNotEmpty &&
+            !_approvers.any((o) => o.value == def)) {
+          _approvers.add(
+            SelectOption(
+              def,
+              details['leave_approver_name']?.toString() ?? def,
+              subtitle: def,
+            ),
+          );
         }
         _approver ??= def;
-        _approverRequired = details['is_mandatory'] == 1 || details['is_mandatory'] == true;
+        _approverRequired =
+            details['is_mandatory'] == 1 || details['is_mandatory'] == true;
         _loading = false;
       });
       _recalculate();
@@ -153,7 +169,9 @@ class _LeaveFormState extends State<LeaveForm> {
         'from_date': Fmt.iso(_from!),
         'to_date': Fmt.iso(_to!),
         'half_day': _halfDay ? 1 : 0,
-        'half_day_date': _halfDay ? Fmt.iso(_from == _to ? _from! : _halfDayDate!) : null,
+        'half_day_date': _halfDay
+            ? Fmt.iso(_from == _to ? _from! : _halfDayDate!)
+            : null,
         'description': _reason.text.trim(),
         'leave_approver': _approver,
         if (widget.doc == null) ...{
@@ -193,37 +211,40 @@ class _LeaveFormState extends State<LeaveForm> {
           },
         ),
         const FormGap(),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: DateInput(
-              label: 'С',
-              required: true,
-              value: _from,
-              placeholder: 'Дата',
-              onChanged: (d) {
-                setState(() {
-                  _from = d;
-                  if (_to == null || (d != null && _to!.isBefore(d))) _to = d;
-                });
-                _recalculate();
-              },
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: DateInput(
+                label: 'С',
+                required: true,
+                value: _from,
+                placeholder: 'Дата',
+                onChanged: (d) {
+                  setState(() {
+                    _from = d;
+                    if (_to == null || (d != null && _to!.isBefore(d))) _to = d;
+                  });
+                  _recalculate();
+                },
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DateInput(
-              label: 'По',
-              required: true,
-              value: _to,
-              minimum: _from,
-              placeholder: 'Дата',
-              onChanged: (d) {
-                setState(() => _to = d);
-                _recalculate();
-              },
+            const SizedBox(width: 12),
+            Expanded(
+              child: DateInput(
+                label: 'По',
+                required: true,
+                value: _to,
+                minimum: _from,
+                placeholder: 'Дата',
+                onChanged: (d) {
+                  setState(() => _to = d);
+                  _recalculate();
+                },
+              ),
             ),
-          ),
-        ]),
+          ],
+        ),
         const FormGap(),
         SwitchInput(
           label: 'Половина дня',
@@ -251,24 +272,42 @@ class _LeaveFormState extends State<LeaveForm> {
         const FormGap(),
         SurfaceCard(
           padding: const EdgeInsets.all(18),
-          child: Row(children: [
-            Expanded(child: _Stat(label: 'Дней отпуска', value: _days == null ? '—' : Fmt.decimal(_days))),
-            Container(width: 1, height: 36, color: AppColors.line),
-            const SizedBox(width: 18),
-            Expanded(
-              child: _Stat(label: 'Доступно', value: _balance == null ? '—' : Fmt.decimal(_balance), warn: short),
-            ),
-            if (_calculating) const CupertinoActivityIndicator(),
-          ]),
+          child: Row(
+            children: [
+              Expanded(
+                child: _Stat(
+                  label: 'Дней отпуска',
+                  value: _days == null ? '—' : Fmt.decimal(_days),
+                ),
+              ),
+              Container(width: 1, height: 36, color: AppColors.line),
+              const SizedBox(width: 18),
+              Expanded(
+                child: _Stat(
+                  label: 'Доступно',
+                  value: _balance == null ? '—' : Fmt.decimal(_balance),
+                  warn: short,
+                ),
+              ),
+              if (_calculating) const CupertinoActivityIndicator(),
+            ],
+          ),
         ),
         if (short)
           Padding(
             padding: const EdgeInsets.only(top: 8, left: 2),
-            child: Text('Запрошено больше дней, чем доступно по этому типу отпуска',
-                style: AppText.caption.copyWith(color: AppColors.red)),
+            child: Text(
+              'Запрошено больше дней, чем доступно по этому типу отпуска',
+              style: AppText.caption.copyWith(color: AppColors.red),
+            ),
           ),
         const FormGap(),
-        AppTextField(label: 'Причина', controller: _reason, maxLines: 4, hint: 'Например, ежегодный трудовой отпуск'),
+        AppTextField(
+          label: 'Причина',
+          controller: _reason,
+          maxLines: 4,
+          hint: 'Например, ежегодный трудовой отпуск',
+        ),
         const FormGap(),
         SelectInput(
           label: 'Согласующий',
@@ -292,14 +331,19 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: AppText.caption),
-      const SizedBox(height: 4),
-      Text(value,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppText.caption),
+        const SizedBox(height: 4),
+        Text(
+          value,
           style: AppText.heading.copyWith(
             color: warn ? AppColors.red : AppColors.ink,
             fontFeatures: const [FontFeature.tabularFigures()],
-          )),
-    ]);
+          ),
+        ),
+      ],
+    );
   }
 }

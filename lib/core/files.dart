@@ -9,15 +9,21 @@ import 'api.dart';
 import 'fmt.dart';
 
 class Attachment {
-  Attachment({required this.name, required this.fileName, required this.url, this.size, this.isPrivate = true});
+  Attachment({
+    required this.name,
+    required this.fileName,
+    required this.url,
+    this.size,
+    this.isPrivate = true,
+  });
 
   factory Attachment.fromJson(Json j) => Attachment(
-        name: j['name'].toString(),
-        fileName: (j['file_name'] ?? j['name']).toString(),
-        url: j['file_url']?.toString() ?? '',
-        size: j['file_size'] == null ? null : Fmt.number(j['file_size']),
-        isPrivate: j['is_private'] == 1 || j['is_private'] == true,
-      );
+    name: j['name'].toString(),
+    fileName: (j['file_name'] ?? j['name']).toString(),
+    url: j['file_url']?.toString() ?? '',
+    size: j['file_size'] == null ? null : Fmt.number(j['file_size']),
+    isPrivate: j['is_private'] == 1 || j['is_private'] == true,
+  );
 
   final String name;
   final String fileName;
@@ -28,7 +34,10 @@ class Attachment {
   String get meta {
     final dot = fileName.lastIndexOf('.');
     final ext = dot > 0 ? fileName.substring(dot + 1).toUpperCase() : '';
-    return [if (size != null) Fmt.bytes(size), if (ext.isNotEmpty) ext].join(' • ');
+    return [
+      if (size != null) Fmt.bytes(size),
+      if (ext.isNotEmpty) ext,
+    ].join(' • ');
   }
 }
 
@@ -62,7 +71,8 @@ abstract final class Files {
     return Attachment.fromJson(json);
   }
 
-  static Future<void> delete(Attachment a) => _api.call('hrms.api.delete_attachment', {'filename': a.name});
+  static Future<void> delete(Attachment a) =>
+      _api.call('hrms.api.delete_attachment', {'filename': a.name});
 
   static Future<void> open(Attachment a) async {
     final bytes = await _api.download(a.url);
@@ -70,7 +80,8 @@ abstract final class Files {
   }
 
   static Future<void> openPrint(String doctype, String name) async {
-    final path = '/api/method/frappe.utils.print_format.download_pdf'
+    final path =
+        '/api/method/frappe.utils.print_format.download_pdf'
         '?doctype=${Uri.encodeQueryComponent(doctype)}&name=${Uri.encodeQueryComponent(name)}';
     final bytes = await _api.download(path);
     await _openBytes(bytes, '$name.pdf');

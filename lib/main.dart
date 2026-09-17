@@ -66,7 +66,9 @@ class _RootGateState extends State<RootGate> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused && _session.biometricLock && _session.phase == SessionPhase.ready) {
+    if (state == AppLifecycleState.paused &&
+        _session.biometricLock &&
+        _session.phase == SessionPhase.ready) {
       _session.unlocked = false;
       setState(() {});
     }
@@ -82,7 +84,9 @@ class _RootGateState extends State<RootGate> with WidgetsBindingObserver {
           SessionPhase.loading => const BootScreen(),
           SessionPhase.noEmployee => const NoEmployeeScreen(),
           SessionPhase.ready =>
-            _session.biometricLock && !_session.unlocked ? const LockScreen() : const Shell(),
+            _session.biometricLock && !_session.unlocked
+                ? const LockScreen()
+                : const Shell(),
         };
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 240),

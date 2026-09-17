@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/forms.dart';
@@ -119,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final sections = <(IconData, Tone, String, List<(String, String)>)>[
       (
-        CupertinoIcons.person,
+        AppIcons.person,
         Tone.violet,
         'Сведения о сотруднике',
         [
@@ -140,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       (
-        CupertinoIcons.building_2_fill,
+        AppIcons.building2Fill,
         Tone.green,
         'Компания',
         [
@@ -154,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       (
-        CupertinoIcons.phone,
+        AppIcons.phone,
         Tone.amber,
         'Контакты',
         [
@@ -165,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       (
-        CupertinoIcons.money_dollar_circle,
+        AppIcons.moneyDollarCircle,
         Tone.dark,
         'Зарплата и банк',
         [
@@ -188,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         showBack: widget.showBack,
         actions: [
           CircleButton(
-            icon: CupertinoIcons.gear,
+            icon: AppIcons.gear,
             label: 'Настройки',
             onTap: () => pushPage(context, const SettingsScreen()),
           ),
@@ -231,19 +232,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _Group(
             children: [
               _Row(
-                icon: CupertinoIcons.folder,
+                icon: AppIcons.folder,
                 tone: Tone.violet,
                 label: 'Кадровые документы',
                 onTap: () => pushPage(context, const DocumentsScreen()),
               ),
               _Row(
-                icon: CupertinoIcons.doc_plaintext,
+                icon: AppIcons.docPlaintext,
                 tone: Tone.green,
                 label: 'Расчётные листки',
                 onTap: () => pushPage(context, const SalarySlipsScreen()),
               ),
               _Row(
-                icon: CupertinoIcons.bell,
+                icon: AppIcons.bell,
                 tone: Tone.amber,
                 label: 'Уведомления',
                 onTap: () => pushPage(context, const NotificationsScreen()),
@@ -254,13 +255,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _Group(
             children: [
               _Row(
-                icon: CupertinoIcons.lock,
+                icon: AppIcons.lock,
                 tone: Tone.dark,
                 label: 'Сменить пароль',
                 onTap: () => pushPage(context, const ChangePasswordScreen()),
               ),
               _Row(
-                icon: CupertinoIcons.gear,
+                icon: AppIcons.gear,
                 tone: Tone.dark,
                 label: 'Настройки',
                 onTap: () => pushPage(context, const SettingsScreen()),
@@ -319,11 +320,7 @@ class _Row extends StatelessWidget {
             IconBadge(icon: icon, tone: tone, size: 40),
             const SizedBox(width: 14),
             Expanded(child: Text(label, style: AppText.bodyStrong)),
-            const Icon(
-              CupertinoIcons.chevron_right,
-              size: 16,
-              color: AppColors.ink4,
-            ),
+            const Icon(AppIcons.chevronRight, size: 16, color: AppColors.ink4),
           ],
         ),
       ),

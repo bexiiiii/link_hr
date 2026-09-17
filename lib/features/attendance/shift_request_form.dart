@@ -22,7 +22,8 @@ class _ShiftRequestFormState extends State<ShiftRequestForm> {
   List<SelectOption> _shiftTypes = [];
   List<SelectOption> _approvers = [];
   late String? _shift = widget.doc?['shift_type']?.toString();
-  late DateTime? _from = Fmt.parse(widget.doc?['from_date']) ?? Fmt.dateOnly(DateTime.now());
+  late DateTime? _from =
+      Fmt.parse(widget.doc?['from_date']) ?? Fmt.dateOnly(DateTime.now());
   late DateTime? _to = Fmt.parse(widget.doc?['to_date']);
   late String? _approver = widget.doc?['approver']?.toString();
   bool _loading = true;
@@ -50,12 +51,21 @@ class _ShiftRequestFormState extends State<ShiftRequestForm> {
       setState(() {
         _shiftTypes = [
           for (final s in results[0])
-            SelectOption(s['name'].toString(), s['name'].toString(),
-                subtitle: s['start_time'] == null ? null : '${hm(s['start_time'])}–${hm(s['end_time'])}'),
+            SelectOption(
+              s['name'].toString(),
+              s['name'].toString(),
+              subtitle: s['start_time'] == null
+                  ? null
+                  : '${hm(s['start_time'])}–${hm(s['end_time'])}',
+            ),
         ];
         _approvers = [
           for (final a in results[1])
-            SelectOption(a['name'].toString(), (a['full_name'] ?? a['name']).toString(), subtitle: a['name'].toString()),
+            SelectOption(
+              a['name'].toString(),
+              (a['full_name'] ?? a['name']).toString(),
+              subtitle: a['name'].toString(),
+            ),
         ];
         _approver ??= _approvers.isEmpty ? null : _approvers.first.value;
         _loading = false;

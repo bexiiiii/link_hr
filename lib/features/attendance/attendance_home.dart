@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/fmt.dart';
@@ -188,7 +189,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         child: Text('Посещаемость', style: AppText.title),
                       ),
                       CircleButton(
-                        icon: CupertinoIcons.list_bullet,
+                        icon: AppIcons.listBullet,
                         label: 'История отметок',
                         size: 48,
                         iconSize: 20,
@@ -277,7 +278,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     Row(
                       children: [
                         const Icon(
-                          CupertinoIcons.clock,
+                          AppIcons.clock,
                           size: 16,
                           color: AppColors.amber,
                         ),
@@ -335,7 +336,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     child: Divided(
                       children: [
                         NavRow(
-                          icon: CupertinoIcons.calendar,
+                          icon: AppIcons.calendar,
                           title: 'Табель',
                           subtitle: 'Календарь посещаемости по месяцам',
                           onTap: () => _openPanel(
@@ -347,7 +348,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                         ),
                         NavRow(
-                          icon: CupertinoIcons.chart_bar,
+                          icon: AppIcons.chartBar,
                           title: 'Статистика',
                           subtitle: 'Дисциплина и план за день',
                           onTap: () => _openPanel(
@@ -361,7 +362,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                         ),
                         NavRow(
-                          icon: CupertinoIcons.star,
+                          icon: AppIcons.star,
                           title: 'Баллы',
                           subtitle: _session.hasFeature('points')
                               ? 'Рейтинг и достижения'
@@ -397,7 +398,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 ),
                         ),
                         NavRow(
-                          icon: CupertinoIcons.tray_arrow_up,
+                          icon: AppIcons.trayArrowUp,
                           title: 'Корректировки и смены',
                           subtitle: 'Забыли отметиться, другая смена',
                           onTap: () =>
@@ -559,9 +560,7 @@ class _ClockButtonState extends State<_ClockButton>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  widget.out
-                      ? CupertinoIcons.hand_raised
-                      : CupertinoIcons.hand_point_right,
+                  widget.out ? AppIcons.handRaised : AppIcons.handPointRight,
                   color: Colors.white,
                   size: 40,
                 ),

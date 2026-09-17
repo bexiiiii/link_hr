@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'app_icons.dart';
 
 import 'api.dart';
 import 'fmt.dart';
@@ -37,8 +38,8 @@ void showToast(BuildContext context, String message, {bool error = false}) {
           children: [
             Icon(
               error
-                  ? CupertinoIcons.exclamationmark_circle_fill
-                  : CupertinoIcons.checkmark_circle_fill,
+                  ? AppIcons.exclamationmarkCircleFill
+                  : AppIcons.checkmarkCircleFill,
               color: Colors.white,
               size: 20,
             ),
@@ -632,7 +633,7 @@ class ScreenHeader extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: CircleButton(
-                  icon: CupertinoIcons.chevron_left,
+                  icon: AppIcons.chevronLeft,
                   label: 'Назад',
                   size: 44,
                   iconSize: 18,
@@ -861,7 +862,7 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return EmptyState(
-      icon: CupertinoIcons.wifi_exclamationmark,
+      icon: AppIcons.wifiExclamationmark,
       title: 'Не удалось загрузить',
       message: errorText(error),
       actionLabel: 'Повторить',
@@ -939,7 +940,7 @@ class PrimaryButton extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: kFont,
                       fontSize: height >= 46 ? 15 : 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: fg,
                     ),
                   ),
@@ -1123,7 +1124,7 @@ class AttachmentTile extends StatelessWidget {
                 minimumSize: const Size(40, 40),
                 onPressed: onDelete,
                 child: const Icon(
-                  CupertinoIcons.xmark_circle_fill,
+                  AppIcons.xmarkCircleFill,
                   color: AppColors.ink4,
                   size: 22,
                 ),
@@ -1226,7 +1227,7 @@ class InlineError extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
-            CupertinoIcons.exclamationmark_circle_fill,
+            AppIcons.exclamationmarkCircleFill,
             color: AppColors.red,
             size: 20,
           ),

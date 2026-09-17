@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/fmt.dart';
@@ -100,69 +101,105 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     final unread = _items.where((n) => n['read'] != 1).length;
     return AppPage(
-      header: ScreenHeader(title: 'Уведомления', actions: [
-        if (unread > 0) CircleButton(icon: CupertinoIcons.checkmark_alt, label: 'Прочитать все', onTap: _markAll),
-      ]),
-      body: PageScroll(onRefresh: _refresh, children: [
-        if (_loading)
-          const SkeletonCards(count: 5, height: 72)
-        else if (_error != null)
-          ErrorState(error: _error!, onRetry: _refresh)
-        else if (_items.isEmpty)
-          const EmptyState(
-            icon: CupertinoIcons.bell,
-            title: 'Уведомлений нет',
-            message: 'Здесь появятся ответы по вашим заявкам и новые заявки на согласование.',
-          )
-        else ...[
-          SurfaceCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Divided(children: [
-              for (final n in _items)
-                Pressable(
-                  onTap: () => _open(n),
-                  scale: 0.99,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      AppAvatar(name: n['from_user']?.toString() ?? 'Link', size: 40, border: false),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(stripHtml(n['message']?.toString()),
-                              style: AppText.body.copyWith(
-                                fontWeight: n['read'] == 1 ? FontWeight.w400 : FontWeight.w600,
-                                color: n['read'] == 1 ? AppColors.ink2 : AppColors.ink,
-                              )),
-                          const SizedBox(height: 4),
-                          Text(Fmt.relative(n['creation']), style: AppText.caption),
-                        ]),
-                      ),
-                      if (n['read'] != 1)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8, top: 6),
-                          width: 9,
-                          height: 9,
-                          decoration: const BoxDecoration(color: AppColors.violet, shape: BoxShape.circle),
-                        ),
-                    ]),
-                  ),
-                ),
-            ]),
-          ),
-          if (_hasMore)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: PrimaryButton(
-                label: 'Показать ещё',
-                kind: ButtonKind.outline,
-                height: 48,
-                loading: _loadingMore,
-                onTap: _more,
-              ),
+      header: ScreenHeader(
+        title: 'Уведомления',
+        actions: [
+          if (unread > 0)
+            CircleButton(
+              icon: AppIcons.checkmarkAlt,
+              label: 'Прочитать все',
+              onTap: _markAll,
             ),
         ],
-      ]),
+      ),
+      body: PageScroll(
+        onRefresh: _refresh,
+        children: [
+          if (_loading)
+            const SkeletonCards(count: 5, height: 72)
+          else if (_error != null)
+            ErrorState(error: _error!, onRetry: _refresh)
+          else if (_items.isEmpty)
+            const EmptyState(
+              icon: AppIcons.bell,
+              title: 'Уведомлений нет',
+              message:
+                  'Здесь появятся ответы по вашим заявкам и новые заявки на согласование.',
+            )
+          else ...[
+            SurfaceCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Divided(
+                children: [
+                  for (final n in _items)
+                    Pressable(
+                      onTap: () => _open(n),
+                      scale: 0.99,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppAvatar(
+                              name: n['from_user']?.toString() ?? 'Link',
+                              size: 40,
+                              border: false,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    stripHtml(n['message']?.toString()),
+                                    style: AppText.body.copyWith(
+                                      fontWeight: n['read'] == 1
+                                          ? FontWeight.w400
+                                          : FontWeight.w600,
+                                      color: n['read'] == 1
+                                          ? AppColors.ink2
+                                          : AppColors.ink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    Fmt.relative(n['creation']),
+                                    style: AppText.caption,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (n['read'] != 1)
+                              Container(
+                                margin: const EdgeInsets.only(left: 8, top: 6),
+                                width: 9,
+                                height: 9,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.violet,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (_hasMore)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: PrimaryButton(
+                  label: 'Показать ещё',
+                  kind: ButtonKind.outline,
+                  height: 48,
+                  loading: _loadingMore,
+                  onTap: _more,
+                ),
+              ),
+          ],
+        ],
+      ),
     );
   }
 }

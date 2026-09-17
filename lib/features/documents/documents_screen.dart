@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/forms.dart';
@@ -21,23 +22,17 @@ enum KzDoc {
     'KZ Labor Contract',
     'Договоры',
     'Трудовой договор',
-    CupertinoIcons.doc_text,
+    AppIcons.docText,
     Tone.violet,
   ),
   order(
     'KZ Personnel Order',
     'Приказы',
     'Кадровый приказ',
-    CupertinoIcons.doc_checkmark,
+    AppIcons.docCheckmark,
     Tone.green,
   ),
-  timesheet(
-    'KZ Timesheet',
-    'Табели',
-    'Табель Т-13',
-    CupertinoIcons.table,
-    Tone.dark,
-  );
+  timesheet('KZ Timesheet', 'Табели', 'Табель Т-13', AppIcons.table, Tone.dark);
 
   const KzDoc(this.doctype, this.plural, this.singular, this.icon, this.tone);
 
@@ -123,11 +118,11 @@ enum KzDoc {
 }
 
 enum DocState {
-  sign('Подпишите', CupertinoIcons.signature, Tone.violet),
-  waiting('Ожидается', CupertinoIcons.clock, Tone.amber),
-  draft('Черновик', CupertinoIcons.pencil, Tone.neutral),
-  ready('Готово', CupertinoIcons.checkmark_circle, Tone.green),
-  closed('Закрыт', CupertinoIcons.xmark_circle, Tone.dark);
+  sign('Подпишите', AppIcons.signature, Tone.violet),
+  waiting('Ожидается', AppIcons.clock, Tone.amber),
+  draft('Черновик', AppIcons.pencil, Tone.neutral),
+  ready('Готово', AppIcons.checkmarkCircle, Tone.green),
+  closed('Закрыт', AppIcons.xmarkCircle, Tone.dark);
 
   const DocState(this.label, this.icon, this.tone);
 
@@ -252,7 +247,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         actions: [
           if (isManager())
             CircleButton(
-              icon: CupertinoIcons.add,
+              icon: AppIcons.add,
               label: 'Новый документ',
               onTap: _create,
             ),
@@ -322,7 +317,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ErrorState(error: _error!, onRetry: _load)
           else if (rows.isEmpty)
             EmptyState(
-              icon: CupertinoIcons.doc_text_search,
+              icon: AppIcons.docTextSearch,
               title: q.isNotEmpty || _state != null || _type != null
                   ? 'Ничего не найдено'
                   : 'Документов пока нет',
@@ -375,11 +370,7 @@ class _DocRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              CupertinoIcons.doc_text_fill,
-              color: AppColors.blue,
-              size: 34,
-            ),
+            const Icon(AppIcons.docTextFill, color: AppColors.blue, size: 34),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -582,7 +573,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       return PrimaryButton(
         label: 'Подписан ${Fmt.date(signed.modified)}',
         kind: ButtonKind.outline,
-        icon: CupertinoIcons.checkmark_seal,
+        icon: AppIcons.checkmarkSeal,
       );
     }
     if (isManager() && _employeeUser != null && widget.kind.creatable) {
@@ -602,7 +593,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         title: 'Детали документа',
         actions: [
           CircleButton(
-            icon: CupertinoIcons.share,
+            icon: AppIcons.share,
             label: 'Поделиться PDF',
             onTap: _pdf == null
                 ? null

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/premium.dart';
 import '../../core/theme.dart';
@@ -24,13 +25,13 @@ class ServicesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <(IconData, String, String?, VoidCallback)>[
       (
-        CupertinoIcons.square_split_2x2_fill,
+        AppIcons.squareSplit2x2Fill,
         'Доска',
         null,
         () => ShellScope.maybeOf(context)?.goTo(ShellTab.tasks),
       ),
       (
-        CupertinoIcons.list_bullet_indent,
+        AppIcons.listBulletIndent,
         'Чеклисты',
         null,
         () => pushPage(
@@ -43,13 +44,13 @@ class ServicesScreen extends StatelessWidget {
         ),
       ),
       (
-        CupertinoIcons.alarm,
+        AppIcons.alarm,
         'Link Time',
         'История приходов и уходов',
         () => pushPage(context, const CheckinHistoryScreen()),
       ),
       (
-        CupertinoIcons.money_dollar_circle,
+        AppIcons.moneyDollarCircle,
         isManager() ? 'Подсчёт ЗП' : 'Подсчёт',
         isManager()
             ? 'Зарплата сотрудников за месяц'
@@ -66,14 +67,14 @@ class ServicesScreen extends StatelessWidget {
         ),
       ),
       (
-        CupertinoIcons.folder,
+        AppIcons.folder,
         'Документы',
         isManager() ? 'Договоры, приказы и подписи' : 'Мои договоры и приказы',
         () => pushPage(context, const DocumentsScreen()),
       ),
       if (isManager())
         (
-          CupertinoIcons.speaker_2,
+          AppIcons.speaker2,
           'Оповещение',
           null,
           () => pushPage(
@@ -87,7 +88,7 @@ class ServicesScreen extends StatelessWidget {
         ),
       if (isManager())
         (
-          CupertinoIcons.chart_pie,
+          AppIcons.chartPie,
           'Анализ',
           'Дисциплина сотрудников',
           () => pushPage(
@@ -100,7 +101,7 @@ class ServicesScreen extends StatelessWidget {
           ),
         ),
       (
-        CupertinoIcons.rosette,
+        AppIcons.rosette,
         'Достижения',
         null,
         () => pushPage(
@@ -113,19 +114,19 @@ class ServicesScreen extends StatelessWidget {
         ),
       ),
       (
-        CupertinoIcons.airplane,
+        AppIcons.airplane,
         'Отпуска',
         null,
         () => pushPage(context, const LeaveScreen(showBack: true)),
       ),
       (
-        CupertinoIcons.tray_arrow_up,
+        AppIcons.trayArrowUp,
         'Запросы',
         'Отпуск, смены, отметки',
         () => pushPage(context, const RequestsScreen()),
       ),
       (
-        CupertinoIcons.creditcard,
+        AppIcons.creditcard,
         'Расходы и авансы',
         null,
         () => pushPage(context, const FinanceScreen(showBack: true)),
@@ -137,7 +138,7 @@ class ServicesScreen extends StatelessWidget {
         showBack: false,
         actions: [
           CircleButton(
-            icon: CupertinoIcons.search,
+            icon: AppIcons.search,
             label: 'Поиск',
             onTap: () => pushPage(context, const SearchScreen()),
           ),
@@ -202,11 +203,7 @@ class _ServiceRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              CupertinoIcons.chevron_right,
-              size: 16,
-              color: AppColors.ink4,
-            ),
+            const Icon(AppIcons.chevronRight, size: 16, color: AppColors.ink4),
           ],
         ),
       ),

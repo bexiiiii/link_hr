@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'app_icons.dart';
 
 import 'session.dart';
 import 'theme.dart';
@@ -7,7 +8,13 @@ import 'ui.dart';
 
 /// Wraps a Premium-only screen. On Basic it explains the limit instead of the content.
 class PremiumGate extends StatelessWidget {
-  const PremiumGate({super.key, required this.feature, required this.title, required this.child, this.showBack = true});
+  const PremiumGate({
+    super.key,
+    required this.feature,
+    required this.title,
+    required this.child,
+    this.showBack = true,
+  });
 
   final String feature;
   final String title;
@@ -32,7 +39,7 @@ class PremiumNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return EmptyState(
-      icon: CupertinoIcons.lock,
+      icon: AppIcons.lock,
       title: '«$title» доступно в тарифе Premium',
       message: Session.instance.isManager
           ? 'Ваша компания на тарифе Basic. Чтобы открыть этот раздел, перейдите на Premium: напишите нам, и мы подключим за один день.'
@@ -53,8 +60,8 @@ class PlanBanner extends StatelessWidget {
     final expired = s.planExpired || days < 0;
     final text = expired
         ? (s.planExpired
-            ? 'Подписка компании закончилась. Данные доступны только для просмотра.'
-            : 'Подписка компании закончилась. Изменения заблокируются через ${3 + days} дн.')
+              ? 'Подписка компании закончилась. Данные доступны только для просмотра.'
+              : 'Подписка компании закончилась. Изменения заблокируются через ${3 + days} дн.')
         : 'Подписка компании заканчивается через $days дн.';
     final color = expired ? AppColors.red : AppColors.amber;
     return Container(
@@ -65,11 +72,18 @@ class PlanBanner extends StatelessWidget {
         color: expired ? AppColors.redSoft : AppColors.amberSoft,
         borderRadius: BorderRadius.circular(AppRadius.field),
       ),
-      child: Row(children: [
-        Icon(CupertinoIcons.exclamationmark_circle, size: 18, color: color),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: AppText.label.copyWith(color: AppColors.ink))),
-      ]),
+      child: Row(
+        children: [
+          Icon(AppIcons.exclamationmarkCircle, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: AppText.label.copyWith(color: AppColors.ink),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

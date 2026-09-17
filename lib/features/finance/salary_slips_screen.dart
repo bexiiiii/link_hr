@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/forms.dart';
@@ -64,73 +65,126 @@ class _SalarySlipsScreenState extends State<SalarySlipsScreen> {
     final latest = _slips.isEmpty ? null : _slips.first;
     return AppPage(
       header: const ScreenHeader(title: 'Расчётные листки'),
-      body: PageScroll(onRefresh: _load, children: [
-        if (_periods.isNotEmpty) ...[
-          SelectInput(
-            label: 'Расчётный период',
-            value: _period?['name']?.toString(),
-            options: [for (final p in _periods) SelectOption(p['name'].toString(), _periodLabel(p))],
-            onChanged: (v) {
-              setState(() {
-                _period = _periods.firstWhere((p) => p['name'] == v);
-                _loading = true;
-              });
-              _load();
-            },
-          ),
-          const SizedBox(height: 16),
-        ],
-        if (_loading)
-          const SkeletonCards(count: 4, height: 84)
-        else if (_error != null)
-          ErrorState(error: _error!, onRetry: _load)
-        else if (_slips.isEmpty)
-          const EmptyState(
-            icon: CupertinoIcons.doc_plaintext,
-            title: 'Расчётных листков пока нет',
-            message: 'Листки появятся после того, как бухгалтерия проведёт расчёт зарплаты.',
-          )
-        else ...[
-          SurfaceCard(
-            child: Row(children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Выплачено с начала года', style: AppText.caption),
-                  const SizedBox(height: 4),
-                  Text(Fmt.money(latest!['year_to_date'], latest['currency']?.toString()),
-                      style: AppText.title.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
-                ]),
-              ),
-              const IconBadge(icon: CupertinoIcons.chart_bar_alt_fill, tone: Tone.green, size: 48),
-            ]),
-          ),
-          const SectionHeader('Листки'),
-          for (final s in _slips)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: SurfaceCard(
-                radius: AppRadius.tile,
-                padding: const EdgeInsets.all(16),
-                onTap: () => pushPage(context, SalarySlipDetailScreen(name: s['name'].toString())),
-                child: Row(children: [
-                  const IconBadge(icon: CupertinoIcons.doc_plaintext, tone: Tone.dark),
-                  const SizedBox(width: 14),
+      body: PageScroll(
+        onRefresh: _load,
+        children: [
+          if (_periods.isNotEmpty) ...[
+            SelectInput(
+              label: 'Расчётный период',
+              value: _period?['name']?.toString(),
+              options: [
+                for (final p in _periods)
+                  SelectOption(p['name'].toString(), _periodLabel(p)),
+              ],
+              onChanged: (v) {
+                setState(() {
+                  _period = _periods.firstWhere((p) => p['name'] == v);
+                  _loading = true;
+                });
+                _load();
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (_loading)
+            const SkeletonCards(count: 4, height: 84)
+          else if (_error != null)
+            ErrorState(error: _error!, onRetry: _load)
+          else if (_slips.isEmpty)
+            const EmptyState(
+              icon: AppIcons.docPlaintext,
+              title: 'Расчётных листков пока нет',
+              message:
+                  'Листки появятся после того, как бухгалтерия проведёт расчёт зарплаты.',
+            )
+          else ...[
+            SurfaceCard(
+              child: Row(
+                children: [
                   Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(Fmt.monthYear(Fmt.parse(s['start_date']) ?? DateTime.now()),
-                          style: AppText.cardTitle.copyWith(fontSize: 15)),
-                      Text(Fmt.range(s['start_date'], s['end_date']), style: AppText.caption),
-                    ]),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Выплачено с начала года',
+                          style: AppText.caption,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          Fmt.money(
+                            latest!['year_to_date'],
+                            latest['currency']?.toString(),
+                          ),
+                          style: AppText.title.copyWith(
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text(Fmt.money(s['net_pay'], s['currency']?.toString()), style: AppText.number),
-                    Text('до вычетов ${Fmt.money(s['gross_pay'], s['currency']?.toString())}', style: AppText.caption),
-                  ]),
-                ]),
+                  const IconBadge(
+                    icon: AppIcons.chartBarAltFill,
+                    tone: Tone.green,
+                    size: 48,
+                  ),
+                ],
               ),
             ),
+            const SectionHeader('Листки'),
+            for (final s in _slips)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SurfaceCard(
+                  radius: AppRadius.tile,
+                  padding: const EdgeInsets.all(16),
+                  onTap: () => pushPage(
+                    context,
+                    SalarySlipDetailScreen(name: s['name'].toString()),
+                  ),
+                  child: Row(
+                    children: [
+                      const IconBadge(
+                        icon: AppIcons.docPlaintext,
+                        tone: Tone.dark,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              Fmt.monthYear(
+                                Fmt.parse(s['start_date']) ?? DateTime.now(),
+                              ),
+                              style: AppText.cardTitle.copyWith(fontSize: 15),
+                            ),
+                            Text(
+                              Fmt.range(s['start_date'], s['end_date']),
+                              style: AppText.caption,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            Fmt.money(s['net_pay'], s['currency']?.toString()),
+                            style: AppText.number,
+                          ),
+                          Text(
+                            'до вычетов ${Fmt.money(s['gross_pay'], s['currency']?.toString())}',
+                            style: AppText.caption,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }

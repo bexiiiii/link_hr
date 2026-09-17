@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'app_icons.dart';
 
 import 'api.dart';
 import 'theme.dart';
@@ -19,7 +20,7 @@ class ServerImage extends StatelessWidget {
     fit: fit,
     errorBuilder: (_, _, _) => const ColoredBox(
       color: AppColors.chip,
-      child: Center(child: Icon(CupertinoIcons.photo, color: AppColors.ink3)),
+      child: Center(child: Icon(AppIcons.photo, color: AppColors.ink3)),
     ),
   );
 }

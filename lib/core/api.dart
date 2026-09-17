@@ -40,6 +40,7 @@ class Api {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_serverKey, server);
   }
+
   static const _timeout = Duration(seconds: 30);
 
   final _client = http.Client();
@@ -53,8 +54,9 @@ class Api {
     return sid != null && sid.isNotEmpty && sid != 'Guest';
   }
 
-  Map<String, String> get authHeaders =>
-      _jar.isEmpty ? const {} : {'Cookie': _jar.entries.map((e) => '${e.key}=${e.value}').join('; ')};
+  Map<String, String> get authHeaders => _jar.isEmpty
+      ? const {}
+      : {'Cookie': _jar.entries.map((e) => '${e.key}=${e.value}').join('; ')};
 
   String fileUrl(String? path) {
     if (path == null || path.isEmpty) return '';
@@ -66,7 +68,9 @@ class Api {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_serverKey);
     // Installs from before multi-company used the bare IP of our own site.
-    baseUrl = saved == null || saved.contains('186.240.157.112') ? defaultServer : saved;
+    baseUrl = saved == null || saved.contains('186.240.157.112')
+        ? defaultServer
+        : saved;
     final raw = prefs.getString(_cookieKey);
     if (raw == null) return;
     try {
@@ -84,22 +88,33 @@ class Api {
   /// verifies the password there and returns that company's server and session.
   Future<void> login(String usr, String pwd) async {
     _jar.clear();
-    final res = await _send(() => _client.post(
-          Uri.parse('$defaultServer/api/method/link.link_saas.directory.login'),
-          headers: const {'Content-Type': 'application/json', 'Accept': 'application/json'},
-          body: jsonEncode({'usr': usr, 'pwd': pwd, 'device': 'mobile'}),
-        ));
+    final res = await _send(
+      () => _client.post(
+        Uri.parse('$defaultServer/api/method/link.link_saas.directory.login'),
+        headers: const {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'usr': usr, 'pwd': pwd, 'device': 'mobile'}),
+      ),
+    );
     if (res.statusCode == 429) {
-      throw ApiException('Слишком много попыток входа. Подождите 10 минут.', statusCode: 429);
+      throw ApiException(
+        'Слишком много попыток входа. Подождите 10 минут.',
+        statusCode: 429,
+      );
     }
     if (res.statusCode != 200) {
       final err = _error(res);
       throw ApiException(
-        res.statusCode == 401 || res.statusCode == 403 ? 'Неверный email или пароль' : err.message,
+        res.statusCode == 401 || res.statusCode == 403
+            ? 'Неверный email или пароль'
+            : err.message,
         statusCode: res.statusCode,
       );
     }
-    final message = (jsonDecode(res.body) as Map)['message'] as Map? ?? const {};
+    final message =
+        (jsonDecode(res.body) as Map)['message'] as Map? ?? const {};
     await setServer(message['server']?.toString() ?? defaultServer);
     final cookies = message['cookies'];
     if (cookies is Map) {
@@ -111,27 +126,38 @@ class Api {
   }
 
   Future<void> requestPasswordReset(String email) async {
-    await _send(() => _client.post(
-          Uri.parse('$defaultServer/api/method/link.link_saas.directory.reset_password'),
-          headers: const {'Content-Type': 'application/json', 'Accept': 'application/json'},
-          body: jsonEncode({'user': email}),
-        ));
+    await _send(
+      () => _client.post(
+        Uri.parse(
+          '$defaultServer/api/method/link.link_saas.directory.reset_password',
+        ),
+        headers: const {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'user': email}),
+      ),
+    );
   }
 
   Future<void> logout() async {
     try {
-      await _client.post(Uri.parse('$baseUrl/api/method/logout'), headers: authHeaders).timeout(_timeout);
+      await _client
+          .post(Uri.parse('$baseUrl/api/method/logout'), headers: authHeaders)
+          .timeout(_timeout);
     } catch (_) {}
     await clear();
   }
 
   /// Calls a whitelisted python method and returns its `message`.
   Future<dynamic> call(String method, [Json? args]) async {
-    final res = await _send(() => _client.post(
-          Uri.parse('$baseUrl/api/method/$method'),
-          headers: {..._jsonHeaders, ...authHeaders},
-          body: jsonEncode(args ?? const {}),
-        ));
+    final res = await _send(
+      () => _client.post(
+        Uri.parse('$baseUrl/api/method/$method'),
+        headers: {..._jsonHeaders, ...authHeaders},
+        body: jsonEncode(args ?? const {}),
+      ),
+    );
     return _unwrap(res)['message'];
   }
 
@@ -157,21 +183,34 @@ class Api {
   }
 
   Future<Json> doc(String doctype, String name) async {
-    final res = await _send(() => _client.get(
-          Uri.parse('$baseUrl/api/resource/${Uri.encodeComponent(doctype)}/${Uri.encodeComponent(name)}'),
-          headers: {..._jsonHeaders, ...authHeaders},
-        ));
+    final res = await _send(
+      () => _client.get(
+        Uri.parse(
+          '$baseUrl/api/resource/${Uri.encodeComponent(doctype)}/${Uri.encodeComponent(name)}',
+        ),
+        headers: {..._jsonHeaders, ...authHeaders},
+      ),
+    );
     return (_unwrap(res)['data'] as Map).cast<String, dynamic>();
   }
 
-  Future<Json> insert(Json doc) async => _asJson(await call('frappe.client.insert', {'doc': doc}));
+  Future<Json> insert(Json doc) async =>
+      _asJson(await call('frappe.client.insert', {'doc': doc}));
 
-  Future<Json> save(Json doc) async => _asJson(await call('frappe.client.save', {'doc': doc}));
+  Future<Json> save(Json doc) async =>
+      _asJson(await call('frappe.client.save', {'doc': doc}));
 
-  Future<Json> setValue(String doctype, String name, Json values) async => _asJson(
-      await call('frappe.client.set_value', {'doctype': doctype, 'name': name, 'fieldname': values}));
+  Future<Json> setValue(String doctype, String name, Json values) async =>
+      _asJson(
+        await call('frappe.client.set_value', {
+          'doctype': doctype,
+          'name': name,
+          'fieldname': values,
+        }),
+      );
 
-  Future<Json> submit(Json doc) async => _asJson(await call('frappe.client.submit', {'doc': doc}));
+  Future<Json> submit(Json doc) async =>
+      _asJson(await call('frappe.client.submit', {'doc': doc}));
 
   Future<void> cancel(String doctype, String name) =>
       call('frappe.client.cancel', {'doctype': doctype, 'name': name});
@@ -188,33 +227,51 @@ class Api {
     String? docname,
     bool isPrivate = true,
   }) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/method/upload_file'))
-      ..headers.addAll({'Accept': 'application/json', ...authHeaders})
-      ..fields.addAll({
-        'doctype': ?doctype,
-        'docname': ?docname,
-        'is_private': isPrivate ? '1' : '0',
-      })
-      ..files.add(http.MultipartFile.fromBytes('file', bytes, filename: fileName));
-    final res = await _send(() async => http.Response.fromStream(await _client.send(request)));
+    final request =
+        http.MultipartRequest(
+            'POST',
+            Uri.parse('$baseUrl/api/method/upload_file'),
+          )
+          ..headers.addAll({'Accept': 'application/json', ...authHeaders})
+          ..fields.addAll({
+            'doctype': ?doctype,
+            'docname': ?docname,
+            'is_private': isPrivate ? '1' : '0',
+          })
+          ..files.add(
+            http.MultipartFile.fromBytes('file', bytes, filename: fileName),
+          );
+    final res = await _send(
+      () async => http.Response.fromStream(await _client.send(request)),
+    );
     return _asJson(_unwrap(res)['message']);
   }
 
-  Future<void> addTag(String doctype, String name, String tag) =>
-      call('frappe.desk.doctype.tag.tag.add_tag', {'tag': tag, 'dt': doctype, 'dn': name});
+  Future<void> addTag(String doctype, String name, String tag) => call(
+    'frappe.desk.doctype.tag.tag.add_tag',
+    {'tag': tag, 'dt': doctype, 'dn': name},
+  );
 
-  Future<void> removeTag(String doctype, String name, String tag) =>
-      call('frappe.desk.doctype.tag.tag.remove_tag', {'tag': tag, 'dt': doctype, 'dn': name});
+  Future<void> removeTag(String doctype, String name, String tag) => call(
+    'frappe.desk.doctype.tag.tag.remove_tag',
+    {'tag': tag, 'dt': doctype, 'dn': name},
+  );
 
   Future<Uint8List> download(String pathOrUrl) async {
-    final res = await _send(() => _client.get(Uri.parse(fileUrl(pathOrUrl)), headers: authHeaders));
+    final res = await _send(
+      () => _client.get(Uri.parse(fileUrl(pathOrUrl)), headers: authHeaders),
+    );
     if (res.statusCode != 200) throw _error(res);
     return res.bodyBytes;
   }
 
-  static const _jsonHeaders = {'Content-Type': 'application/json', 'Accept': 'application/json'};
+  static const _jsonHeaders = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
-  Json _asJson(dynamic v) => v is Map ? v.cast<String, dynamic>() : <String, dynamic>{};
+  Json _asJson(dynamic v) =>
+      v is Map ? v.cast<String, dynamic>() : <String, dynamic>{};
 
   Future<http.Response> _send(Future<http.Response> Function() request) async {
     try {
@@ -222,7 +279,9 @@ class Api {
       _absorb(res);
       return res;
     } on TimeoutException {
-      throw ApiException('Сервер не отвечает. Проверьте подключение к интернету.');
+      throw ApiException(
+        'Сервер не отвечает. Проверьте подключение к интернету.',
+      );
     } on SocketException {
       throw ApiException('Нет соединения с сервером. Проверьте интернет.');
     } on http.ClientException {
@@ -235,11 +294,15 @@ class Api {
       final body = utf8.decode(res.bodyBytes);
       if (body.isEmpty) return {};
       final decoded = jsonDecode(body);
-      return decoded is Map ? decoded.cast<String, dynamic>() : {'message': decoded};
+      return decoded is Map
+          ? decoded.cast<String, dynamic>()
+          : {'message': decoded};
     }
     final err = _error(res);
-    final sessionGone = res.statusCode == 401 ||
-        (res.statusCode == 403 && (err.type == 'SessionExpired' || err.type == 'CSRFTokenError')) ||
+    final sessionGone =
+        res.statusCode == 401 ||
+        (res.statusCode == 403 &&
+            (err.type == 'SessionExpired' || err.type == 'CSRFTokenError')) ||
         (res.statusCode == 403 && _jar['sid'] == 'Guest');
     if (sessionGone && onSessionExpired != null) onSessionExpired!();
     throw err;
@@ -259,23 +322,34 @@ class Api {
       type = j['exc_type']?.toString();
       final serverMessages = j['_server_messages'];
       if (serverMessages is String) {
-        final items = (jsonDecode(serverMessages) as List).map((raw) {
-          try {
-            final m = jsonDecode(raw.toString());
-            return m is Map ? (m['message'] ?? '').toString() : m.toString();
-          } catch (_) {
-            return raw.toString();
-          }
-        }).where((m) => m.trim().isNotEmpty);
+        final items = (jsonDecode(serverMessages) as List)
+            .map((raw) {
+              try {
+                final m = jsonDecode(raw.toString());
+                return m is Map
+                    ? (m['message'] ?? '').toString()
+                    : m.toString();
+              } catch (_) {
+                return raw.toString();
+              }
+            })
+            .where((m) => m.trim().isNotEmpty);
         if (items.isNotEmpty) message = items.join('\n');
-      } else if (j['message'] is String && (j['message'] as String).isNotEmpty) {
+      } else if (j['message'] is String &&
+          (j['message'] as String).isNotEmpty) {
         message = j['message'];
       } else if (j['exception'] is String) {
         final ex = j['exception'] as String;
-        message = ex.contains(':') ? ex.substring(ex.indexOf(':') + 1).trim() : ex;
+        message = ex.contains(':')
+            ? ex.substring(ex.indexOf(':') + 1).trim()
+            : ex;
       }
     } catch (_) {}
-    return ApiException(stripHtml(message), statusCode: res.statusCode, type: type);
+    return ApiException(
+      stripHtml(message),
+      statusCode: res.statusCode,
+      type: type,
+    );
   }
 
   void _absorb(http.Response res) {

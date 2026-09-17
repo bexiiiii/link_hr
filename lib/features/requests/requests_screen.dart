@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/motion.dart';
@@ -32,7 +33,10 @@ class _RequestsScreenState extends State<RequestsScreen> {
   }
 
   Future<void> _load() async {
-    final r = await Future.wait([fetchRequestFeed(team: false), fetchRequestFeed(team: true)]);
+    final r = await Future.wait([
+      fetchRequestFeed(team: false),
+      fetchRequestFeed(team: true),
+    ]);
     if (mounted) {
       setState(() {
         _mine = r[0];
@@ -42,9 +46,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
   }
 
   Future<void> _create() async {
-    final kind = await pickAction(context, title: 'Новый запрос', actions: [
-      for (final k in RequestKind.values) SheetAction(k.name, k.singular),
-    ]);
+    final kind = await pickAction(
+      context,
+      title: 'Новый запрос',
+      actions: [
+        for (final k in RequestKind.values) SheetAction(k.name, k.singular),
+      ],
+    );
     if (kind == null || !mounted) return;
     await pushPage(context, RequestKind.values.byName(kind).form());
   }
@@ -53,41 +61,63 @@ class _RequestsScreenState extends State<RequestsScreen> {
   Widget build(BuildContext context) {
     final list = _tab == 0 ? _mine : _team;
     return AppPage(
-      header: ScreenHeader(title: 'Запросы', actions: [
-        CircleButton(icon: CupertinoIcons.add, label: 'Новый запрос', onTap: _create),
-      ]),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-          child: SegmentTabs(
-            labels: ['Мои', 'На согласование${(_team?.isEmpty ?? true) ? '' : ' · ${_team!.length}'}'],
-            index: _tab,
-            onChanged: (i) => setState(() => _tab = i),
+      header: ScreenHeader(
+        title: 'Запросы',
+        actions: [
+          CircleButton(
+            icon: AppIcons.add,
+            label: 'Новый запрос',
+            onTap: _create,
           ),
-        ),
-        Expanded(
-          child: PageScroll(onRefresh: _load, children: [
-            if (list == null)
-              const SkeletonCards(count: 4, height: 76)
-            else if (list.isEmpty)
-              EmptyState(
-                icon: _tab == 0 ? CupertinoIcons.doc_text : CupertinoIcons.person_2,
-                title: _tab == 0 ? 'Запросов пока нет' : 'Нечего согласовывать',
-                message: _tab == 0
-                    ? 'Отпуск, расходы, авансы, смены и отметки появятся здесь после подачи.'
-                    : 'Запросы сотрудников, где вы согласующий, появятся здесь.',
-                actionLabel: _tab == 0 ? 'Создать запрос' : null,
-                onAction: _create,
-              )
-            else
-              for (final (i, (kind, data)) in list.indexed)
-                Reveal(
-                  index: i,
-                  child: RequestTile(kind: kind, data: data, showEmployee: _tab == 1, onChanged: _load),
-                ),
-          ]),
-        ),
-      ]),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: SegmentTabs(
+              labels: [
+                'Мои',
+                'На согласование${(_team?.isEmpty ?? true) ? '' : ' · ${_team!.length}'}',
+              ],
+              index: _tab,
+              onChanged: (i) => setState(() => _tab = i),
+            ),
+          ),
+          Expanded(
+            child: PageScroll(
+              onRefresh: _load,
+              children: [
+                if (list == null)
+                  const SkeletonCards(count: 4, height: 76)
+                else if (list.isEmpty)
+                  EmptyState(
+                    icon: _tab == 0 ? AppIcons.docText : AppIcons.person2,
+                    title: _tab == 0
+                        ? 'Запросов пока нет'
+                        : 'Нечего согласовывать',
+                    message: _tab == 0
+                        ? 'Отпуск, расходы, авансы, смены и отметки появятся здесь после подачи.'
+                        : 'Запросы сотрудников, где вы согласующий, появятся здесь.',
+                    actionLabel: _tab == 0 ? 'Создать запрос' : null,
+                    onAction: _create,
+                  )
+                else
+                  for (final (i, (kind, data)) in list.indexed)
+                    Reveal(
+                      index: i,
+                      child: RequestTile(
+                        kind: kind,
+                        data: data,
+                        showEmployee: _tab == 1,
+                        onChanged: _load,
+                      ),
+                    ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

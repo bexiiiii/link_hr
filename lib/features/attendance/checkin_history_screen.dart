@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
 import '../../core/fmt.dart';
@@ -25,7 +26,10 @@ class _CheckinHistoryScreenState extends State<CheckinHistoryScreen> {
 
   Future<void> _loadPhotos(List<Json> rows) async {
     try {
-      final map = await Hr.checkinPhotos([for (final r in rows) if (r['log_type'] == 'IN') r['name'].toString()]);
+      final map = await Hr.checkinPhotos([
+        for (final r in rows)
+          if (r['log_type'] == 'IN') r['name'].toString(),
+      ]);
       if (mounted) setState(() => _photos.addAll(map));
     } catch (_) {}
   }
@@ -80,45 +84,69 @@ class _CheckinHistoryScreenState extends State<CheckinHistoryScreen> {
   Widget build(BuildContext context) {
     final groups = <String, List<Json>>{};
     for (final l in _logs) {
-      groups.putIfAbsent(Fmt.iso(Fmt.parse(l['time']) ?? DateTime.now()), () => []).add(l);
+      groups
+          .putIfAbsent(
+            Fmt.iso(Fmt.parse(l['time']) ?? DateTime.now()),
+            () => [],
+          )
+          .add(l);
     }
     return AppPage(
       header: const ScreenHeader(title: 'История отметок'),
-      body: PageScroll(onRefresh: _refresh, children: [
-        if (_loading)
-          const SkeletonCards(count: 3, height: 150)
-        else if (_error != null)
-          ErrorState(error: _error!, onRetry: _refresh)
-        else if (_logs.isEmpty)
-          const EmptyState(
-            icon: CupertinoIcons.location,
-            title: 'Отметок пока нет',
-            message: 'Отметьте приход на главном экране, и история появится здесь.',
-          )
-        else ...[
-          for (final entry in groups.entries) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
-              child: Text(Fmt.todayLine(DateTime.parse(entry.key)), style: AppText.label),
-            ),
-            SurfaceCard(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-              child: Divided(children: [for (final l in entry.value) CheckinRow(log: l, showDate: false, photo: _photos[l['name']])]),
-            ),
-          ],
-          if (_hasMore)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: PrimaryButton(
-                label: 'Показать ещё',
-                kind: ButtonKind.outline,
-                height: 48,
-                loading: _loadingMore,
-                onTap: _more,
+      body: PageScroll(
+        onRefresh: _refresh,
+        children: [
+          if (_loading)
+            const SkeletonCards(count: 3, height: 150)
+          else if (_error != null)
+            ErrorState(error: _error!, onRetry: _refresh)
+          else if (_logs.isEmpty)
+            const EmptyState(
+              icon: AppIcons.location,
+              title: 'Отметок пока нет',
+              message:
+                  'Отметьте приход на главном экране, и история появится здесь.',
+            )
+          else ...[
+            for (final entry in groups.entries) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
+                child: Text(
+                  Fmt.todayLine(DateTime.parse(entry.key)),
+                  style: AppText.label,
+                ),
               ),
-            ),
+              SurfaceCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 4,
+                ),
+                child: Divided(
+                  children: [
+                    for (final l in entry.value)
+                      CheckinRow(
+                        log: l,
+                        showDate: false,
+                        photo: _photos[l['name']],
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (_hasMore)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: PrimaryButton(
+                  label: 'Показать ещё',
+                  kind: ButtonKind.outline,
+                  height: 48,
+                  loading: _loadingMore,
+                  onTap: _more,
+                ),
+              ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }

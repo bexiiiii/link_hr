@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../core/app_icons.dart';
 
 import '../../core/minimap.dart';
 import '../../core/selfie_camera.dart';
@@ -200,7 +201,7 @@ class _CheckinSheetState extends State<_CheckinSheet> {
                 left: 12,
                 top: 12,
                 child: CircleButton(
-                  icon: CupertinoIcons.arrow_left,
+                  icon: AppIcons.arrowLeft,
                   label: 'Закрыть',
                   size: 44,
                   background: AppColors.surface,
@@ -244,7 +245,7 @@ class _CheckinSheetState extends State<_CheckinSheet> {
                   label: isIn
                       ? 'Сделать селфи и отметиться'
                       : 'Сделать селфи и уйти',
-                  icon: CupertinoIcons.camera,
+                  icon: AppIcons.camera,
                   loading: _busy,
                   onTap: (_locating && s.geolocationTracking) || _outside
                       ? null
