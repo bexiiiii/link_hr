@@ -1,19 +1,19 @@
 ---
 name: Link HR
-description: iOS HR app for companies in Kazakhstan. White surfaces, one deep green, a floating pill navigation.
+description: iOS HR app for companies in Kazakhstan. White surfaces, one clear blue, a floating pill navigation.
 colors:
-  ground: "#F4F5F4"
+  ground: "#F5F8FC"
   surface: "#FFFFFF"
-  surface-alt: "#F7F8F7"
-  line: "#E9EBEA"
-  ink: "#141816"
-  ink-2: "#4A514D"
-  ink-3: "#6E7571"
-  ink-4: "#BFC5C2"
-  green: "#0F8A62"
-  green-pressed: "#0B6F4F"
-  green-soft: "#E6F4EE"
-  green-glow: "#BFE6D6"
+  surface-alt: "#F0F5FB"
+  line: "#E1E9F2"
+  ink: "#122033"
+  ink-2: "#43546A"
+  ink-3: "#66788E"
+  ink-4: "#B8C5D3"
+  blue: "#1769E0"
+  blue-pressed: "#0D54B6"
+  blue-soft: "#E7F0FF"
+  blue-glow: "#C9DDFF"
   orange: "#D9822B"
   orange-soft: "#FDF0E1"
   red: "#D94545"
@@ -41,73 +41,79 @@ spacing:
   card-padding: 16px
   section-gap: 28px
 components:
-  nav-bar: "floating white pill, 16px from the bottom edge, 5 round 48px icon buttons, active = filled green circle with white icon, soft shadow"
-  primary-button: "green pill, 48px tall, white 15px/500 label"
-  clock-button: "round 200px green disc with a soft green halo, hand/tap icon + label, pulses while waiting"
+  nav-bar: "floating white pill, 16px from the bottom edge, 5 round 48px icon buttons, active = filled blue circle with white icon, soft shadow"
+  primary-button: "blue pill, 48px tall, white 15px/500 label"
+  clock-button: "round 200px blue disc with a soft blue halo, hand/tap icon + label, pulses while waiting"
   status-pill: "rounded tinted pill, 12px text: orange = in progress, red = on hold/overdue, gray = backlog, green = done"
   stat-tile: "white 18px card, number 22px/600 on top, 13px gray label, small line icon top-right"
 ---
 
-# Link HR Design System
+# Link Design System
 
-## 1. Overview: One Green Button
+## 1. Direction
 
-**Scene:** an office employee in Almaty opens the app at 08:55 standing at the entrance, phone in one hand, bright daylight or office light, in a hurry to get marked on time; an HR manager later scrolls the same app at a desk between meetings.
+**Scene:** сотрудник открывает Link утром у входа в офис, быстро видит статус рабочего дня, подтверждает местоположение на карте и делает селфи. Позже он же открывает задачи, документы или баллы без разных стилей и технических деталей.
 
-That scene decides everything: a light UI that reads in daylight, one unmistakable green action ("Отметиться"), numbers big enough to read at a glance, and everything else quiet.
-
-**Color strategy: Restrained.** Near-white neutrals tinted a hair toward the green, one deep green accent used only for the primary action, the active tab and success states. Orange and red exist only inside status pills and warnings.
+**Color strategy: restrained blue.** Интерфейс светлый и чистый. Синий — единственный акцент для главного действия, активной вкладки, ссылок и состояния выбора. Он не используется как украшение.
 
 **References:**
-1. *Today's Summary* HR concept (light, green): screen language, floating pill nav, round clock-in button, selfie capture frame. This is the primary reference for color, nav and icons.
-2. *Disciplinary in your hand* attendance concept (dark, mint): information structure only (2×2 attendance tiles, today tasks with progress, attendance list, week strip). Its dark theme and mint color are not used.
+1. *Today's Summary* HR concept (light): светлая палитра, плавающая нижняя панель, круглая кнопка отметки, рамка селфи и строгие иконки.
+2. *Disciplinary in your hand*: только структура данных, 2×2 показатели, задачи с прогрессом и журнал посещаемости. Тёмная тема и мятный цвет не используются.
 
-The previous graphite/blue Beepro-like direction is retired.
+Логотип Link — синий скруглённый знак с белой иконкой цепочки. Он используется на входе и экране загрузки.
 
-## 2. Colors
+## 2. Palette
 
 | Token | Hex | Role |
 |---|---|---|
-| ground | #F4F5F4 | screen background behind cards |
+| background | #F5F8FC | основной фон экрана |
 | surface | #FFFFFF | cards, nav pill, sheets |
-| ink | #141816 | titles and values |
-| ink-2 | #4A514D | secondary text (≥ 7:1 on white) |
-| ink-3 | #6E7571 | captions, labels (≥ 4.6:1 on white) |
-| green | #0F8A62 | primary buttons, active tab, clock button, links |
-| green-soft | #E6F4EE | selected chips, success pill background |
-| orange / red | #D9822B / #D94545 | lateness, on-hold, overdue, errors; only in pills, banners and text |
+| surface-alt | #F0F5FB | неактивные иконки и мягкие блоки |
+| line | #E1E9F2 | тонкие разделители |
+| ink | #122033 | заголовки, значения и основные иконки |
+| ink-secondary | #43546A | вспомогательный текст |
+| ink-muted | #66788E | подписи и даты |
+| blue | #1769E0 | главное действие, активная вкладка и ссылки |
+| blue-pressed | #0D54B6 | нажатие и сильное состояние действия |
+| blue-soft | #E7F0FF | мягкий фон выбора и успеха |
+| blue-glow | #C9DDFF | ореол круглой кнопки отметки |
+| amber / red | #D9822B / #D94545 | предупреждение, опоздание, ошибка, отказ |
 
-Rules: green never decorates. A screen has at most one filled green button besides the active tab. Gray text is never placed on green; on green use white.
+Правила: на обычном экране не больше одного синего заполненного действия, кроме активной вкладки. На синем фоне всегда белый текст или иконка. Технические названия, URL, API и платформа не показываются пользователю.
 
-## 3. Typography
+## 3. Logo and typography
 
-One family, **Onest**, bundled with the app (strong Cyrillic, calm geometric shapes). Hierarchy comes from size and weight (400 / 500 / 600), not from color. Large greeting titles ("Сводка за сегодня") use `display` split over two lines like the reference. Times and counts use tabular figures.
+- Логотип: синий квадрат со скруглением 26% стороны и белой иконкой цепочки.
+- Один шрифт, **Onest**, веса 400, 500, 600 и 700. Крупный заголовок 32px/600, заголовок экрана 22px/600, текст 15px/400, подписи 12–13px/400.
+- Время, суммы, баллы и проценты используют табличные цифры.
 
-## 4. Layout and Elevation
+## 4. Layout, navigation and elevation
 
-- 20px side gutter, 28px between sections, section header = `heading` left + "Все" link right in green.
-- Cards: white, 18px radius, no border, a very soft shadow (0 2 12 rgba(20,24,22,0.04)). Ground is visible between cards.
-- The nav pill and the clock button are the only elements with a noticeable shadow.
-- Content scrolls under the floating nav; lists get 110px bottom padding so the last row is reachable.
+- Боковые поля 20px, между смысловыми секциями 28px, внутри карточки 16px.
+- Карточки белые, радиус 18px, без декоративной рамки, с мягкой тенью до 8px.
+- Нижняя панель — белая плавающая капсула в 16px от нижнего края: Главная, Посещаемость, Задачи, Сервисы, Профиль. Активная кнопка — синий круг с белой залитой Cupertino-иконкой. Неактивные — контурные Cupertino-иконки на светло-голубой подложке.
+- Содержимое прокручивается под панелью с нижним отступом 120px.
 
 ## 5. Components
 
-- **Floating nav pill:** Дом (сводка) · Часы (посещаемость и отметка) · Список (задачи и доска) · Папка (сервисы: документы, заявки, отпуска, ЗП, анализ, чеклисты, достижения, оповещения) · Шестерёнка (профиль и настройки). Notifications open from the bell on Home.
-- **Home "Сводка за сегодня":** date + greeting, bell, avatar; clock card (Приход / Уход / green "Отметиться"); 2×2 tiles (пришёл, ушёл, вовремя %, дней на работе); Статус заявок (всего / одобрено / отклонено); Задачи (cards with status pill, time, progress); Последние отметки.
-- **Attendance screen:** week strip, big round green "Отметиться" / "Уйти" button with halo, live clock, office distance line ("До офиса 120 м" / "Вы должны быть рядом с офисом"), stats row (Приход, Уход, Часы, Перерыв), month selector, attendance log table, табель and statistics below.
-- **Check-in flow:** tap the round button → map + geofence check (existing) → **selfie screen** (front camera only, dark full-screen preview, white corner frame, round back button, green round capture button) → the check-in is saved with the selfie attached. No gallery, no file picker.
-- **Status pills:** backlog gray, in progress orange, on hold red, done green.
-- **Premium lock:** same empty-state pattern, green outline button "Узнать о Premium".
+- **Главная:** приветствие, уведомления, аватар, карточка прихода/ухода, показатели за день, статусы заявок, задачи и последние отметки.
+- **Посещаемость:** полоса недели, круглая синяя кнопка «Отметиться» или «Уйти», время, расстояние до офиса, показатели, журнал, табель, статистика и баллы.
+- **Отметка:** нажатие → карта и GPS-проверка → селфи только фронтальной камерой → сохранение отметки вместе с селфи. Галерея и файлы отсутствуют. Если селфи невозможно сделать, отметка не сохраняется.
+- **Задачи, сервисы и профиль:** все уже существующие возможности остаются доступны в том же визуальном языке.
+- **Баллы:** показывают итог за период и понятные причины начисления или списания рядом со статистикой.
 
 ## 6. Do's and Don'ts
 
 Do:
-- Keep one green primary action per screen.
-- Show real numbers first (times, days, %), labels second.
-- Keep every existing feature reachable within two taps from a tab.
+
+- Сохранять все уже существующие функции и навигационные пути.
+- Показывать реальные данные backend, а не заменять их макетом.
+- Использовать карту до селфи и селфи до записи отметки.
+- Поддерживать единые размеры, отступы, иконки и синий акцент на всех экранах.
 
 Don't:
-- No dark theme, no mint, no gradients on cards, no glass.
-- No uppercase tracked eyebrows, no colored side stripes.
-- No gallery or file upload in the check-in flow.
-- No gray text on green.
+
+- Не использовать тёмную тему, мятный цвет, градиенты, стекло и декоративные полосы.
+- Не показывать пользователю URL, API, Frappe, сервер и прочие технические термины.
+- Не давать загрузить фото отметки из галереи или файлов.
+- Не создавать новый экран, если нужная функция уже есть в текущем приложении.
