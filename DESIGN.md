@@ -44,7 +44,7 @@ components:
   nav-bar: "floating white pill, 16px from the bottom edge, 5 round 48px icon buttons, active = filled blue circle with white icon, soft shadow"
   primary-button: "blue pill, 48px tall, white 15px/500 label"
   clock-button: "round 200px blue disc with a soft blue halo, hand/tap icon + label, pulses while waiting"
-  status-pill: "rounded tinted pill, 12px text: orange = in progress, red = on hold/overdue, gray = backlog, green = done"
+  status-pill: "rounded tinted pill, 12px text: orange = in progress, red = on hold/overdue, gray = backlog, blue = done"
   stat-tile: "white 18px card, number 22px/600 on top, 13px gray label, small line icon top-right"
 ---
 

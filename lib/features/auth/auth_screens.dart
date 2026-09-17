@@ -19,26 +19,11 @@ class BrandMark extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: AppColors.charcoal, borderRadius: BorderRadius.circular(size * 0.32)),
-      child: Stack(alignment: Alignment.center, children: [
-        Text('L',
-            style: TextStyle(
-              fontSize: size * 0.5,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: -1,
-              height: 1,
-            )),
-        Positioned(
-          right: size * 0.2,
-          bottom: size * 0.2,
-          child: Container(
-            width: size * 0.16,
-            height: size * 0.16,
-            decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle),
-          ),
-        ),
-      ]),
+      decoration: BoxDecoration(
+        color: AppColors.blue,
+        borderRadius: BorderRadius.circular(size * 0.26),
+      ),
+      child: Icon(CupertinoIcons.link, size: size * 0.54, color: Colors.white),
     );
   }
 }
@@ -92,7 +77,9 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.bg,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
       builder: (sheetContext) => _ForgotSheet(controller: controller),
     );
     controller.dispose();
@@ -110,11 +97,17 @@ class _LoginScreenState extends State<LoginScreen> {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
               children: [
-                const Align(alignment: Alignment.centerLeft, child: BrandMark(size: 48)),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: BrandMark(size: 48),
+                ),
                 const SizedBox(height: 36),
-                const Text('Вход в Link', style: AppText.display),
+                const Text('Link', style: AppText.display),
                 const SizedBox(height: 10),
-                Text('Рабочий email и пароль от Link HR', style: AppText.body.copyWith(color: AppColors.ink2)),
+                Text(
+                  'Войдите с рабочим email и паролем',
+                  style: AppText.body.copyWith(color: AppColors.ink2),
+                ),
                 const SizedBox(height: 32),
                 AppTextField(
                   label: 'Email',
@@ -122,7 +115,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   hint: 'name@company.kz',
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.username, AutofillHints.email],
+                  autofillHints: const [
+                    AutofillHints.username,
+                    AutofillHints.email,
+                  ],
                 ),
                 const FormGap(),
                 AppTextField(
@@ -134,8 +130,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   onSubmitted: (_) => _submit(),
                   suffix: IconButton(
                     tooltip: _obscure ? 'Показать пароль' : 'Скрыть пароль',
-                    icon: Icon(_obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
-                        size: 20, color: AppColors.ink3),
+                    icon: Icon(
+                      _obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                      size: 20,
+                      color: AppColors.ink3,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
@@ -146,8 +145,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: CupertinoButton(
                     onPressed: _forgot,
-                    child: const Text('Забыли пароль?',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.violet)),
+                    child: const Text(
+                      'Забыли пароль?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.violet,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -196,33 +201,49 @@ class _ForgotSheetState extends State<_ForgotSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: SafeArea(
         top: false,
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Сброс пароля', style: AppText.title),
-          const SizedBox(height: 8),
-          Text(
-            _sent
-                ? 'Инструкции отправлены на ${widget.controller.text.trim()}. Проверьте почту.'
-                : 'Отправим ссылку для создания нового пароля.',
-            style: AppText.body.copyWith(color: AppColors.ink2),
-          ),
-          const SizedBox(height: 20),
-          if (!_sent) ...[
-            AppTextField(
-              label: 'Email',
-              controller: widget.controller,
-              keyboardType: TextInputType.emailAddress,
-              autofocus: true,
-              onSubmitted: (_) => _send(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Сброс пароля', style: AppText.title),
+            const SizedBox(height: 8),
+            Text(
+              _sent
+                  ? 'Инструкции отправлены на ${widget.controller.text.trim()}. Проверьте почту.'
+                  : 'Отправим ссылку для создания нового пароля.',
+              style: AppText.body.copyWith(color: AppColors.ink2),
             ),
-            if (_error != null) InlineError(_error!),
             const SizedBox(height: 20),
-            PrimaryButton(label: 'Отправить ссылку', loading: _busy, onTap: _send),
-          ] else
-            PrimaryButton(label: 'Готово', onTap: () => Navigator.pop(context)),
-        ]),
+            if (!_sent) ...[
+              AppTextField(
+                label: 'Email',
+                controller: widget.controller,
+                keyboardType: TextInputType.emailAddress,
+                autofocus: true,
+                onSubmitted: (_) => _send(),
+              ),
+              if (_error != null) InlineError(_error!),
+              const SizedBox(height: 20),
+              PrimaryButton(
+                label: 'Отправить ссылку',
+                loading: _busy,
+                onTap: _send,
+              ),
+            ] else
+              PrimaryButton(
+                label: 'Готово',
+                onTap: () => Navigator.pop(context),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -236,11 +257,14 @@ class BootScreen extends StatelessWidget {
     return const Scaffold(
       backgroundColor: AppColors.bg,
       body: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          BrandMark(size: 64),
-          SizedBox(height: 24),
-          CupertinoActivityIndicator(),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BrandMark(size: 64),
+            SizedBox(height: 24),
+            CupertinoActivityIndicator(),
+          ],
+        ),
       ),
     );
   }
@@ -271,10 +295,15 @@ class _LockScreenState extends State<LockScreen> {
       _error = null;
     });
     try {
-      final ok = await _auth.authenticate(localizedReason: 'Разблокировать Link');
+      final ok = await _auth.authenticate(
+        localizedReason: 'Разблокировать Link',
+      );
       if (ok) Session.instance.markUnlocked();
     } catch (_) {
-      if (mounted) setState(() => _error = 'Не удалось проверить Face ID. Попробуйте ещё раз.');
+      if (mounted)
+        setState(
+          () => _error = 'Не удалось проверить Face ID. Попробуйте ещё раз.',
+        );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -288,22 +317,39 @@ class _LockScreenState extends State<LockScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(children: [
-            const Spacer(),
-            AppAvatar(name: s.fullName, imageUrl: s.image, size: 88),
-            const SizedBox(height: 18),
-            Text(s.fullName, textAlign: TextAlign.center, style: AppText.title),
-            const SizedBox(height: 6),
-            Text('Link заблокирован', style: AppText.body.copyWith(color: AppColors.ink2)),
-            if (_error != null) InlineError(_error!),
-            const Spacer(),
-            PrimaryButton(label: 'Разблокировать', icon: CupertinoIcons.lock_open, loading: _busy, onTap: _unlock),
-            const SizedBox(height: 8),
-            CupertinoButton(
-              onPressed: () => s.logout(),
-              child: const Text('Выйти из аккаунта', style: TextStyle(color: AppColors.ink2, fontSize: 14)),
-            ),
-          ]),
+          child: Column(
+            children: [
+              const Spacer(),
+              AppAvatar(name: s.fullName, imageUrl: s.image, size: 88),
+              const SizedBox(height: 18),
+              Text(
+                s.fullName,
+                textAlign: TextAlign.center,
+                style: AppText.title,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Link заблокирован',
+                style: AppText.body.copyWith(color: AppColors.ink2),
+              ),
+              if (_error != null) InlineError(_error!),
+              const Spacer(),
+              PrimaryButton(
+                label: 'Разблокировать',
+                icon: CupertinoIcons.lock_open,
+                loading: _busy,
+                onTap: _unlock,
+              ),
+              const SizedBox(height: 8),
+              CupertinoButton(
+                onPressed: () => s.logout(),
+                child: const Text(
+                  'Выйти из аккаунта',
+                  style: TextStyle(color: AppColors.ink2, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -328,29 +374,37 @@ class _NoEmployeeScreenState extends State<NoEmployeeScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            EmptyState(
-              icon: CupertinoIcons.person_crop_circle_badge_exclam,
-              title: 'Профиль сотрудника не найден',
-              message: 'Учётная запись ${s.userId} не привязана к активному сотруднику. Обратитесь в отдел кадров.',
-            ),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              label: 'Проверить снова',
-              loading: _busy,
-              onTap: () async {
-                setState(() => _busy = true);
-                try {
-                  await s.refresh();
-                } catch (e) {
-                  if (context.mounted) showToast(context, errorText(e), error: true);
-                } finally {
-                  if (mounted) setState(() => _busy = false);
-                }
-              },
-            ),
-            CupertinoButton(onPressed: () => s.logout(), child: const Text('Выйти')),
-          ]),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              EmptyState(
+                icon: CupertinoIcons.person_crop_circle_badge_exclam,
+                title: 'Профиль сотрудника не найден',
+                message:
+                    'Учётная запись ${s.userId} не привязана к активному сотруднику. Обратитесь в отдел кадров.',
+              ),
+              const SizedBox(height: 20),
+              PrimaryButton(
+                label: 'Проверить снова',
+                loading: _busy,
+                onTap: () async {
+                  setState(() => _busy = true);
+                  try {
+                    await s.refresh();
+                  } catch (e) {
+                    if (context.mounted)
+                      showToast(context, errorText(e), error: true);
+                  } finally {
+                    if (mounted) setState(() => _busy = false);
+                  }
+                },
+              ),
+              CupertinoButton(
+                onPressed: () => s.logout(),
+                child: const Text('Выйти'),
+              ),
+            ],
+          ),
         ),
       ),
     );

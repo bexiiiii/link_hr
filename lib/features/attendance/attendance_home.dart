@@ -44,6 +44,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   List<MonthSheet> _sheets = [];
   List<Json> _todayLogs = [];
   List<Json> _shifts = [];
+  List<MotivationRule> _motivationRules = [];
   ShiftLocation? _office;
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
 
@@ -69,10 +70,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final start = Fmt.dateOnly(now);
     try {
       final r = await Future.wait<Object?>([
-        MonthSheet.loadRange(DateTime(now.year, 1), DateTime(now.year, now.month)),
-        Hr.checkinsBetween(start, start.add(const Duration(days: 1))).then<Object?>((v) => v).catchError((_) => <Json>[]),
-        Hr.shiftAssignments().then<Object?>((v) => v).catchError((_) => <Json>[]),
+        MonthSheet.loadRange(
+          DateTime(now.year, 1),
+          DateTime(now.year, now.month),
+        ),
+        Hr.checkinsBetween(
+          start,
+          start.add(const Duration(days: 1)),
+        ).then<Object?>((v) => v).catchError((_) => <Json>[]),
+        Hr.shiftAssignments()
+            .then<Object?>((v) => v)
+            .catchError((_) => <Json>[]),
         Hr.shiftLocation().then<Object?>((v) => v).catchError((_) => null),
+        MotivationRule.load()
+            .then<Object?>((v) => v)
+            .catchError((_) => <MotivationRule>[]),
       ]);
       if (!mounted) return;
       setState(() {
@@ -80,6 +92,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         _todayLogs = r[1] as List<Json>;
         _shifts = r[2] as List<Json>;
         _office = r[3] as ShiftLocation?;
+        _motivationRules = r[4] as List<MotivationRule>;
         _loading = false;
         _error = null;
         _now = DateTime.now();
@@ -94,8 +107,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  MonthSheet? get _selectedSheet =>
-      _sheets.where((m) => m.month.year == _month.year && m.month.month == _month.month).firstOrNull;
+  MonthSheet? get _selectedSheet => _sheets
+      .where(
+        (m) => m.month.year == _month.year && m.month.month == _month.month,
+      )
+      .firstOrNull;
 
   /// Minutes spent away between an OUT and the next IN today.
   int get _breakMinutes {
@@ -120,8 +136,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return h == 0 ? '$m мин' : (m == 0 ? '$h ч' : '$hч ${m}м');
   }
 
-  Future<void> _openPanel(String title, Widget Function(List<MonthSheet> sheets, List<TaskItem> tasks, List<ChecklistRun> runs) build) {
-    return pushPage(context, _PanelPage(title: title, sheets: _sheets, builder: build));
+  Future<void> _openPanel(
+    String title,
+    Widget Function(
+      List<MonthSheet> sheets,
+      List<TaskItem> tasks,
+      List<ChecklistRun> runs,
+    )
+    build,
+  ) {
+    return pushPage(
+      context,
+      _PanelPage(title: title, sheets: _sheets, builder: build),
+    );
   }
 
   @override
@@ -139,29 +166,37 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final hint = !_session.checkinAllowed
         ? 'Отметки из приложения отключены в вашей компании'
         : _office != null && _session.geolocationTracking
-            ? 'Вы должны быть рядом с офисом «${_office!.name}»'
-            : 'Отметка сохраняется с геолокацией и селфи';
+        ? 'Вы должны быть рядом с офисом «${_office!.name}»'
+        : 'Отметка сохраняется с геолокацией и селфи';
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
         bottom: false,
         child: _error != null && _sheets.isEmpty
-            ? PageScroll(onRefresh: _load, children: [ErrorState(error: _error!, onRetry: _load)])
+            ? PageScroll(
+                onRefresh: _load,
+                children: [ErrorState(error: _error!, onRetry: _load)],
+              )
             : PageScroll(
                 onRefresh: _load,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
                 children: [
-                  Row(children: [
-                    const Expanded(child: Text('Посещаемость', style: AppText.title)),
-                    CircleButton(
-                      icon: CupertinoIcons.list_bullet,
-                      label: 'История отметок',
-                      size: 48,
-                      iconSize: 20,
-                      onTap: () => pushPage(context, const CheckinHistoryScreen()),
-                    ),
-                  ]),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text('Посещаемость', style: AppText.title),
+                      ),
+                      CircleButton(
+                        icon: CupertinoIcons.list_bullet,
+                        label: 'История отметок',
+                        size: 48,
+                        iconSize: 20,
+                        onTap: () =>
+                            pushPage(context, const CheckinHistoryScreen()),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   _WeekStrip(today: today, sheet: current),
                   const SizedBox(height: 28),
@@ -170,22 +205,34 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       label: !_session.checkinAllowed
                           ? 'Недоступно'
                           : onShift
-                              ? 'Уйти'
-                              : finished
-                                  ? 'Снова на работу'
-                                  : 'Отметиться',
+                          ? 'Уйти'
+                          : finished
+                          ? 'Снова на работу'
+                          : 'Отметиться',
                       out: onShift,
                       waiting: !onShift && !finished && _session.checkinAllowed,
                       onTap: !_session.checkinAllowed || _loading
                           ? null
-                          : () => showCheckinSheet(context, onShift ? 'OUT' : 'IN'),
+                          : () => showCheckinSheet(
+                              context,
+                              onShift ? 'OUT' : 'IN',
+                            ),
                     ),
                   ),
                   const SizedBox(height: 22),
-                  Center(child: Text(Fmt.time(_now), style: AppText.clock.copyWith(fontSize: 34))),
+                  Center(
+                    child: Text(
+                      Fmt.time(_now),
+                      style: AppText.clock.copyWith(fontSize: 34),
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Center(
-                    child: Text(hint, textAlign: TextAlign.center, style: AppText.label.copyWith(color: AppColors.ink3)),
+                    child: Text(
+                      hint,
+                      textAlign: TextAlign.center,
+                      style: AppText.label.copyWith(color: AppColors.ink3),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Center(
@@ -196,90 +243,168 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                   const SizedBox(height: 22),
                   SurfaceCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    child: Row(children: [
-                      _TodayStat(label: 'Приход', value: todayRecord?.firstIn == null ? '– –' : Fmt.time(todayRecord!.firstIn)),
-                      _TodayStat(label: 'Уход', value: finished ? Fmt.time(Fmt.parse(last?['time'])) : '– –'),
-                      _TodayStat(label: 'Часы', value: _duration(workedMinutes)),
-                      _TodayStat(label: 'Перерыв', value: _duration(_breakMinutes)),
-                    ]),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      children: [
+                        _TodayStat(
+                          label: 'Приход',
+                          value: todayRecord?.firstIn == null
+                              ? '– –'
+                              : Fmt.time(todayRecord!.firstIn),
+                        ),
+                        _TodayStat(
+                          label: 'Уход',
+                          value: finished
+                              ? Fmt.time(Fmt.parse(last?['time']))
+                              : '– –',
+                        ),
+                        _TodayStat(
+                          label: 'Часы',
+                          value: _duration(workedMinutes),
+                        ),
+                        _TodayStat(
+                          label: 'Перерыв',
+                          value: _duration(_breakMinutes),
+                        ),
+                      ],
+                    ),
                   ),
                   if ((todayRecord?.lateMinutes ?? 0) > 0) ...[
                     const SizedBox(height: 10),
-                    Row(children: [
-                      const Icon(CupertinoIcons.clock, size: 16, color: AppColors.amber),
-                      const SizedBox(width: 6),
-                      Text('Опоздание сегодня: ${formatLate(todayRecord!.lateMinutes)}',
-                          style: AppText.label.copyWith(color: AppColors.amber)),
-                    ]),
+                    Row(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.clock,
+                          size: 16,
+                          color: AppColors.amber,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Опоздание сегодня: ${formatLate(todayRecord!.lateMinutes)}',
+                          style: AppText.label.copyWith(color: AppColors.amber),
+                        ),
+                      ],
+                    ),
                   ],
                   SummarySection(title: 'Журнал отметок'),
-                  Row(children: [
-                    Expanded(
-                      child: Text(
-                        current == null ? '' : '${_selectedSheet?.present ?? 0} ${Fmt.plural(_selectedSheet?.present ?? 0, 'день', 'дня', 'дней')} на работе',
-                        style: AppText.label,
-                      ),
-                    ),
-                    DropdownPill(
-                      label: Fmt.monthYear(_month),
-                      onTap: () async {
-                        final picked = await showSelectSheet(
-                          context,
-                          title: 'Месяц',
-                          options: [
-                            for (final m in _sheets.reversed) SelectOption(Fmt.iso(m.month), Fmt.monthYear(m.month)),
-                          ],
-                          selected: Fmt.iso(_month),
-                        );
-                        if (picked != null) setState(() => _month = DateTime.parse(picked));
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 10),
-                  if (_loading) const Skeleton(height: 260, radius: AppRadius.card) else _LogTable(sheet: _selectedSheet, today: today),
-                  SummarySection(title: 'Отчёты'),
-                  SurfaceCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                    child: Divided(children: [
-                      NavRow(
-                        icon: CupertinoIcons.calendar,
-                        title: 'Табель',
-                        subtitle: 'Календарь посещаемости по месяцам',
-                        onTap: () => _openPanel('Табель', (sheets, _, _) => TimesheetGridPanel(yearSheets: sheets, onRefresh: () async {})),
-                      ),
-                      NavRow(
-                        icon: CupertinoIcons.chart_bar,
-                        title: 'Статистика',
-                        subtitle: 'Дисциплина и план за день',
-                        onTap: () => _openPanel(
-                          'Статистика',
-                          (sheets, tasks, runs) => StatsPanel(yearSheets: sheets, tasks: tasks, runs: runs, onRefresh: () async {}),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          current == null
+                              ? ''
+                              : '${_selectedSheet?.present ?? 0} ${Fmt.plural(_selectedSheet?.present ?? 0, 'день', 'дня', 'дней')} на работе',
+                          style: AppText.label,
                         ),
                       ),
-                      NavRow(
-                        icon: CupertinoIcons.star,
-                        title: 'Баллы',
-                        subtitle: _session.hasFeature('points') ? 'Рейтинг и достижения' : 'Доступно в Premium',
-                        onTap: () => _session.hasFeature('points')
-                            ? _openPanel('Баллы', (sheets, tasks, runs) {
-                                final me = _session.userId;
-                                return PointsPanel(
-                                  score: Score.compute(sheet: sheets.last, tasks: tasks, runs: runs, me: me),
-                                  achievements: Achievements.compute(sheets: sheets, tasks: tasks, runs: runs, me: me),
-                                  month: sheets.last.month,
-                                  onRefresh: () async {},
-                                );
-                              })
-                            : pushPage(context, const PremiumGate(feature: 'points', title: 'Баллы', child: SizedBox())),
+                      DropdownPill(
+                        label: Fmt.monthYear(_month),
+                        onTap: () async {
+                          final picked = await showSelectSheet(
+                            context,
+                            title: 'Месяц',
+                            options: [
+                              for (final m in _sheets.reversed)
+                                SelectOption(
+                                  Fmt.iso(m.month),
+                                  Fmt.monthYear(m.month),
+                                ),
+                            ],
+                            selected: Fmt.iso(_month),
+                          );
+                          if (picked != null)
+                            setState(() => _month = DateTime.parse(picked));
+                        },
                       ),
-                      NavRow(
-                        icon: CupertinoIcons.tray_arrow_up,
-                        title: 'Корректировки и смены',
-                        subtitle: 'Забыли отметиться, другая смена',
-                        onTap: () => pushPage(context, const RequestsScreen()),
-                      ),
-                    ]),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (_loading)
+                    const Skeleton(height: 260, radius: AppRadius.card)
+                  else
+                    _LogTable(sheet: _selectedSheet, today: today),
+                  SummarySection(title: 'Отчёты'),
+                  SurfaceCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 2,
+                    ),
+                    child: Divided(
+                      children: [
+                        NavRow(
+                          icon: CupertinoIcons.calendar,
+                          title: 'Табель',
+                          subtitle: 'Календарь посещаемости по месяцам',
+                          onTap: () => _openPanel(
+                            'Табель',
+                            (sheets, _, _) => TimesheetGridPanel(
+                              yearSheets: sheets,
+                              onRefresh: () async {},
+                            ),
+                          ),
+                        ),
+                        NavRow(
+                          icon: CupertinoIcons.chart_bar,
+                          title: 'Статистика',
+                          subtitle: 'Дисциплина и план за день',
+                          onTap: () => _openPanel(
+                            'Статистика',
+                            (sheets, tasks, runs) => StatsPanel(
+                              yearSheets: sheets,
+                              tasks: tasks,
+                              runs: runs,
+                              onRefresh: () async {},
+                            ),
+                          ),
+                        ),
+                        NavRow(
+                          icon: CupertinoIcons.star,
+                          title: 'Баллы',
+                          subtitle: _session.hasFeature('points')
+                              ? 'Рейтинг и достижения'
+                              : 'Доступно в Premium',
+                          onTap: () => _session.hasFeature('points')
+                              ? _openPanel('Баллы', (sheets, tasks, runs) {
+                                  final me = _session.userId;
+                                  return PointsPanel(
+                                    score: Score.compute(
+                                      sheet: sheets.last,
+                                      tasks: tasks,
+                                      runs: runs,
+                                      me: me,
+                                      rules: _motivationRules,
+                                    ),
+                                    achievements: Achievements.compute(
+                                      sheets: sheets,
+                                      tasks: tasks,
+                                      runs: runs,
+                                      me: me,
+                                    ),
+                                    month: sheets.last.month,
+                                    onRefresh: () async {},
+                                  );
+                                })
+                              : pushPage(
+                                  context,
+                                  const PremiumGate(
+                                    feature: 'points',
+                                    title: 'Баллы',
+                                    child: SizedBox(),
+                                  ),
+                                ),
+                        ),
+                        NavRow(
+                          icon: CupertinoIcons.tray_arrow_up,
+                          title: 'Корректировки и смены',
+                          subtitle: 'Забыли отметиться, другая смена',
+                          onTap: () =>
+                              pushPage(context, const RequestsScreen()),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -297,22 +422,35 @@ class _TodayStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, maxLines: 1, style: AppText.caption),
-        const SizedBox(height: 4),
-        Text(value,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, maxLines: 1, style: AppText.caption),
+          const SizedBox(height: 4),
+          Text(
+            value,
             maxLines: 1,
             softWrap: false,
             overflow: TextOverflow.fade,
-            style: AppText.number.copyWith(fontSize: 16, color: value == '– –' ? AppColors.ink4 : AppColors.ink)),
-      ]),
+            style: AppText.number.copyWith(
+              fontSize: 16,
+              color: value == '– –' ? AppColors.ink4 : AppColors.ink,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 /// Round green button with a soft halo that breathes while the day has not started.
 class _ClockButton extends StatefulWidget {
-  const _ClockButton({required this.label, required this.onTap, required this.waiting, required this.out});
+  const _ClockButton({
+    required this.label,
+    required this.onTap,
+    required this.waiting,
+    required this.out,
+  });
 
   final String label;
   final VoidCallback? onTap;
@@ -323,8 +461,12 @@ class _ClockButton extends StatefulWidget {
   State<_ClockButton> createState() => _ClockButtonState();
 }
 
-class _ClockButtonState extends State<_ClockButton> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
+class _ClockButtonState extends State<_ClockButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  );
 
   @override
   void didChangeDependencies() {
@@ -379,7 +521,8 @@ class _ClockButtonState extends State<_ClockButton> with SingleTickerProviderSta
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: (enabled ? AppColors.greenGlow : AppColors.chip).withValues(alpha: 0.45 + 0.35 * t),
+                color: (enabled ? AppColors.greenGlow : AppColors.chip)
+                    .withValues(alpha: 0.45 + 0.35 * t),
               ),
               child: Container(
                 width: size + 12 + 8 * t,
@@ -387,7 +530,8 @@ class _ClockButtonState extends State<_ClockButton> with SingleTickerProviderSta
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: (enabled ? AppColors.greenGlow : AppColors.chip).withValues(alpha: 0.9),
+                  color: (enabled ? AppColors.greenGlow : AppColors.chip)
+                      .withValues(alpha: 0.9),
                 ),
                 child: child,
               ),
@@ -398,18 +542,40 @@ class _ClockButtonState extends State<_ClockButton> with SingleTickerProviderSta
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: enabled ? (widget.out ? AppColors.greenDeep : AppColors.green) : AppColors.ink4,
+              color: enabled
+                  ? (widget.out ? AppColors.greenDeep : AppColors.green)
+                  : AppColors.ink4,
               boxShadow: enabled
-                  ? [BoxShadow(color: AppColors.green.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 10))]
+                  ? [
+                      BoxShadow(
+                        color: AppColors.green.withValues(alpha: 0.35),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ]
                   : null,
             ),
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(widget.out ? CupertinoIcons.hand_raised : CupertinoIcons.hand_point_right, color: Colors.white, size: 40),
-              const SizedBox(height: 10),
-              Text(widget.label,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  widget.out
+                      ? CupertinoIcons.hand_raised
+                      : CupertinoIcons.hand_point_right,
+                  color: Colors.white,
+                  size: 40,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.label,
                   textAlign: TextAlign.center,
-                  style: AppText.bodyStrong.copyWith(color: Colors.white, fontSize: 17)),
-            ]),
+                  style: AppText.bodyStrong.copyWith(
+                    color: Colors.white,
+                    fontSize: 17,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -431,47 +597,64 @@ class _WeekStrip extends StatelessWidget {
     final monday = today.subtract(Duration(days: today.weekday - 1));
     return SurfaceCard(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      child: Row(children: [
-        for (var i = 0; i < 7; i++)
-          Expanded(child: () {
-            final d = monday.add(Duration(days: i));
-            final record = sheet?.days.where((x) => x.date == d).firstOrNull;
-            final isToday = d == today;
-            final marked = record?.firstIn != null;
-            return Column(children: [
-              Text(_names[i], style: AppText.caption.copyWith(color: isToday ? AppColors.green : AppColors.ink3)),
-              const SizedBox(height: 6),
-              Container(
-                width: 36,
-                height: 36,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isToday ? AppColors.green : Colors.transparent,
-                ),
-                child: Text(
-                  '${d.day}',
-                  style: AppText.number.copyWith(
-                    color: isToday ? Colors.white : (d.isAfter(today) ? AppColors.ink4 : AppColors.ink),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: !marked
-                      ? Colors.transparent
-                      : record!.mark == DayMark.late
-                          ? AppColors.amber
-                          : AppColors.green,
-                ),
-              ),
-            ]);
-          }()),
-      ]),
+      child: Row(
+        children: [
+          for (var i = 0; i < 7; i++)
+            Expanded(
+              child: () {
+                final d = monday.add(Duration(days: i));
+                final record = sheet?.days
+                    .where((x) => x.date == d)
+                    .firstOrNull;
+                final isToday = d == today;
+                final marked = record?.firstIn != null;
+                return Column(
+                  children: [
+                    Text(
+                      _names[i],
+                      style: AppText.caption.copyWith(
+                        color: isToday ? AppColors.green : AppColors.ink3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isToday ? AppColors.green : Colors.transparent,
+                      ),
+                      child: Text(
+                        '${d.day}',
+                        style: AppText.number.copyWith(
+                          color: isToday
+                              ? Colors.white
+                              : (d.isAfter(today)
+                                    ? AppColors.ink4
+                                    : AppColors.ink),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: !marked
+                            ? Colors.transparent
+                            : record!.mark == DayMark.late
+                            ? AppColors.amber
+                            : AppColors.green,
+                      ),
+                    ),
+                  ],
+                );
+              }(),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -492,90 +675,147 @@ class _LogTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = (sheet?.days ?? const <DayRecord>[])
-        .where((d) => !d.date.isAfter(today) && (d.firstIn != null || d.mark == DayMark.absent || d.mark == DayMark.leave))
+        .where(
+          (d) =>
+              !d.date.isAfter(today) &&
+              (d.firstIn != null ||
+                  d.mark == DayMark.absent ||
+                  d.mark == DayMark.leave),
+        )
         .toList()
         .reversed
         .toList();
-    const headerStyle = TextStyle(fontFamily: kFont, fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white);
+    const headerStyle = TextStyle(
+      fontFamily: kFont,
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      color: Colors.white,
+    );
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: DecoratedBox(
-        decoration: const BoxDecoration(color: AppColors.surface, boxShadow: AppShadow.card),
-        child: Column(children: [
-          Container(
-            color: AppColors.ink2,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: const Row(children: [
-              Expanded(flex: 4, child: Text('Дата', style: headerStyle)),
-              Expanded(flex: 3, child: Text('Приход', style: headerStyle)),
-              Expanded(flex: 3, child: Text('Уход', style: headerStyle)),
-              Expanded(flex: 3, child: Text('Часы', textAlign: TextAlign.right, style: headerStyle)),
-            ]),
-          ),
-          if (rows.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text('В этом месяце отметок нет', style: AppText.body.copyWith(color: AppColors.ink3)),
-            )
-          else
-            for (final (i, d) in rows.take(math.min(rows.length, 31)).indexed)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                decoration: BoxDecoration(
-                  border: i == 0 ? null : const Border(top: BorderSide(color: AppColors.line)),
-                ),
-                child: Row(children: [
-                  Expanded(
-                    flex: 4,
-                    child: Text(_dayLabel(d.date), style: AppText.label.copyWith(color: AppColors.ink)),
-                  ),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          boxShadow: AppShadow.card,
+        ),
+        child: Column(
+          children: [
+            Container(
+              color: AppColors.ink2,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: const Row(
+                children: [
+                  Expanded(flex: 4, child: Text('Дата', style: headerStyle)),
+                  Expanded(flex: 3, child: Text('Приход', style: headerStyle)),
+                  Expanded(flex: 3, child: Text('Уход', style: headerStyle)),
                   Expanded(
                     flex: 3,
                     child: Text(
-                      d.firstIn == null ? _markLabel(d.mark) : Fmt.time(d.firstIn),
-                      style: AppText.number.copyWith(
-                        fontSize: 14,
-                        color: d.mark == DayMark.late
-                            ? AppColors.amber
-                            : d.firstIn == null
-                                ? AppColors.ink3
-                                : AppColors.ink,
-                      ),
+                      'Часы',
+                      textAlign: TextAlign.right,
+                      style: headerStyle,
                     ),
                   ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(d.lastOut == null ? '–' : Fmt.time(d.lastOut), style: AppText.number.copyWith(fontSize: 14)),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(_hours(d.hours), textAlign: TextAlign.right, style: AppText.number.copyWith(fontSize: 14)),
-                  ),
-                ]),
+                ],
               ),
-        ]),
+            ),
+            if (rows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'В этом месяце отметок нет',
+                  style: AppText.body.copyWith(color: AppColors.ink3),
+                ),
+              )
+            else
+              for (final (i, d) in rows.take(math.min(rows.length, 31)).indexed)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 13,
+                  ),
+                  decoration: BoxDecoration(
+                    border: i == 0
+                        ? null
+                        : const Border(top: BorderSide(color: AppColors.line)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          _dayLabel(d.date),
+                          style: AppText.label.copyWith(color: AppColors.ink),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          d.firstIn == null
+                              ? _markLabel(d.mark)
+                              : Fmt.time(d.firstIn),
+                          style: AppText.number.copyWith(
+                            fontSize: 14,
+                            color: d.mark == DayMark.late
+                                ? AppColors.amber
+                                : d.firstIn == null
+                                ? AppColors.ink3
+                                : AppColors.ink,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          d.lastOut == null ? '–' : Fmt.time(d.lastOut),
+                          style: AppText.number.copyWith(fontSize: 14),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          _hours(d.hours),
+                          textAlign: TextAlign.right,
+                          style: AppText.number.copyWith(fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+          ],
+        ),
       ),
     );
   }
 
   static const _weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-  String _dayLabel(DateTime d) => '${_weekdays[d.weekday - 1]}, ${d.day} ${Fmt.dayMonth(d).split(' ').skip(1).join(' ')}';
+  String _dayLabel(DateTime d) =>
+      '${_weekdays[d.weekday - 1]}, ${d.day} ${Fmt.dayMonth(d).split(' ').skip(1).join(' ')}';
 
   String _markLabel(DayMark m) => switch (m) {
-        DayMark.absent => 'Прогул',
-        DayMark.leave => 'Отпуск',
-        _ => '–',
-      };
+    DayMark.absent => 'Прогул',
+    DayMark.leave => 'Отпуск',
+    _ => '–',
+  };
 }
 
 /// Hosts a reporting panel (табель, статистика, баллы) with the data it needs.
 class _PanelPage extends StatefulWidget {
-  const _PanelPage({required this.title, required this.sheets, required this.builder});
+  const _PanelPage({
+    required this.title,
+    required this.sheets,
+    required this.builder,
+  });
 
   final String title;
   final List<MonthSheet> sheets;
-  final Widget Function(List<MonthSheet> sheets, List<TaskItem> tasks, List<ChecklistRun> runs) builder;
+  final Widget Function(
+    List<MonthSheet> sheets,
+    List<TaskItem> tasks,
+    List<ChecklistRun> runs,
+  )
+  builder;
 
   @override
   State<_PanelPage> createState() => _PanelPageState();
@@ -595,7 +835,11 @@ class _PanelPageState extends State<_PanelPage> {
     final now = DateTime.now();
     final r = await Future.wait<Object>([
       Tasks.list().catchError((_) => <TaskItem>[]),
-      Checklists.runs(from: DateTime(now.year, 1, 1), to: now, user: Session.instance.userId).catchError((_) => <ChecklistRun>[]),
+      Checklists.runs(
+        from: DateTime(now.year, 1, 1),
+        to: now,
+        user: Session.instance.userId,
+      ).catchError((_) => <ChecklistRun>[]),
     ]);
     if (mounted) {
       setState(() {
