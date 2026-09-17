@@ -37,8 +37,8 @@ abstract final class AppColors {
   static const amberSoft = Color(0xFFFDF0E1);
   static const warn = Color(0xFFE9B949);
   static const warnSoft = Color(0xFFFDF6E3);
-  static const plum = Color(0xFF7B5CD6);
-  static const plumSoft = Color(0xFFF1ECFC);
+  static const plum = blue;
+  static const plumSoft = blueSoft;
 
   static const chip = Color(0xFFEAF0F7);
   static const chipDot = Color(0xFFC8D3E0);
@@ -132,9 +132,7 @@ abstract final class AppRadius {
 
 /// The one soft shadow used for cards; the nav pill and clock button use [AppShadow.float].
 abstract final class AppShadow {
-  static const card = [
-    BoxShadow(color: Color(0x0A122033), blurRadius: 8, offset: Offset(0, 2)),
-  ];
+  static const card = <BoxShadow>[];
   static const float = [
     BoxShadow(color: Color(0x1A122033), blurRadius: 16, offset: Offset(0, 6)),
   ];

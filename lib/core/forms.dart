@@ -23,17 +23,33 @@ class FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, left: 2),
-      child: Text.rich(TextSpan(
-        text: text.toUpperCase(),
-        style: AppText.caption.copyWith(letterSpacing: 0.3, color: AppColors.ink3),
-        children: [if (required) const TextSpan(text: ' *', style: TextStyle(color: AppColors.red))],
-      )),
+      child: Text.rich(
+        TextSpan(
+          text: text,
+          style: AppText.label.copyWith(
+            fontWeight: FontWeight.w500,
+            color: AppColors.ink2,
+          ),
+          children: [
+            if (required)
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(color: AppColors.red),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
 
 class _FieldBox extends StatelessWidget {
-  const _FieldBox({required this.child, this.onTap, this.enabled = true, this.semanticLabel});
+  const _FieldBox({
+    required this.child,
+    this.onTap,
+    this.enabled = true,
+    this.semanticLabel,
+  });
 
   final Widget child;
   final VoidCallback? onTap;
@@ -62,9 +78,9 @@ class _FieldBox extends StatelessWidget {
 
 InputDecoration fieldDecoration({String? hint, Widget? suffix}) {
   OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.field),
-        borderSide: BorderSide(color: c, width: w),
-      );
+    borderRadius: BorderRadius.circular(AppRadius.field),
+    borderSide: BorderSide(color: c, width: w),
+  );
   return InputDecoration(
     hintText: hint,
     hintStyle: AppText.body.copyWith(color: AppColors.ink3),
@@ -116,29 +132,37 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      FieldLabel(label, required: required),
-      TextField(
-        controller: controller,
-        enabled: enabled,
-        obscureText: obscure,
-        autofocus: autofocus,
-        maxLines: obscure ? 1 : maxLines,
-        minLines: 1,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
-        autofillHints: autofillHints,
-        onChanged: onChanged,
-        onSubmitted: onSubmitted,
-        style: AppText.body,
-        cursorColor: AppColors.violet,
-        decoration: fieldDecoration(hint: hint, suffix: suffix),
-      ),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FieldLabel(label, required: required),
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          obscureText: obscure,
+          autofocus: autofocus,
+          maxLines: obscure ? 1 : maxLines,
+          minLines: 1,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          autofillHints: autofillHints,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          style: AppText.body,
+          cursorColor: AppColors.violet,
+          decoration: fieldDecoration(hint: hint, suffix: suffix),
+        ),
+      ],
+    );
   }
 }
 
-Future<DateTime?> pickDate(BuildContext context, {DateTime? initial, DateTime? minimum, DateTime? maximum}) {
+Future<DateTime?> pickDate(
+  BuildContext context, {
+  DateTime? initial,
+  DateTime? minimum,
+  DateTime? maximum,
+}) {
   final min = minimum == null ? null : Fmt.dateOnly(minimum);
   final max = maximum == null ? null : Fmt.dateOnly(maximum);
   var temp = Fmt.dateOnly(initial ?? DateTime.now());
@@ -154,29 +178,39 @@ Future<DateTime?> pickDate(BuildContext context, {DateTime? initial, DateTime? m
       ),
       child: SafeArea(
         top: false,
-        child: Column(children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(children: [
-              CupertinoButton(onPressed: () => Navigator.pop(c), child: const Text('Отмена')),
-              const Spacer(),
-              CupertinoButton(
-                onPressed: () => Navigator.pop(c, temp),
-                child: const Text('Готово', style: TextStyle(fontWeight: FontWeight.w600)),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(c),
+                    child: const Text('Отмена'),
+                  ),
+                  const Spacer(),
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(c, temp),
+                    child: const Text(
+                      'Готово',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          ),
-          Expanded(
-            child: CupertinoDatePicker(
-              mode: CupertinoDatePickerMode.date,
-              initialDateTime: temp,
-              minimumDate: min,
-              maximumDate: max,
-              dateOrder: DatePickerDateOrder.dmy,
-              onDateTimeChanged: (d) => temp = d,
             ),
-          ),
-        ]),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: temp,
+                minimumDate: min,
+                maximumDate: max,
+                dateOrder: DatePickerDateOrder.dmy,
+                onDateTimeChanged: (d) => temp = d,
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -208,35 +242,55 @@ class DateInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      FieldLabel(label, required: required),
-      _FieldBox(
-        enabled: enabled,
-        semanticLabel: label,
-        onTap: () async {
-          FocusScope.of(context).unfocus();
-          final d = await pickDate(context, initial: value, minimum: minimum, maximum: maximum);
-          if (d != null) onChanged(d);
-        },
-        child: Row(children: [
-          Expanded(
-            child: Text(
-              value == null ? placeholder : Fmt.long(value),
-              style: AppText.body.copyWith(color: value == null ? AppColors.ink3 : AppColors.ink),
-            ),
-          ),
-          if (clearable && value != null && enabled)
-            GestureDetector(
-              onTap: () => onChanged(null),
-              child: const Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Icon(CupertinoIcons.xmark_circle_fill, size: 20, color: AppColors.ink4),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FieldLabel(label, required: required),
+        _FieldBox(
+          enabled: enabled,
+          semanticLabel: label,
+          onTap: () async {
+            FocusScope.of(context).unfocus();
+            final d = await pickDate(
+              context,
+              initial: value,
+              minimum: minimum,
+              maximum: maximum,
+            );
+            if (d != null) onChanged(d);
+          },
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value == null ? placeholder : Fmt.long(value),
+                  style: AppText.body.copyWith(
+                    color: value == null ? AppColors.ink3 : AppColors.ink,
+                  ),
+                ),
               ),
-            ),
-          const Icon(CupertinoIcons.calendar, size: 20, color: AppColors.violet),
-        ]),
-      ),
-    ]);
+              if (clearable && value != null && enabled)
+                GestureDetector(
+                  onTap: () => onChanged(null),
+                  child: const Padding(
+                    padding: EdgeInsets.only(right: 10),
+                    child: Icon(
+                      CupertinoIcons.xmark_circle_fill,
+                      size: 20,
+                      color: AppColors.ink4,
+                    ),
+                  ),
+                ),
+              const Icon(
+                CupertinoIcons.calendar,
+                size: 20,
+                color: AppColors.violet,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -266,32 +320,56 @@ class SelectInput extends StatelessWidget {
   Widget build(BuildContext context) {
     String? display;
     if (value != null && value!.isNotEmpty) {
-      display = options.where((o) => o.value == value).map((o) => o.label).firstOrNull ?? value;
+      display =
+          options
+              .where((o) => o.value == value)
+              .map((o) => o.label)
+              .firstOrNull ??
+          value;
     }
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      FieldLabel(label, required: required),
-      _FieldBox(
-        enabled: enabled && !loading,
-        semanticLabel: label,
-        onTap: () async {
-          FocusScope.of(context).unfocus();
-          final picked = await showSelectSheet(context, title: label, options: options, selected: value);
-          if (picked != null) onChanged(picked);
-        },
-        child: Row(children: [
-          Expanded(
-            child: Text(
-              display ?? (options.isEmpty && !loading ? 'Нет доступных вариантов' : placeholder),
-              style: AppText.body.copyWith(color: display == null ? AppColors.ink3 : AppColors.ink),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FieldLabel(label, required: required),
+        _FieldBox(
+          enabled: enabled && !loading,
+          semanticLabel: label,
+          onTap: () async {
+            FocusScope.of(context).unfocus();
+            final picked = await showSelectSheet(
+              context,
+              title: label,
+              options: options,
+              selected: value,
+            );
+            if (picked != null) onChanged(picked);
+          },
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  display ??
+                      (options.isEmpty && !loading
+                          ? 'Нет доступных вариантов'
+                          : placeholder),
+                  style: AppText.body.copyWith(
+                    color: display == null ? AppColors.ink3 : AppColors.ink,
+                  ),
+                ),
+              ),
+              if (loading)
+                const CupertinoActivityIndicator()
+              else
+                const Icon(
+                  CupertinoIcons.chevron_down,
+                  size: 18,
+                  color: AppColors.ink3,
+                ),
+            ],
           ),
-          if (loading)
-            const CupertinoActivityIndicator()
-          else
-            const Icon(CupertinoIcons.chevron_down, size: 18, color: AppColors.ink3),
-        ]),
-      ),
-    ]);
+        ),
+      ],
+    );
   }
 }
 
@@ -305,13 +383,20 @@ Future<String?> showSelectSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-    builder: (_) => _SelectSheet(title: title, options: options, selected: selected),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+    ),
+    builder: (_) =>
+        _SelectSheet(title: title, options: options, selected: selected),
   );
 }
 
 class _SelectSheet extends StatefulWidget {
-  const _SelectSheet({required this.title, required this.options, this.selected});
+  const _SelectSheet({
+    required this.title,
+    required this.options,
+    this.selected,
+  });
 
   final String title;
   final List<SelectOption> options;
@@ -328,7 +413,12 @@ class _SelectSheetState extends State<_SelectSheet> {
   Widget build(BuildContext context) {
     final q = _query.toLowerCase();
     final items = widget.options
-        .where((o) => q.isEmpty || o.label.toLowerCase().contains(q) || (o.subtitle ?? '').toLowerCase().contains(q))
+        .where(
+          (o) =>
+              q.isEmpty ||
+              o.label.toLowerCase().contains(q) ||
+              (o.subtitle ?? '').toLowerCase().contains(q),
+        )
         .toList();
     final media = MediaQuery.of(context);
     return Padding(
@@ -337,63 +427,92 @@ class _SelectSheetState extends State<_SelectSheet> {
         constraints: BoxConstraints(maxHeight: media.size.height * 0.78),
         child: SafeArea(
           top: false,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const SizedBox(height: 10),
-            Container(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
                 width: 38,
                 height: 5,
-                decoration: BoxDecoration(color: AppColors.chip, borderRadius: BorderRadius.circular(3))),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Align(alignment: Alignment.centerLeft, child: Text(widget.title, style: AppText.heading)),
-            ),
-            if (widget.options.length > 7)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                child: CupertinoSearchTextField(
-                  placeholder: 'Поиск',
-                  onChanged: (v) => setState(() => _query = v),
+                decoration: BoxDecoration(
+                  color: AppColors.chip,
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
-            if (items.isEmpty)
               Padding(
-                padding: const EdgeInsets.all(28),
-                child: Text('Ничего не найдено', style: AppText.label.copyWith(color: AppColors.ink3)),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(widget.title, style: AppText.heading),
+                ),
               ),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (_, i) {
-                  final o = items[i];
-                  final isSelected = o.value == widget.selected;
-                  return Pressable(
-                    onTap: () => Navigator.pop(context, o.value),
-                    scale: 0.99,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      child: Row(children: [
-                        Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(o.label,
-                                style: AppText.bodyStrong
-                                    .copyWith(color: isSelected ? AppColors.violet : AppColors.ink)),
-                            if (o.subtitle != null && o.subtitle!.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(o.subtitle!, style: AppText.caption),
-                            ],
-                          ]),
+              if (widget.options.length > 7)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  child: CupertinoSearchTextField(
+                    placeholder: 'Поиск',
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
+                ),
+              if (items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Text(
+                    'Ничего не найдено',
+                    style: AppText.label.copyWith(color: AppColors.ink3),
+                  ),
+                ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final o = items[i];
+                    final isSelected = o.value == widget.selected;
+                    return Pressable(
+                      onTap: () => Navigator.pop(context, o.value),
+                      scale: 0.99,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    o.label,
+                                    style: AppText.bodyStrong.copyWith(
+                                      color: isSelected
+                                          ? AppColors.violet
+                                          : AppColors.ink,
+                                    ),
+                                  ),
+                                  if (o.subtitle != null &&
+                                      o.subtitle!.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(o.subtitle!, style: AppText.caption),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                CupertinoIcons.checkmark_alt,
+                                color: AppColors.violet,
+                                size: 22,
+                              ),
+                          ],
                         ),
-                        if (isSelected) const Icon(CupertinoIcons.checkmark_alt, color: AppColors.violet, size: 22),
-                      ]),
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ),
       ),
     );
@@ -422,19 +541,27 @@ class SwitchInput extends StatelessWidget {
       enabled: enabled,
       onTap: () => onChanged(!value),
       semanticLabel: label,
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: AppText.bodyStrong),
-            if (subtitle != null) ...[const SizedBox(height: 2), Text(subtitle!, style: AppText.caption)],
-          ]),
-        ),
-        CupertinoSwitch(
-          value: value,
-          activeTrackColor: AppColors.violet,
-          onChanged: enabled ? onChanged : null,
-        ),
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppText.bodyStrong),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle!, style: AppText.caption),
+                ],
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: value,
+            activeTrackColor: AppColors.violet,
+            onChanged: enabled ? onChanged : null,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -474,20 +601,26 @@ class FormScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget body;
     if (loading) {
-      body = PageScroll(children: [
-        for (var i = 0; i < 5; i++) ...[
-          const Skeleton(height: 14, width: 120),
-          const SizedBox(height: 10),
-          const Skeleton(height: 56, radius: AppRadius.field),
-          const SizedBox(height: 20),
+      body = PageScroll(
+        children: [
+          for (var i = 0; i < 5; i++) ...[
+            const Skeleton(height: 14, width: 120),
+            const SizedBox(height: 10),
+            const Skeleton(height: 56, radius: AppRadius.field),
+            const SizedBox(height: 20),
+          ],
         ],
-      ]);
+      );
     } else if (loadError != null) {
-      body = PageScroll(children: [ErrorState(error: loadError!, onRetry: onRetry ?? () {})]);
+      body = PageScroll(
+        children: [ErrorState(error: loadError!, onRetry: onRetry ?? () {})],
+      );
     } else {
       body = GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: PageScroll(children: [...children, if (error != null) InlineError(error!)]),
+        child: PageScroll(
+          children: [...children, if (error != null) InlineError(error!)],
+        ),
       );
     }
     return AppPage(

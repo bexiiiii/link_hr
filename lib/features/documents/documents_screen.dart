@@ -17,9 +17,27 @@ import '../../data/notices.dart';
 import '../analysis/analysis_screen.dart';
 
 enum KzDoc {
-  contract('KZ Labor Contract', 'Договоры', 'Трудовой договор', CupertinoIcons.doc_text, Tone.violet),
-  order('KZ Personnel Order', 'Приказы', 'Кадровый приказ', CupertinoIcons.doc_checkmark, Tone.green),
-  timesheet('KZ Timesheet', 'Табели', 'Табель Т-13', CupertinoIcons.table, Tone.dark);
+  contract(
+    'KZ Labor Contract',
+    'Договоры',
+    'Трудовой договор',
+    CupertinoIcons.doc_text,
+    Tone.violet,
+  ),
+  order(
+    'KZ Personnel Order',
+    'Приказы',
+    'Кадровый приказ',
+    CupertinoIcons.doc_checkmark,
+    Tone.green,
+  ),
+  timesheet(
+    'KZ Timesheet',
+    'Табели',
+    'Табель Т-13',
+    CupertinoIcons.table,
+    Tone.dark,
+  );
 
   const KzDoc(this.doctype, this.plural, this.singular, this.icon, this.tone);
 
@@ -32,10 +50,42 @@ enum KzDoc {
   bool get creatable => this != KzDoc.timesheet;
 
   List<String> get fields => switch (this) {
-        KzDoc.contract => ['name', 'title', 'contract_number', 'contract_date', 'status', 'designation', 'employee', 'employee_name', 'docstatus', 'modified'],
-        KzDoc.order => ['name', 'title', 'order_type', 'order_number', 'order_date', 'status', 'employee', 'employee_name', 'docstatus', 'modified'],
-        KzDoc.timesheet => ['name', 'title', 'year', 'month', 'status', 'department', 'total_hours', 'docstatus', 'modified'],
-      };
+    KzDoc.contract => [
+      'name',
+      'title',
+      'contract_number',
+      'contract_date',
+      'status',
+      'designation',
+      'employee',
+      'employee_name',
+      'docstatus',
+      'modified',
+    ],
+    KzDoc.order => [
+      'name',
+      'title',
+      'order_type',
+      'order_number',
+      'order_date',
+      'status',
+      'employee',
+      'employee_name',
+      'docstatus',
+      'modified',
+    ],
+    KzDoc.timesheet => [
+      'name',
+      'title',
+      'year',
+      'month',
+      'status',
+      'department',
+      'total_hours',
+      'docstatus',
+      'modified',
+    ],
+  };
 
   Future<List<Json>> fetch({required bool all}) {
     final me = Session.instance.employeeId;
@@ -45,29 +95,31 @@ enum KzDoc {
       filters: all
           ? null
           : this == KzDoc.timesheet
-              ? [
-                  ['KZ Timesheet Detail', 'employee', '=', me],
-                ]
-              : {'employee': me},
+          ? [
+              ['KZ Timesheet Detail', 'employee', '=', me],
+            ]
+          : {'employee': me},
       orderBy: 'modified desc',
       limit: 300,
     );
   }
 
   String title(Json d) => switch (this) {
-        KzDoc.contract => 'Договор № ${d['contract_number'] ?? d['name']}',
-        KzDoc.order => (d['title'] ?? d['order_type'] ?? d['name']).toString(),
-        KzDoc.timesheet =>
-          'Табель за ${Fmt.monthYear(DateTime(Fmt.number(d['year']).toInt(), Fmt.number(d['month']).toInt().clamp(1, 12))).toLowerCase()}',
-      };
+    KzDoc.contract => 'Договор № ${d['contract_number'] ?? d['name']}',
+    KzDoc.order => (d['title'] ?? d['order_type'] ?? d['name']).toString(),
+    KzDoc.timesheet =>
+      'Табель за ${Fmt.monthYear(DateTime(Fmt.number(d['year']).toInt(), Fmt.number(d['month']).toInt().clamp(1, 12))).toLowerCase()}',
+  };
 
   String subtitle(Json d) => switch (this) {
-        KzDoc.contract || KzDoc.order =>
-          [d['employee_name'] ?? '', d['designation'] ?? '', Fmt.date(d['contract_date'] ?? d['order_date'])]
-              .where((s) => '$s'.isNotEmpty)
-              .join(' · '),
-        KzDoc.timesheet => '${Fmt.decimal(d['total_hours'])} ч · ${d['department'] ?? ''}',
-      };
+    KzDoc.contract || KzDoc.order => [
+      d['employee_name'] ?? '',
+      d['designation'] ?? '',
+      Fmt.date(d['contract_date'] ?? d['order_date']),
+    ].where((s) => '$s'.isNotEmpty).join(' · '),
+    KzDoc.timesheet =>
+      '${Fmt.decimal(d['total_hours'])} ч · ${d['department'] ?? ''}',
+  };
 }
 
 enum DocState {
@@ -93,7 +145,11 @@ enum DocState {
       'На согласовании' => DocState.waiting,
       'Действует' || 'Подписан' || 'Утвержден' => DocState.ready,
       'Расторгнут' || 'Истек' || 'Отменен' || 'Закрыт' => DocState.closed,
-      _ => switch (Fmt.number(d['docstatus']).toInt()) { 1 => DocState.ready, 2 => DocState.closed, _ => DocState.draft },
+      _ => switch (Fmt.number(d['docstatus']).toInt()) {
+        1 => DocState.ready,
+        2 => DocState.closed,
+        _ => DocState.draft,
+      },
     };
   }
 }
@@ -134,11 +190,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     Object? error;
     await Future.wait([
       for (final k in KzDoc.values)
-        k.fetch(all: all).then((rows) => _data[k] = rows).catchError((Object e) {
+        k.fetch(all: all).then((rows) => _data[k] = rows).catchError((
+          Object e,
+        ) {
           error = e;
           return <Json>[];
         }),
-      Notices.signRequests().then((r) => _requests = r).catchError((_) => <SignRequest>[]),
+      Notices.signRequests()
+          .then((r) => _requests = r)
+          .catchError((_) => <SignRequest>[]),
     ]);
     if (mounted) {
       setState(() {
@@ -149,11 +209,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Future<void> _create() async {
-    final picked = await pickAction(context, title: 'Новый документ', actions: [
-      for (final k in KzDoc.values.where((k) => k.creatable)) SheetAction(k.name, k.singular),
-    ]);
+    final picked = await pickAction(
+      context,
+      title: 'Новый документ',
+      actions: [
+        for (final k in KzDoc.values.where((k) => k.creatable))
+          SheetAction(k.name, k.singular),
+      ],
+    );
     if (picked == null || !mounted) return;
-    await pushPage(context, DocumentFormScreen(kind: KzDoc.values.byName(picked)));
+    await pushPage(
+      context,
+      DocumentFormScreen(kind: KzDoc.values.byName(picked)),
+    );
   }
 
   @override
@@ -163,7 +231,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       for (final k in KzDoc.values)
         if (_type == null || _type == k)
           for (final d in _data[k] ?? const <Json>[])
-            if (q.isEmpty || '${k.title(d)} ${k.subtitle(d)} ${d['name']}'.toLowerCase().contains(q))
+            if (q.isEmpty ||
+                '${k.title(d)} ${k.subtitle(d)} ${d['name']}'
+                    .toLowerCase()
+                    .contains(q))
               (k, d, DocState.of(d, _requests)),
     ].where((r) => _state == null || r.$3 == _state).toList();
     final counts = {for (final s in DocState.values) s: 0};
@@ -175,75 +246,109 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
 
     return AppPage(
-      header: ScreenHeader(title: 'Документы', showBack: widget.showBack, actions: [
-        if (isManager()) CircleButton(icon: CupertinoIcons.add, label: 'Новый документ', onTap: _create),
-      ]),
-      body: PageScroll(onRefresh: _load, children: [
-        CupertinoSearchTextField(
-          placeholder: 'Поиск документа или сотрудника',
-          backgroundColor: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          onChanged: (v) => setState(() => _query = v),
-        ),
-        const SizedBox(height: 12),
-        Row(children: [
-          DropdownPill(
-            label: _type?.plural ?? 'Все типы',
-            onTap: () async {
-              final picked = await pickAction(context, title: 'Тип документа', actions: [
-                const SheetAction('all', 'Все типы'),
-                for (final k in KzDoc.values) SheetAction(k.name, k.plural),
-              ]);
-              if (picked != null) setState(() => _type = picked == 'all' ? null : KzDoc.values.byName(picked));
-            },
+      header: ScreenHeader(
+        title: 'Документы',
+        showBack: widget.showBack,
+        actions: [
+          if (isManager())
+            CircleButton(
+              icon: CupertinoIcons.add,
+              label: 'Новый документ',
+              onTap: _create,
+            ),
+        ],
+      ),
+      body: PageScroll(
+        onRefresh: _load,
+        children: [
+          CupertinoSearchTextField(
+            placeholder: 'Поиск документа или сотрудника',
+            backgroundColor: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            onChanged: (v) => setState(() => _query = v),
           ),
-        ]),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 34,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
+          const SizedBox(height: 12),
+          Row(
             children: [
-              for (final s in DocState.values)
-                if (counts[s]! > 0 || s == _state) ...[
-                  TagChip(
-                    label: '${s.label} · ${counts[s]}',
-                    icon: s.icon,
-                    tone: s.tone,
-                    selected: _state == s,
-                    onTap: () => setState(() => _state = _state == s ? null : s),
-                  ),
-                  const SizedBox(width: 8),
-                ],
+              DropdownPill(
+                label: _type?.plural ?? 'Все типы',
+                onTap: () async {
+                  final picked = await pickAction(
+                    context,
+                    title: 'Тип документа',
+                    actions: [
+                      const SheetAction('all', 'Все типы'),
+                      for (final k in KzDoc.values)
+                        SheetAction(k.name, k.plural),
+                    ],
+                  );
+                  if (picked != null)
+                    setState(
+                      () => _type = picked == 'all'
+                          ? null
+                          : KzDoc.values.byName(picked),
+                    );
+                },
+              ),
             ],
           ),
-        ),
-        GroupLabel(isManager() ? 'Документы сотрудников' : 'Мои документы'),
-        if (_loading)
-          const Skeleton(height: 260, radius: AppRadius.card)
-        else if (_error != null)
-          ErrorState(error: _error!, onRetry: _load)
-        else if (rows.isEmpty)
-          EmptyState(
-            icon: CupertinoIcons.doc_text_search,
-            title: q.isNotEmpty || _state != null || _type != null ? 'Ничего не найдено' : 'Документов пока нет',
-            message: q.isNotEmpty || _state != null || _type != null
-                ? 'Измените поиск или сбросьте фильтры.'
-                : 'Трудовые договоры, приказы и табели Т-13 появятся здесь после оформления отделом кадров.',
-            actionLabel: isManager() && q.isEmpty && _state == null ? 'Создать документ' : null,
-            onAction: _create,
-          )
-        else
-          SurfaceCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-            child: Divided(children: [
-              for (final (i, (k, d, s)) in rows.indexed)
-                Reveal(index: i.clamp(0, 12), child: _DocRow(kind: k, data: d, state: s)),
-            ]),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 34,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                for (final s in DocState.values)
+                  if (counts[s]! > 0 || s == _state) ...[
+                    TagChip(
+                      label: '${s.label} · ${counts[s]}',
+                      icon: s.icon,
+                      tone: s.tone,
+                      selected: _state == s,
+                      onTap: () =>
+                          setState(() => _state = _state == s ? null : s),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+              ],
+            ),
           ),
-      ]),
+          GroupLabel(isManager() ? 'Документы сотрудников' : 'Мои документы'),
+          if (_loading)
+            const Skeleton(height: 260, radius: AppRadius.card)
+          else if (_error != null)
+            ErrorState(error: _error!, onRetry: _load)
+          else if (rows.isEmpty)
+            EmptyState(
+              icon: CupertinoIcons.doc_text_search,
+              title: q.isNotEmpty || _state != null || _type != null
+                  ? 'Ничего не найдено'
+                  : 'Документов пока нет',
+              message: q.isNotEmpty || _state != null || _type != null
+                  ? 'Измените поиск или сбросьте фильтры.'
+                  : 'Трудовые договоры, приказы и табели Т-13 появятся здесь после оформления отделом кадров.',
+              actionLabel: isManager() && q.isEmpty && _state == null
+                  ? 'Создать документ'
+                  : null,
+              onAction: _create,
+            )
+          else
+            SurfaceCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              child: Divided(
+                children: [
+                  for (final (i, (k, d, s)) in rows.indexed)
+                    Reveal(
+                      index: i.clamp(0, 12),
+                      child: _DocRow(kind: k, data: d, state: s),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -259,33 +364,69 @@ class _DocRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = state.tone == Tone.neutral ? AppColors.ink2 : state.tone.ink;
     return Pressable(
-      onTap: () => pushPage(context, DocumentDetailScreen(kind: kind, name: data['name'].toString())),
+      onTap: () => pushPage(
+        context,
+        DocumentDetailScreen(kind: kind, name: data['name'].toString()),
+      ),
       scale: 0.99,
       semanticLabel: '${kind.title(data)}, ${state.label}',
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Icon(CupertinoIcons.doc_text_fill, color: Color(0xFF3D7BF7), size: 34),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(kind.title(data), maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.bodyStrong),
-              if (kind.subtitle(data).isNotEmpty)
-                Text(kind.subtitle(data), maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption),
-              Text('Тип: ${kind.singular}', style: AppText.caption),
-            ]),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(color: state.tone.soft, borderRadius: BorderRadius.circular(8)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(state.icon, size: 13, color: color),
-              const SizedBox(width: 4),
-              Text(state.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
-            ]),
-          ),
-        ]),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              CupertinoIcons.doc_text_fill,
+              color: AppColors.blue,
+              size: 34,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    kind.title(data),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bodyStrong,
+                  ),
+                  if (kind.subtitle(data).isNotEmpty)
+                    Text(
+                      kind.subtitle(data),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.caption,
+                    ),
+                  Text('Тип: ${kind.singular}', style: AppText.caption),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: state.tone.soft,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(state.icon, size: 13, color: color),
+                  const SizedBox(width: 4),
+                  Text(
+                    state.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -293,7 +434,11 @@ class _DocRow extends StatelessWidget {
 
 /// PDF preview of the print format, plus the signature flow.
 class DocumentDetailScreen extends StatefulWidget {
-  const DocumentDetailScreen({super.key, required this.kind, required this.name});
+  const DocumentDetailScreen({
+    super.key,
+    required this.kind,
+    required this.name,
+  });
 
   final KzDoc kind;
   final String name;
@@ -320,14 +465,19 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Future<void> _load() async {
     try {
       final doc = await Api.instance.doc(widget.kind.doctype, widget.name);
-      final requests = (await Notices.signRequests().catchError((_) => <SignRequest>[]))
-          .where((r) => r.docname == widget.name)
-          .toList();
+      final requests = (await Notices.signRequests().catchError(
+        (_) => <SignRequest>[],
+      )).where((r) => r.docname == widget.name).toList();
       String? user;
       final emp = doc['employee']?.toString();
       if (emp != null && emp.isNotEmpty) {
         final rows = await Api.instance
-            .list('Employee', fields: ['user_id'], filters: {'name': emp}, limit: 1)
+            .list(
+              'Employee',
+              fields: ['user_id'],
+              filters: {'name': emp},
+              limit: 1,
+            )
             .catchError((_) => <Json>[]);
         user = rows.firstOrNull?['user_id']?.toString();
       }
@@ -350,8 +500,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       _pdfError = null;
     });
     try {
-      final bytes = await Api.instance.download('/api/method/frappe.utils.print_format.download_pdf'
-          '?doctype=${Uri.encodeQueryComponent(widget.kind.doctype)}&name=${Uri.encodeQueryComponent(widget.name)}');
+      final bytes = await Api.instance.download(
+        '/api/method/frappe.utils.print_format.download_pdf'
+        '?doctype=${Uri.encodeQueryComponent(widget.kind.doctype)}&name=${Uri.encodeQueryComponent(widget.name)}',
+      );
       if (mounted) setState(() => _pdf = bytes);
     } catch (e) {
       if (mounted) setState(() => _pdfError = e);
@@ -359,10 +511,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Future<void> _send() async {
-    final ok = await confirmAction(context,
-        title: 'Отправить на подпись?',
-        message: 'Сотрудник увидит документ со статусом «Подпишите».',
-        confirmLabel: 'Отправить');
+    final ok = await confirmAction(
+      context,
+      title: 'Отправить на подпись?',
+      message: 'Сотрудник увидит документ со статусом «Подпишите».',
+      confirmLabel: 'Отправить',
+    );
     if (!ok) return;
     setState(() => _busy = true);
     try {
@@ -383,10 +537,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Future<void> _sign(SignRequest r) async {
-    final ok = await confirmAction(context,
-        title: 'Подписать документ?',
-        message: 'Подтверждаете, что ознакомились с документом и согласны с его содержанием.',
-        confirmLabel: 'Подписать');
+    final ok = await confirmAction(
+      context,
+      title: 'Подписать документ?',
+      message:
+          'Подтверждаете, что ознакомились с документом и согласны с его содержанием.',
+      confirmLabel: 'Подписать',
+    );
     if (!ok) return;
     setState(() => _busy = true);
     try {
@@ -408,15 +565,32 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final open = _requests.where((r) => !r.signed).toList();
     final toMe = open.where((r) => r.to == me).firstOrNull;
     if (toMe != null) {
-      return PrimaryButton(label: 'Подписать документ', kind: ButtonKind.green, loading: _busy, onTap: () => _sign(toMe));
+      return PrimaryButton(
+        label: 'Подписать документ',
+        kind: ButtonKind.green,
+        loading: _busy,
+        onTap: () => _sign(toMe),
+      );
     }
-    if (open.isNotEmpty) return const PrimaryButton(label: 'Ожидает подписи сотрудника', kind: ButtonKind.outline);
+    if (open.isNotEmpty)
+      return const PrimaryButton(
+        label: 'Ожидает подписи сотрудника',
+        kind: ButtonKind.outline,
+      );
     final signed = _requests.where((r) => r.signed).firstOrNull;
     if (signed != null) {
-      return PrimaryButton(label: 'Подписан ${Fmt.date(signed.modified)}', kind: ButtonKind.outline, icon: CupertinoIcons.checkmark_seal);
+      return PrimaryButton(
+        label: 'Подписан ${Fmt.date(signed.modified)}',
+        kind: ButtonKind.outline,
+        icon: CupertinoIcons.checkmark_seal,
+      );
     }
     if (isManager() && _employeeUser != null && widget.kind.creatable) {
-      return PrimaryButton(label: 'Отправить сотруднику', loading: _busy, onTap: _send);
+      return PrimaryButton(
+        label: 'Отправить сотруднику',
+        loading: _busy,
+        onTap: _send,
+      );
     }
     return null;
   }
@@ -424,21 +598,34 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return AppPage(
-      header: ScreenHeader(title: 'Детали документа', actions: [
-        CircleButton(
-          icon: CupertinoIcons.share,
-          label: 'Поделиться PDF',
-          onTap: _pdf == null
-              ? null
-              : () => SharePlus.instance.share(ShareParams(
-                    files: [XFile.fromData(_pdf!, mimeType: 'application/pdf', name: '${widget.name}.pdf')],
-                    fileNameOverrides: ['${widget.name}.pdf'],
-                  )),
-        ),
-      ]),
+      header: ScreenHeader(
+        title: 'Детали документа',
+        actions: [
+          CircleButton(
+            icon: CupertinoIcons.share,
+            label: 'Поделиться PDF',
+            onTap: _pdf == null
+                ? null
+                : () => SharePlus.instance.share(
+                    ShareParams(
+                      files: [
+                        XFile.fromData(
+                          _pdf!,
+                          mimeType: 'application/pdf',
+                          name: '${widget.name}.pdf',
+                        ),
+                      ],
+                      fileNameOverrides: ['${widget.name}.pdf'],
+                    ),
+                  ),
+          ),
+        ],
+      ),
       bottom: _bottom(),
       body: _error != null
-          ? PageScroll(children: [ErrorState(error: _error!, onRetry: _load)])
+          ? PageScroll(
+              children: [ErrorState(error: _error!, onRetry: _load)],
+            )
           : Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
               child: ClipRRect(
@@ -449,22 +636,36 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       ? Center(
                           child: Padding(
                             padding: const EdgeInsets.all(20),
-                            child: ErrorState(error: _pdfError!, onRetry: _loadPdf),
+                            child: ErrorState(
+                              error: _pdfError!,
+                              onRetry: _loadPdf,
+                            ),
                           ),
                         )
                       : _pdf == null
-                          ? Center(
-                              child: Container(
-                                padding: const EdgeInsets.all(28),
-                                decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(12)),
-                                child: const Column(mainAxisSize: MainAxisSize.min, children: [
-                                  CupertinoActivityIndicator(radius: 14),
-                                  SizedBox(height: 12),
-                                  Text('Подождите, готовим документ', style: AppText.label),
-                                ]),
-                              ),
-                            )
-                          : Reveal(child: PdfViewer.data(_pdf!, sourceName: widget.name)),
+                      ? Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(28),
+                            decoration: BoxDecoration(
+                              color: AppColors.bg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CupertinoActivityIndicator(radius: 14),
+                                SizedBox(height: 12),
+                                Text(
+                                  'Подождите, готовим документ',
+                                  style: AppText.label,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : Reveal(
+                          child: PdfViewer.data(_pdf!, sourceName: widget.name),
+                        ),
                 ),
               ),
             ),
@@ -484,8 +685,26 @@ class DocumentFormScreen extends StatefulWidget {
 }
 
 class _DocumentFormScreenState extends State<DocumentFormScreen> {
-  static const _types = {'Data', 'Int', 'Float', 'Currency', 'Small Text', 'Text', 'Long Text', 'Date', 'Select', 'Check', 'Link', 'Percent'};
-  static const _skip = {'amended_from', 'naming_series', 'enbek_sync_status', 'registration_enbek_id'};
+  static const _types = {
+    'Data',
+    'Int',
+    'Float',
+    'Currency',
+    'Small Text',
+    'Text',
+    'Long Text',
+    'Date',
+    'Select',
+    'Check',
+    'Link',
+    'Percent',
+  };
+  static const _skip = {
+    'amended_from',
+    'naming_series',
+    'enbek_sync_status',
+    'registration_enbek_id',
+  };
 
   List<Json> _fields = [];
   final Map<String, dynamic> _values = {};
@@ -518,39 +737,70 @@ class _DocumentFormScreenState extends State<DocumentFormScreen> {
       _loadError = null;
     });
     try {
-      final raw = await Api.instance.call('hrms.api.get_doctype_fields', {'doctype': widget.kind.doctype});
+      final raw = await Api.instance.call('hrms.api.get_doctype_fields', {
+        'doctype': widget.kind.doctype,
+      });
       final fields = (raw as List)
           .map((e) => (e as Map).cast<String, dynamic>())
-          .where((f) =>
-              _types.contains(f['fieldtype']) &&
-              !_skip.contains(f['fieldname']) &&
-              !_truthy(f['hidden']) &&
-              !_truthy(f['read_only']) &&
-              (f['fetch_from'] ?? '').toString().isEmpty)
+          .where(
+            (f) =>
+                _types.contains(f['fieldtype']) &&
+                !_skip.contains(f['fieldname']) &&
+                !_truthy(f['hidden']) &&
+                !_truthy(f['read_only']) &&
+                (f['fetch_from'] ?? '').toString().isEmpty,
+          )
           .toList();
-      final links = fields.where((f) => f['fieldtype'] == 'Link').map((f) => f['options'].toString()).toSet();
+      final links = fields
+          .where((f) => f['fieldtype'] == 'Link')
+          .map((f) => f['options'].toString())
+          .toSet();
       final options = <String, List<SelectOption>>{};
-      await Future.wait(links.map((dt) async {
-        final isEmployee = dt == 'Employee';
-        final rows = await Api.instance
-            .list(dt, fields: ['name', if (isEmployee) 'employee_name'], limit: 500, orderBy: 'modified desc')
-            .catchError((_) => <Json>[]);
-        options[dt] = [
-          for (final r in rows)
-            SelectOption(r['name'].toString(), isEmployee ? '${r['employee_name'] ?? r['name']}' : r['name'].toString(),
-                subtitle: isEmployee ? r['name'].toString() : null),
-        ];
-      }));
+      await Future.wait(
+        links.map((dt) async {
+          final isEmployee = dt == 'Employee';
+          final rows = await Api.instance
+              .list(
+                dt,
+                fields: ['name', if (isEmployee) 'employee_name'],
+                limit: 500,
+                orderBy: 'modified desc',
+              )
+              .catchError((_) => <Json>[]);
+          options[dt] = [
+            for (final r in rows)
+              SelectOption(
+                r['name'].toString(),
+                isEmployee
+                    ? '${r['employee_name'] ?? r['name']}'
+                    : r['name'].toString(),
+                subtitle: isEmployee ? r['name'].toString() : null,
+              ),
+          ];
+        }),
+      );
       for (final f in fields) {
         final name = f['fieldname'].toString();
         final type = f['fieldtype'];
         final def = f['default'];
         if (name == 'company') _values[name] = Session.instance.company;
-        if (type == 'Date' && name.endsWith('_date') && def == 'Today') _values[name] = DateTime.now();
+        if (type == 'Date' && name.endsWith('_date') && def == 'Today')
+          _values[name] = DateTime.now();
         if (type == 'Check') _values[name] = _truthy(def);
         if (type == 'Select' && def != null) _values[name] = def.toString();
-        if (const {'Data', 'Int', 'Float', 'Currency', 'Small Text', 'Text', 'Long Text', 'Percent'}.contains(type)) {
-          _text[name] = TextEditingController(text: def is String && !def.startsWith('eval') ? def : '');
+        if (const {
+          'Data',
+          'Int',
+          'Float',
+          'Currency',
+          'Small Text',
+          'Text',
+          'Long Text',
+          'Percent',
+        }.contains(type)) {
+          _text[name] = TextEditingController(
+            text: def is String && !def.startsWith('eval') ? def : '',
+          );
         }
       }
       if (!mounted) return;
@@ -577,7 +827,15 @@ class _DocumentFormScreenState extends State<DocumentFormScreen> {
       dynamic v;
       if (_text.containsKey(name)) {
         final s = _text[name]!.text.trim();
-        v = s.isEmpty ? null : (type == 'Int' ? int.tryParse(s) : (const {'Float', 'Currency', 'Percent'}.contains(type) ? num.tryParse(s.replaceAll(',', '.').replaceAll(' ', '')) : s));
+        v = s.isEmpty
+            ? null
+            : (type == 'Int'
+                  ? int.tryParse(s)
+                  : (const {'Float', 'Currency', 'Percent'}.contains(type)
+                        ? num.tryParse(
+                            s.replaceAll(',', '.').replaceAll(' ', ''),
+                          )
+                        : s));
       } else {
         v = _values[name];
         if (v is DateTime) v = Fmt.iso(v);
@@ -599,7 +857,12 @@ class _DocumentFormScreenState extends State<DocumentFormScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          CupertinoPageRoute(builder: (_) => DocumentDetailScreen(kind: widget.kind, name: saved['name'].toString())),
+          CupertinoPageRoute(
+            builder: (_) => DocumentDetailScreen(
+              kind: widget.kind,
+              name: saved['name'].toString(),
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -615,12 +878,33 @@ class _DocumentFormScreenState extends State<DocumentFormScreen> {
     final required = _truthy(f['reqd']);
     switch (f['fieldtype']) {
       case 'Date':
-        return DateInput(label: label, required: required, value: _values[name] as DateTime?, clearable: !required, onChanged: (d) => setState(() => _values[name] = d));
+        return DateInput(
+          label: label,
+          required: required,
+          value: _values[name] as DateTime?,
+          clearable: !required,
+          onChanged: (d) => setState(() => _values[name] = d),
+        );
       case 'Check':
-        return SwitchInput(label: label, value: _values[name] == true, onChanged: (v) => setState(() => _values[name] = v));
+        return SwitchInput(
+          label: label,
+          value: _values[name] == true,
+          onChanged: (v) => setState(() => _values[name] = v),
+        );
       case 'Select':
-        final opts = (f['options'] ?? '').toString().split('\n').where((o) => o.trim().isNotEmpty).map((o) => SelectOption(o, statusLabel(o))).toList();
-        return SelectInput(label: label, required: required, value: _values[name] as String?, options: opts, onChanged: (v) => setState(() => _values[name] = v));
+        final opts = (f['options'] ?? '')
+            .toString()
+            .split('\n')
+            .where((o) => o.trim().isNotEmpty)
+            .map((o) => SelectOption(o, statusLabel(o)))
+            .toList();
+        return SelectInput(
+          label: label,
+          required: required,
+          value: _values[name] as String?,
+          options: opts,
+          onChanged: (v) => setState(() => _values[name] = v),
+        );
       case 'Link':
         return SelectInput(
           label: label,
@@ -630,14 +914,25 @@ class _DocumentFormScreenState extends State<DocumentFormScreen> {
           onChanged: (v) => setState(() => _values[name] = v),
         );
       default:
-        final multiline = const {'Small Text', 'Text', 'Long Text'}.contains(f['fieldtype']);
-        final numeric = const {'Int', 'Float', 'Currency', 'Percent'}.contains(f['fieldtype']);
+        final multiline = const {
+          'Small Text',
+          'Text',
+          'Long Text',
+        }.contains(f['fieldtype']);
+        final numeric = const {
+          'Int',
+          'Float',
+          'Currency',
+          'Percent',
+        }.contains(f['fieldtype']);
         return AppTextField(
           label: label,
           controller: _text[name]!,
           required: required,
           maxLines: multiline ? 4 : 1,
-          keyboardType: numeric ? const TextInputType.numberWithOptions(decimal: true) : null,
+          keyboardType: numeric
+              ? const TextInputType.numberWithOptions(decimal: true)
+              : null,
         );
     }
   }
@@ -654,7 +949,10 @@ class _DocumentFormScreenState extends State<DocumentFormScreen> {
       error: _error,
       onSubmit: _submit,
       children: [
-        Text(widget.kind.singular, style: AppText.display.copyWith(fontSize: 22)),
+        Text(
+          widget.kind.singular,
+          style: AppText.display.copyWith(fontSize: 22),
+        ),
         const SizedBox(height: 18),
         for (final (i, f) in _fields.indexed) ...[
           Reveal(index: i.clamp(0, 10), child: _field(f)),

@@ -11,8 +11,9 @@ import 'theme.dart';
 Future<T?> pushPage<T>(BuildContext context, Widget page) =>
     Navigator.of(context).push<T>(CupertinoPageRoute(builder: (_) => page));
 
-String errorText(Object error) =>
-    error is ApiException ? error.message : 'Что-то пошло не так. Попробуйте ещё раз.';
+String errorText(Object error) => error is ApiException
+    ? error.message
+    : 'Что-то пошло не так. Попробуйте ещё раз.';
 
 void showToast(BuildContext context, String message, {bool error = false}) {
   final messenger = ScaffoldMessenger.maybeOf(context);
@@ -24,23 +25,38 @@ void showToast(BuildContext context, String message, {bool error = false}) {
   }
   messenger
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: error ? AppColors.red : AppColors.charcoal,
-      elevation: 0,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      duration: Duration(milliseconds: error ? 4200 : 2600),
-      content: Row(children: [
-        Icon(error ? CupertinoIcons.exclamationmark_circle_fill : CupertinoIcons.checkmark_circle_fill,
-            color: Colors.white, size: 20),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(message,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white)),
+    ..showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: error ? AppColors.red : AppColors.charcoal,
+        elevation: 0,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: Duration(milliseconds: error ? 4200 : 2600),
+        content: Row(
+          children: [
+            Icon(
+              error
+                  ? CupertinoIcons.exclamationmark_circle_fill
+                  : CupertinoIcons.checkmark_circle_fill,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
-      ]),
-    ));
+      ),
+    );
 }
 
 Future<bool> confirmAction(
@@ -54,9 +70,17 @@ Future<bool> confirmAction(
     context: context,
     builder: (c) => CupertinoAlertDialog(
       title: Text(title),
-      content: message == null ? null : Padding(padding: const EdgeInsets.only(top: 6), child: Text(message)),
+      content: message == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(message),
+            ),
       actions: [
-        CupertinoDialogAction(onPressed: () => Navigator.pop(c, false), child: const Text('Отмена')),
+        CupertinoDialogAction(
+          onPressed: () => Navigator.pop(c, false),
+          child: const Text('Отмена'),
+        ),
         CupertinoDialogAction(
           isDestructiveAction: destructive,
           isDefaultAction: !destructive,
@@ -76,7 +100,11 @@ class SheetAction {
   final bool destructive;
 }
 
-Future<String?> pickAction(BuildContext context, {String? title, required List<SheetAction> actions}) {
+Future<String?> pickAction(
+  BuildContext context, {
+  String? title,
+  required List<SheetAction> actions,
+}) {
   return showCupertinoModalPopup<String>(
     context: context,
     builder: (c) => CupertinoActionSheet(
@@ -188,32 +216,36 @@ class CircleButton extends StatelessWidget {
       child: SizedBox(
         width: size,
         height: size,
-        child: Stack(children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: background,
-                shape: BoxShape.circle,
-                boxShadow: background == AppColors.surface ? AppShadow.card : null,
-              ),
-              child: Icon(icon, size: iconSize, color: foreground),
-            ),
-          ),
-          if (badge)
-            Positioned(
-              top: size * 0.24,
-              right: size * 0.26,
-              child: Container(
-                width: 9,
-                height: 9,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.red,
+                  color: background,
                   shape: BoxShape.circle,
-                  border: Border.all(color: background, width: 1.5),
+                  boxShadow: background == AppColors.surface
+                      ? AppShadow.card
+                      : null,
+                ),
+                child: Icon(icon, size: iconSize, color: foreground),
+              ),
+            ),
+            if (badge)
+              Positioned(
+                top: size * 0.24,
+                right: size * 0.26,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: AppColors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: background, width: 1.5),
+                  ),
                 ),
               ),
-            ),
-        ]),
+          ],
+        ),
       ),
     );
   }
@@ -247,7 +279,9 @@ class SurfaceCard extends StatelessWidget {
       ),
       child: child,
     );
-    return onTap == null ? card : Pressable(onTap: onTap, scale: 0.985, child: card);
+    return onTap == null
+        ? card
+        : Pressable(onTap: onTap, scale: 0.985, child: card);
   }
 }
 
@@ -263,18 +297,32 @@ class StatusPill extends StatelessWidget {
     final t = tone ?? toneForStatus(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: t.soft, borderRadius: BorderRadius.circular(AppRadius.pill)),
+      decoration: BoxDecoration(
+        color: t.soft,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
       child: Text(
         label ?? statusLabel(status),
         maxLines: 1,
-        style: TextStyle(fontFamily: kFont, fontSize: 12, height: 1.2, fontWeight: FontWeight.w500, color: t.ink),
+        style: TextStyle(
+          fontFamily: kFont,
+          fontSize: 12,
+          height: 1.2,
+          fontWeight: FontWeight.w500,
+          color: t.ink,
+        ),
       ),
     );
   }
 }
 
 class LegendDot extends StatelessWidget {
-  const LegendDot({super.key, required this.color, required this.label, this.bold = false});
+  const LegendDot({
+    super.key,
+    required this.color,
+    required this.label,
+    this.bold = false,
+  });
 
   final Color color;
   final String label;
@@ -282,15 +330,24 @@ class LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 6),
-      Text(label,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
           style: AppText.caption.copyWith(
             color: bold ? AppColors.ink : AppColors.ink3,
             fontWeight: bold ? FontWeight.w600 : FontWeight.w500,
-          )),
-    ]);
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -326,38 +383,51 @@ class CountChip extends StatelessWidget {
           color: selected ? tone.solid : AppColors.chip,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            width: 26,
-            height: 26,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected ? Colors.white : AppColors.chipDot,
-              shape: BoxShape.circle,
-            ),
-            child: Text('$count',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: 26,
+              height: 26,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected ? Colors.white : AppColors.chipDot,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '$count',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: selected ? tone.solid : Colors.white,
-                )),
-          ),
-          const SizedBox(width: 8),
-          Text(label,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: selected ? Colors.white : AppColors.ink3,
-              )),
-        ]),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class AppAvatar extends StatelessWidget {
-  const AppAvatar({super.key, required this.name, this.imageUrl, this.size = 36, this.border = true});
+  const AppAvatar({
+    super.key,
+    required this.name,
+    this.imageUrl,
+    this.size = 36,
+    this.border = true,
+  });
 
   final String name;
   final String? imageUrl;
@@ -367,10 +437,19 @@ class AppAvatar extends StatelessWidget {
   static const _palette = [Color(0xFFEFF0F2)];
 
   static String initials(String name) {
-    final base = name.contains('@') ? name.split('@').first.replaceAll(RegExp(r'[._-]'), ' ') : name;
-    final parts = base.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final base = name.contains('@')
+        ? name.split('@').first.replaceAll(RegExp(r'[._-]'), ' ')
+        : name;
+    final parts = base
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
-    final letters = parts.take(2).map((p) => p.characters.first.toUpperCase()).join();
+    final letters = parts
+        .take(2)
+        .map((p) => p.characters.first.toUpperCase())
+        .join();
     return letters;
   }
 
@@ -378,13 +457,15 @@ class AppAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = _palette[name.hashCode.abs() % _palette.length];
     final fallback = Center(
-      child: Text(initials(name),
-          style: TextStyle(
-            fontSize: size * 0.36,
-            fontWeight: FontWeight.w500,
-            color: AppColors.ink3,
-            letterSpacing: 0.2,
-          )),
+      child: Text(
+        initials(name),
+        style: TextStyle(
+          fontSize: size * 0.36,
+          fontWeight: FontWeight.w500,
+          color: AppColors.ink3,
+          letterSpacing: 0.2,
+        ),
+      ),
     );
     final url = Api.instance.fileUrl(imageUrl);
     return Container(
@@ -417,7 +498,12 @@ class Person {
 }
 
 class AvatarStack extends StatelessWidget {
-  const AvatarStack({super.key, required this.people, this.max = 3, this.size = 30});
+  const AvatarStack({
+    super.key,
+    required this.people,
+    this.max = 3,
+    this.size = 30,
+  });
 
   final List<Person> people;
   final int max;
@@ -428,25 +514,46 @@ class AvatarStack extends StatelessWidget {
     if (people.isEmpty) return const SizedBox.shrink();
     final shown = people.take(max).toList();
     final step = size * 0.66;
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      SizedBox(
-        width: size + step * (shown.length - 1),
-        height: size,
-        child: Stack(children: [
-          for (var i = 0; i < shown.length; i++)
-            Positioned(left: step * i, child: AppAvatar(name: shown[i].name, imageUrl: shown[i].image, size: size)),
-        ]),
-      ),
-      if (people.length > max) ...[
-        const SizedBox(width: 8),
-        Text('${people.length - max}+', style: AppText.bodyStrong.copyWith(color: AppColors.ink2)),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: size + step * (shown.length - 1),
+          height: size,
+          child: Stack(
+            children: [
+              for (var i = 0; i < shown.length; i++)
+                Positioned(
+                  left: step * i,
+                  child: AppAvatar(
+                    name: shown[i].name,
+                    imageUrl: shown[i].image,
+                    size: size,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (people.length > max) ...[
+          const SizedBox(width: 8),
+          Text(
+            '${people.length - max}+',
+            style: AppText.bodyStrong.copyWith(color: AppColors.ink2),
+          ),
+        ],
       ],
-    ]);
+    );
   }
 }
 
 class SectionHeader extends StatelessWidget {
-  const SectionHeader(this.title, {super.key, this.actionLabel, this.onAction, this.topGap = 22});
+  const SectionHeader(
+    this.title, {
+    super.key,
+    this.actionLabel,
+    this.onAction,
+    this.topGap = 22,
+  });
 
   final String title;
   final String? actionLabel;
@@ -457,24 +564,37 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: topGap, bottom: 10),
-      child: Row(children: [
-        Expanded(child: Text(title, style: AppText.heading)),
-        if (actionLabel != null)
-          Pressable(
-            onTap: onAction,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(actionLabel!,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.violet)),
+      child: Row(
+        children: [
+          Expanded(child: Text(title, style: AppText.heading)),
+          if (actionLabel != null)
+            Pressable(
+              onTap: onAction,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  actionLabel!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.violet,
+                  ),
+                ),
+              ),
             ),
-          ),
-      ]),
+        ],
+      ),
     );
   }
 }
 
 class ScreenHeader extends StatelessWidget {
-  const ScreenHeader({super.key, required this.title, this.showBack = true, this.actions = const []});
+  const ScreenHeader({
+    super.key,
+    required this.title,
+    this.showBack = true,
+    this.actions = const [],
+  });
 
   final String title;
   final bool showBack;
@@ -485,46 +605,66 @@ class ScreenHeader extends StatelessWidget {
     if (!showBack) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
-        child: Row(children: [
-          Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.title.copyWith(fontSize: 26))),
-          for (final a in actions) ...[const SizedBox(width: 8), a],
-        ]),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.title.copyWith(fontSize: 24),
+              ),
+            ),
+            for (final a in actions) ...[const SizedBox(width: 8), a],
+          ],
+        ),
       );
     }
     final side = actions.length <= 1 ? 64.0 : 16.0 + 52.0 * actions.length;
     return SizedBox(
       height: 64,
-      child: Row(children: [
-        SizedBox(
-          width: side,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: CircleButton(
-                icon: CupertinoIcons.chevron_left,
-                label: 'Назад',
-                size: 44,
-                iconSize: 18,
-                onTap: () => Navigator.of(context).maybePop(),
+      child: Row(
+        children: [
+          SizedBox(
+            width: side,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: CircleButton(
+                  icon: CupertinoIcons.chevron_left,
+                  label: 'Назад',
+                  size: 44,
+                  iconSize: 18,
+                  onTap: () => Navigator.of(context).maybePop(),
+                ),
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: Text(title,
+          Expanded(
+            child: Text(
+              title,
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.heading.copyWith(fontWeight: FontWeight.w500, fontSize: 19)),
-        ),
-        SizedBox(
-          width: side,
-          child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            for (final a in actions) Padding(padding: const EdgeInsets.only(right: 16), child: a),
-          ]),
-        ),
-      ]),
+              style: AppText.heading.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 19,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: side,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                for (final a in actions)
+                  Padding(padding: const EdgeInsets.only(right: 16), child: a),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -542,10 +682,12 @@ class AppPage extends StatelessWidget {
       backgroundColor: AppColors.bg,
       body: SafeArea(
         bottom: bottom == null,
-        child: Column(children: [
-          ?header,
-          Expanded(child: body),
-        ]),
+        child: Column(
+          children: [
+            ?header,
+            Expanded(child: body),
+          ],
+        ),
       ),
       bottomNavigationBar: bottom == null
           ? null
@@ -553,7 +695,10 @@ class AppPage extends StatelessWidget {
               color: AppColors.bg,
               child: SafeArea(
                 top: false,
-                child: Padding(padding: const EdgeInsets.fromLTRB(20, 10, 20, 12), child: bottom),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                  child: bottom,
+                ),
               ),
             ),
     );
@@ -578,18 +723,29 @@ class PageScroll extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       controller: controller,
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
-        if (onRefresh != null) CupertinoSliverRefreshControl(onRefresh: onRefresh),
-        SliverPadding(padding: padding, sliver: SliverList(delegate: SliverChildListDelegate(children))),
+        if (onRefresh != null)
+          CupertinoSliverRefreshControl(onRefresh: onRefresh),
+        SliverPadding(
+          padding: padding,
+          sliver: SliverList(delegate: SliverChildListDelegate(children)),
+        ),
       ],
     );
   }
 }
 
 class Skeleton extends StatefulWidget {
-  const Skeleton({super.key, this.width = double.infinity, required this.height, this.radius = 14});
+  const Skeleton({
+    super.key,
+    this.width = double.infinity,
+    required this.height,
+    this.radius = 14,
+  });
 
   final double width;
   final double height;
@@ -599,9 +755,12 @@ class Skeleton extends StatefulWidget {
   State<Skeleton> createState() => _SkeletonState();
 }
 
-class _SkeletonState extends State<Skeleton> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat(reverse: true);
+class _SkeletonState extends State<Skeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
 
   @override
   void dispose() {
@@ -614,10 +773,16 @@ class _SkeletonState extends State<Skeleton> with SingleTickerProviderStateMixin
     final box = Container(
       width: widget.width,
       height: widget.height,
-      decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(widget.radius)),
+      decoration: BoxDecoration(
+        color: AppColors.line,
+        borderRadius: BorderRadius.circular(widget.radius),
+      ),
     );
     if (MediaQuery.of(context).disableAnimations) return box;
-    return FadeTransition(opacity: Tween(begin: 0.45, end: 1.0).animate(_c), child: box);
+    return FadeTransition(
+      opacity: Tween(begin: 0.45, end: 1.0).animate(_c),
+      child: box,
+    );
   }
 }
 
@@ -629,12 +794,14 @@ class SkeletonCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      for (var i = 0; i < count; i++) ...[
-        Skeleton(height: height, radius: AppRadius.card),
-        if (i < count - 1) const SizedBox(height: 12),
+    return Column(
+      children: [
+        for (var i = 0; i < count; i++) ...[
+          Skeleton(height: height, radius: AppRadius.card),
+          if (i < count - 1) const SizedBox(height: 12),
+        ],
       ],
-    ]);
+    );
   }
 }
 
@@ -658,17 +825,29 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
-      child: Column(children: [
-        Icon(icon, color: AppColors.ink4, size: 34),
-        const SizedBox(height: 14),
-        Text(title, textAlign: TextAlign.center, style: AppText.cardTitle),
-        const SizedBox(height: 6),
-        Text(message, textAlign: TextAlign.center, style: AppText.label.copyWith(color: AppColors.ink3)),
-        if (actionLabel != null) ...[
-          const SizedBox(height: 18),
-          PrimaryButton(label: actionLabel!, onTap: onAction, height: 44, expand: false, kind: ButtonKind.outline),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.ink4, size: 34),
+          const SizedBox(height: 14),
+          Text(title, textAlign: TextAlign.center, style: AppText.cardTitle),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppText.label.copyWith(color: AppColors.ink3),
+          ),
+          if (actionLabel != null) ...[
+            const SizedBox(height: 18),
+            PrimaryButton(
+              label: actionLabel!,
+              onTap: onAction,
+              height: 44,
+              expand: false,
+              kind: ButtonKind.outline,
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -737,7 +916,9 @@ class PrimaryButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: kind == ButtonKind.outline ? Border.all(color: AppColors.green, width: 1.2) : null,
+            border: kind == ButtonKind.outline
+                ? Border.all(color: AppColors.green, width: 1.2)
+                : null,
           ),
           child: Row(
             mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
@@ -746,12 +927,22 @@ class PrimaryButton extends StatelessWidget {
               if (loading)
                 CupertinoActivityIndicator(color: fg)
               else ...[
-                if (icon != null) ...[Icon(icon, size: 20, color: fg), const SizedBox(width: 8)],
+                if (icon != null) ...[
+                  Icon(icon, size: 20, color: fg),
+                  const SizedBox(width: 8),
+                ],
                 Flexible(
-                  child: Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontFamily: kFont, fontSize: height >= 46 ? 15 : 14, fontWeight: FontWeight.w500, color: fg)),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: kFont,
+                      fontSize: height >= 46 ? 15 : 14,
+                      fontWeight: FontWeight.w500,
+                      color: fg,
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -763,7 +954,14 @@ class PrimaryButton extends StatelessWidget {
 }
 
 class DetailRow extends StatelessWidget {
-  const DetailRow({super.key, required this.label, this.value, this.child, this.trailing, this.onTap});
+  const DetailRow({
+    super.key,
+    required this.label,
+    this.value,
+    this.child,
+    this.trailing,
+    this.onTap,
+  });
 
   final String label;
   final String? value;
@@ -775,18 +973,25 @@ class DetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: AppText.caption),
-            const SizedBox(height: 5),
-            child ?? Text(value ?? '—', style: AppText.bodyStrong),
-          ]),
-        ),
-        if (trailing != null) ...[const SizedBox(width: 12), trailing!],
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppText.caption),
+                const SizedBox(height: 5),
+                child ?? Text(value ?? '—', style: AppText.bodyStrong),
+              ],
+            ),
+          ),
+          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+        ],
+      ),
     );
-    return onTap == null ? row : Pressable(onTap: onTap, scale: 0.99, child: row);
+    return onTap == null
+        ? row
+        : Pressable(onTap: onTap, scale: 0.99, child: row);
   }
 }
 
@@ -797,12 +1002,15 @@ class Divided extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      for (var i = 0; i < children.length; i++) ...[
-        children[i],
-        if (i < children.length - 1) const Divider(height: 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          children[i],
+          if (i < children.length - 1) const Divider(height: 1),
+        ],
       ],
-    ]);
+    );
   }
 }
 
@@ -817,26 +1025,47 @@ class FieldRows extends StatelessWidget {
     if (visible.isEmpty) return const SizedBox.shrink();
     return SurfaceCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      child: Divided(children: [
-        for (final r in visible)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(flex: 5, child: Text(r.$1, style: AppText.label.copyWith(color: AppColors.ink3))),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 6,
-                child: Text(r.$2, textAlign: TextAlign.right, style: AppText.bodyStrong),
+      child: Divided(
+        children: [
+          for (final r in visible)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Text(
+                      r.$1,
+                      style: AppText.label.copyWith(color: AppColors.ink3),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 6,
+                    child: Text(
+                      r.$2,
+                      textAlign: TextAlign.right,
+                      style: AppText.bodyStrong,
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          ),
-      ]),
+            ),
+        ],
+      ),
     );
   }
 }
 
 class AttachmentTile extends StatelessWidget {
-  const AttachmentTile({super.key, required this.name, required this.meta, this.onTap, this.onDelete});
+  const AttachmentTile({
+    super.key,
+    required this.name,
+    required this.meta,
+    this.onTap,
+    this.onDelete,
+  });
 
   final String name;
   final String meta;
@@ -853,38 +1082,66 @@ class AttachmentTile extends StatelessWidget {
       semanticLabel: 'Открыть $name',
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(color: AppColors.violet, shape: BoxShape.circle),
-            child: Text(ext.length > 4 ? ext.substring(0, 4) : ext,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.bodyStrong),
-              const SizedBox(height: 2),
-              Text(meta, style: AppText.caption),
-            ]),
-          ),
-          if (onDelete != null)
-            CupertinoButton(
-              padding: const EdgeInsets.all(8),
-              minimumSize: const Size(40, 40),
-              onPressed: onDelete,
-              child: const Icon(CupertinoIcons.xmark_circle_fill, color: AppColors.ink4, size: 22),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: AppColors.violet,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                ext.length > 4 ? ext.substring(0, 4) : ext,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
             ),
-        ]),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bodyStrong,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(meta, style: AppText.caption),
+                ],
+              ),
+            ),
+            if (onDelete != null)
+              CupertinoButton(
+                padding: const EdgeInsets.all(8),
+                minimumSize: const Size(40, 40),
+                onPressed: onDelete,
+                child: const Icon(
+                  CupertinoIcons.xmark_circle_fill,
+                  color: AppColors.ink4,
+                  size: 22,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class SegmentTabs extends StatelessWidget {
-  const SegmentTabs({super.key, required this.labels, required this.index, required this.onChanged});
+  const SegmentTabs({
+    super.key,
+    required this.labels,
+    required this.index,
+    required this.onChanged,
+  });
 
   final List<String> labels;
   final int index;
@@ -906,12 +1163,14 @@ class SegmentTabs extends StatelessWidget {
           for (var i = 0; i < labels.length; i++)
             i: Padding(
               padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Text(labels[i],
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: i == index ? FontWeight.w600 : FontWeight.w500,
-                    color: i == index ? AppColors.ink : AppColors.ink3,
-                  )),
+              child: Text(
+                labels[i],
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: i == index ? FontWeight.w600 : FontWeight.w500,
+                  color: i == index ? AppColors.ink : AppColors.ink3,
+                ),
+              ),
             ),
         },
       ),
@@ -920,7 +1179,12 @@ class SegmentTabs extends StatelessWidget {
 }
 
 class IconBadge extends StatelessWidget {
-  const IconBadge({super.key, required this.icon, this.tone = Tone.neutral, this.size = 38});
+  const IconBadge({
+    super.key,
+    required this.icon,
+    this.tone = Tone.neutral,
+    this.size = 38,
+  });
 
   final IconData icon;
   final Tone tone;
@@ -936,7 +1200,11 @@ class IconBadge extends StatelessWidget {
       Tone.amber => AppColors.amber,
       _ => AppColors.ink,
     };
-    return SizedBox(width: size, height: size, child: Icon(icon, size: size * 0.6, color: color));
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Icon(icon, size: size * 0.6, color: color),
+    );
   }
 }
 
@@ -950,14 +1218,31 @@ class InlineError extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.redSoft, borderRadius: BorderRadius.circular(12)),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Icon(CupertinoIcons.exclamationmark_circle_fill, color: AppColors.red, size: 20),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(message, style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFFA9362D))),
-        ),
-      ]),
+      decoration: BoxDecoration(
+        color: AppColors.redSoft,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            CupertinoIcons.exclamationmark_circle_fill,
+            color: AppColors.red,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: Color(0xFFA9362D),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -979,7 +1264,9 @@ class _HatchPainter extends CustomPainter {
     final r = size.width / 2;
     final center = Offset(r, r);
     canvas.save();
-    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: center, radius: r)));
+    canvas.clipPath(
+      Path()..addOval(Rect.fromCircle(center: center, radius: r)),
+    );
     canvas.drawCircle(center, r, Paint()..color = const Color(0xFFF1F1F4));
     final line = Paint()
       ..color = const Color(0xFFDADAE2)
@@ -995,7 +1282,12 @@ class _HatchPainter extends CustomPainter {
 }
 
 class SemicircleGauge extends StatelessWidget {
-  const SemicircleGauge({super.key, required this.value, required this.color, this.size = 96});
+  const SemicircleGauge({
+    super.key,
+    required this.value,
+    required this.color,
+    this.size = 96,
+  });
 
   final double value;
   final Color color;
@@ -1007,7 +1299,10 @@ class SemicircleGauge extends StatelessWidget {
       tween: Tween(begin: 0, end: value.clamp(0, 1)),
       duration: const Duration(milliseconds: 700),
       curve: Curves.easeOutQuart,
-      builder: (_, v, _) => CustomPaint(size: Size(size, size / 2 + 6), painter: _GaugePainter(v, color)),
+      builder: (_, v, _) => CustomPaint(
+        size: Size(size, size / 2 + 6),
+        painter: _GaugePainter(v, color),
+      ),
     );
   }
 }
@@ -1021,7 +1316,12 @@ class _GaugePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const stroke = 10.0;
-    final rect = Rect.fromLTWH(stroke / 2, stroke / 2, size.width - stroke, size.width - stroke);
+    final rect = Rect.fromLTWH(
+      stroke / 2,
+      stroke / 2,
+      size.width - stroke,
+      size.width - stroke,
+    );
     final track = Paint()
       ..color = AppColors.chip
       ..style = PaintingStyle.stroke
@@ -1029,12 +1329,19 @@ class _GaugePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(rect, math.pi, math.pi, false, track);
     if (value > 0) {
-      canvas.drawArc(rect, math.pi, math.pi * value, false, track..color = color);
+      canvas.drawArc(
+        rect,
+        math.pi,
+        math.pi * value,
+        false,
+        track..color = color,
+      );
     }
   }
 
   @override
-  bool shouldRepaint(covariant _GaugePainter old) => old.value != value || old.color != color;
+  bool shouldRepaint(covariant _GaugePainter old) =>
+      old.value != value || old.color != color;
 }
 
 class MonthDaysLabel extends StatelessWidget {
@@ -1044,5 +1351,6 @@ class MonthDaysLabel extends StatelessWidget {
   final Object? to;
 
   @override
-  Widget build(BuildContext context) => Text(Fmt.range(from, to), style: AppText.caption);
+  Widget build(BuildContext context) =>
+      Text(Fmt.range(from, to), style: AppText.caption);
 }

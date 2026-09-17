@@ -18,7 +18,8 @@ class ShellScope extends InheritedWidget {
 
   final ValueChanged<int> goTo;
 
-  static ShellScope? maybeOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<ShellScope>();
+  static ShellScope? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ShellScope>();
 
   @override
   bool updateShouldNotify(ShellScope oldWidget) => false;
@@ -65,7 +66,8 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) Session.instance.notifyDataChanged();
+    if (state == AppLifecycleState.resumed)
+      Session.instance.notifyDataChanged();
   }
 
   void _go(int i) {
@@ -82,7 +84,12 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     return switch (i) {
       ShellTab.home => const HomeScreen(),
       ShellTab.attendance => const AttendanceScreen(),
-      ShellTab.tasks => const PremiumGate(feature: 'tasks', title: 'Задачи', showBack: false, child: BoardScreen()),
+      ShellTab.tasks => const PremiumGate(
+        feature: 'tasks',
+        title: 'Задачи',
+        showBack: false,
+        child: BoardScreen(),
+      ),
       ShellTab.services => const ServicesScreen(),
       _ => const ProfileScreen(showBack: false),
     };
@@ -95,26 +102,32 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
       goTo: _go,
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        body: Stack(children: [
-          for (var i = 0; i < _items.length; i++)
-            Offstage(
-              offstage: i != _index,
-              child: TickerMode(
-                enabled: i == _index,
-                child: AnimatedOpacity(
-                  opacity: i == _index ? 1 : 0,
-                  duration: reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 180),
-                  child: _tab(i),
+        body: Stack(
+          children: [
+            for (var i = 0; i < _items.length; i++)
+              Offstage(
+                offstage: i != _index,
+                child: TickerMode(
+                  enabled: i == _index,
+                  child: AnimatedOpacity(
+                    opacity: i == _index ? 1 : 0,
+                    duration: reduceMotion(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 180),
+                    child: _tab(i),
+                  ),
                 ),
               ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: bottomInset > 0 ? bottomInset - 6 : 14,
+              child: Center(
+                child: _NavPill(items: _items, index: _index, onTap: _go),
+              ),
             ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: bottomInset > 0 ? bottomInset - 6 : 14,
-            child: Center(child: _NavPill(items: _items, index: _index, onTap: _go)),
-          ),
-        ]),
+          ],
+        ),
       ),
     );
   }
@@ -122,7 +135,11 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
 
 /// Floating white pill with round icon buttons; the active tab is a filled green circle.
 class _NavPill extends StatelessWidget {
-  const _NavPill({required this.items, required this.index, required this.onTap});
+  const _NavPill({
+    required this.items,
+    required this.index,
+    required this.onTap,
+  });
 
   final List<(IconData, IconData, String)> items;
   final int index;
@@ -137,36 +154,39 @@ class _NavPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.pill),
         boxShadow: AppShadow.float,
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        for (var i = 0; i < items.length; i++)
-          Padding(
-            padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
-            child: Semantics(
-              button: true,
-              selected: i == index,
-              label: items[i].$3,
-              child: Pressable(
-                onTap: () => onTap(i),
-                scale: 0.9,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutQuart,
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: i == index ? AppColors.green : AppColors.surfaceAlt,
-                  ),
-                  child: Icon(
-                    i == index ? items[i].$2 : items[i].$1,
-                    size: 23,
-                    color: i == index ? Colors.white : AppColors.ink2,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < items.length; i++)
+            Padding(
+              padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
+              child: Semantics(
+                button: true,
+                selected: i == index,
+                label: items[i].$3,
+                child: Pressable(
+                  onTap: () => onTap(i),
+                  scale: 0.9,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutQuart,
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: i == index ? AppColors.blue : Colors.transparent,
+                    ),
+                    child: Icon(
+                      i == index ? items[i].$2 : items[i].$1,
+                      size: 23,
+                      color: i == index ? Colors.white : AppColors.ink3,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ]),
+        ],
+      ),
     );
   }
 }
