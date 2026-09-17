@@ -165,7 +165,7 @@ class CircleButton extends StatelessWidget {
     this.onTap,
     this.badge = false,
     this.size = 40,
-    this.background = AppColors.surfaceAlt,
+    this.background = AppColors.surface,
     this.foreground = AppColors.ink,
     this.iconSize = 19,
   });
@@ -191,7 +191,11 @@ class CircleButton extends StatelessWidget {
         child: Stack(children: [
           Positioned.fill(
             child: DecoratedBox(
-              decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: background,
+                shape: BoxShape.circle,
+                boxShadow: background == AppColors.surface ? AppShadow.card : null,
+              ),
               child: Icon(icon, size: iconSize, color: foreground),
             ),
           ),
@@ -222,7 +226,7 @@ class SurfaceCard extends StatelessWidget {
     this.onTap,
     this.padding = const EdgeInsets.all(16),
     this.radius = AppRadius.card,
-    this.color = AppColors.surfaceAlt,
+    this.color = AppColors.surface,
   });
 
   final Widget child;
@@ -239,7 +243,7 @@ class SurfaceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(radius),
-        border: color == AppColors.surface ? Border.all(color: AppColors.line) : null,
+        boxShadow: color == AppColors.surface ? AppShadow.card : null,
       ),
       child: child,
     );
@@ -259,11 +263,11 @@ class StatusPill extends StatelessWidget {
     final t = tone ?? toneForStatus(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: t.solid, borderRadius: BorderRadius.circular(7)),
+      decoration: BoxDecoration(color: t.soft, borderRadius: BorderRadius.circular(AppRadius.pill)),
       child: Text(
         label ?? statusLabel(status),
         maxLines: 1,
-        style: TextStyle(fontSize: 12, height: 1.2, fontWeight: FontWeight.w600, color: t.onSolid),
+        style: TextStyle(fontFamily: kFont, fontSize: 12, height: 1.2, fontWeight: FontWeight.w500, color: t.ink),
       ),
     );
   }
@@ -480,27 +484,30 @@ class ScreenHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!showBack) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
         child: Row(children: [
-          Expanded(
-            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.title.copyWith(fontSize: 24)),
-          ),
+          Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.title.copyWith(fontSize: 26))),
           for (final a in actions) ...[const SizedBox(width: 8), a],
         ]),
       );
     }
-    final side = actions.length <= 1 ? 56.0 : 8.0 + 48.0 * actions.length;
+    final side = actions.length <= 1 ? 64.0 : 16.0 + 52.0 * actions.length;
     return SizedBox(
-      height: 52,
+      height: 64,
       child: Row(children: [
         SizedBox(
           width: side,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              tooltip: 'Назад',
-              onPressed: () => Navigator.of(context).maybePop(),
-              icon: const Icon(CupertinoIcons.arrow_left, size: 24, color: AppColors.ink),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: CircleButton(
+                icon: CupertinoIcons.chevron_left,
+                label: 'Назад',
+                size: 44,
+                iconSize: 18,
+                onTap: () => Navigator.of(context).maybePop(),
+              ),
             ),
           ),
         ),
@@ -509,12 +516,12 @@ class ScreenHeader extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: AppColors.ink)),
+              style: AppText.heading.copyWith(fontWeight: FontWeight.w500, fontSize: 19)),
         ),
         SizedBox(
           width: side,
           child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            for (final a in actions) Padding(padding: const EdgeInsets.only(right: 8), child: a),
+            for (final a in actions) Padding(padding: const EdgeInsets.only(right: 16), child: a),
           ]),
         ),
       ]),
@@ -532,7 +539,7 @@ class AppPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg,
       body: SafeArea(
         bottom: bottom == null,
         child: Column(children: [
@@ -543,7 +550,7 @@ class AppPage extends StatelessWidget {
       bottomNavigationBar: bottom == null
           ? null
           : Container(
-              color: AppColors.surface,
+              color: AppColors.bg,
               child: SafeArea(
                 top: false,
                 child: Padding(padding: const EdgeInsets.fromLTRB(20, 10, 20, 12), child: bottom),
@@ -558,7 +565,7 @@ class PageScroll extends StatelessWidget {
     super.key,
     required this.children,
     this.onRefresh,
-    this.padding = const EdgeInsets.fromLTRB(20, 4, 20, 36),
+    this.padding = const EdgeInsets.fromLTRB(20, 4, 20, 120),
     this.controller,
   });
 
@@ -709,12 +716,12 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = switch (kind) {
-      ButtonKind.dark => (AppColors.charcoal, Colors.white),
-      ButtonKind.violet => (AppColors.violet, Colors.white),
-      ButtonKind.green => (AppColors.greenDeep, Colors.white),
-      ButtonKind.danger => (AppColors.redSoft, const Color(0xFFA9362D)),
-      ButtonKind.soft => (AppColors.violetSoft, AppColors.violet),
-      ButtonKind.outline => (AppColors.surface, AppColors.ink),
+      ButtonKind.dark => (AppColors.green, Colors.white),
+      ButtonKind.violet => (AppColors.green, Colors.white),
+      ButtonKind.green => (AppColors.green, Colors.white),
+      ButtonKind.danger => (AppColors.redSoft, const Color(0xFFB83636)),
+      ButtonKind.soft => (AppColors.greenSoft, AppColors.greenDeep),
+      ButtonKind.outline => (AppColors.surface, AppColors.green),
     };
     final disabled = onTap == null && !loading;
     return Pressable(
@@ -729,8 +736,8 @@ class PrimaryButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 22),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(10),
-            border: kind == ButtonKind.outline ? Border.all(color: AppColors.ink2, width: 1.2) : null,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: kind == ButtonKind.outline ? Border.all(color: AppColors.green, width: 1.2) : null,
           ),
           child: Row(
             mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
@@ -744,7 +751,7 @@ class PrimaryButton extends StatelessWidget {
                   child: Text(label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: height >= 46 ? 16 : 14, fontWeight: FontWeight.w500, color: fg)),
+                      style: TextStyle(fontFamily: kFont, fontSize: height >= 46 ? 15 : 14, fontWeight: FontWeight.w500, color: fg)),
                 ),
               ],
             ],

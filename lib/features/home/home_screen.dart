@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../core/premium.dart';
 import '../../core/api.dart';
 import '../../core/fmt.dart';
-import '../../core/kit.dart';
 import '../../core/people.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
@@ -17,10 +16,13 @@ import '../../data/tasks.dart';
 import '../../data/timesheet.dart';
 import '../achievements/achievements_screens.dart';
 import '../notices/notices_screens.dart';
-import '../profile/profile_screen.dart';
 import '../shell.dart';
-import '../timesheet/timesheet_view.dart';
-import 'home_panels.dart';
+import '../attendance/checkin_history_screen.dart';
+import '../checklists/checklists_screens.dart';
+import '../requests/requests_screen.dart';
+import '../tasks/task_sheet.dart';
+import 'checkin_card.dart';
+import 'summary_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,20 +33,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _session = Session.instance;
-  int _tab = 0;
   bool _loading = true;
   Object? _error;
 
   List<MonthSheet> _sheets = [];
   List<TaskItem> _tasks = [];
   List<ChecklistRun> _today = [];
-  List<ChecklistRun> _yearRuns = [];
   Json? _lastLog;
   List<Json> _shifts = [];
   List<Notice> _unread = [];
   Map<String, PersonInfo> _people = {};
-  Score? _score;
   List<Achievement> _achievements = [];
+  List<Json> _recent = [];
+  (int, int, int)? _requests;
   final Set<String> _shownNotices = {};
   bool _popupOpen = false;
 
@@ -70,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
         MonthSheet.loadRange(DateTime(now.year, 1), DateTime(now.year, now.month)),
         Tasks.list().then<Object?>((v) => v).catchError((_) => <TaskItem>[]),
         Checklists.runs(from: DateTime(now.year, 1, 1), to: now, user: me).then<Object?>((v) => v).catchError((_) => <ChecklistRun>[]),
-        Hr.checkins(limit: 1).then<Object?>((v) => v).catchError((_) => <Json>[]),
+        Hr.checkins(limit: 3).then<Object?>((v) => v).catchError((_) => <Json>[]),
         Hr.shiftAssignments().then<Object?>((v) => v).catchError((_) => <Json>[]),
         Notices.mine(unreadOnly: true).then<Object?>((v) => v).catchError((_) => <Notice>[]),
         People.byUser(),
@@ -83,17 +84,17 @@ class _HomeScreenState extends State<HomeScreen> {
         _sheets = sheets;
         _tasks = tasks;
         _today = today;
-        _yearRuns = runs;
-        _lastLog = (r[3] as List<Json>).firstOrNull;
+        _recent = r[3] as List<Json>;
+        _lastLog = _recent.firstOrNull;
         _shifts = r[4] as List<Json>;
         _unread = r[5] as List<Notice>;
         _people = r[6] as Map<String, PersonInfo>;
-        _score = Score.compute(sheet: sheets.last, tasks: tasks, runs: runs, me: me);
         _achievements = Achievements.compute(sheets: sheets, tasks: tasks, runs: runs, me: me);
         _loading = false;
         _error = null;
       });
       _popups();
+      _loadRequests();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -125,179 +126,229 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// My requests of every kind: leave, shift, attendance correction, expenses.
+  Future<void> _loadRequests() async {
+    final lists = await Future.wait([
+      Hr.leaves(limit: 200).catchError((_) => <Json>[]),
+      Hr.shiftRequests(limit: 200).catchError((_) => <Json>[]),
+      Hr.attendanceRequests(limit: 200).catchError((_) => <Json>[]),
+      Hr.expenseClaims(limit: 200).catchError((_) => <Json>[]),
+    ]);
+    var total = 0, approved = 0, declined = 0;
+    for (final row in lists.expand((l) => l)) {
+      total++;
+      final status = (row['approval_status'] ?? row['status'] ?? '').toString();
+      final docstatus = int.tryParse('${row['docstatus'] ?? 0}') ?? 0;
+      if (status == 'Approved' || (status.isEmpty && docstatus == 1)) approved++;
+      if (status == 'Rejected' || docstatus == 2) declined++;
+    }
+    if (mounted) setState(() => _requests = (total, approved, declined));
+  }
+
+  String _greeting(DateTime now) {
+    final h = now.hour;
+    if (h < 5) return 'Доброй ночи';
+    if (h < 12) return 'Доброе утро';
+    if (h < 18) return 'Добрый день';
+    return 'Добрый вечер';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     final current = _sheets.lastOrNull;
-    final todayRecord = current?.days.where((d) => d.date == Fmt.dateOnly(DateTime.now())).firstOrNull;
+    final todayRecord = current?.days.where((d) => d.date == Fmt.dateOnly(now)).firstOrNull;
+    final lastTime = Fmt.parse(_lastLog?['time']);
+    final lastToday = lastTime != null && Fmt.dateOnly(lastTime) == Fmt.dateOnly(now);
+    final onShift = lastToday && _lastLog?['log_type'] == 'IN';
+    final finished = lastToday && _lastLog?['log_type'] == 'OUT';
+    final canCheckin = _session.checkinAllowed;
+    final workStart = MonthSheet.workStartOf(_shifts);
+    final onTime = current == null ? 0 : current.count(DayMark.onTime) + current.count(DayMark.remote);
+    final late = current?.count(DayMark.late) ?? 0;
+    final onTimePct = onTime + late == 0 ? null : (onTime * 100 / (onTime + late)).round();
+
+    final tasks = _session.hasFeature('tasks')
+        ? (_tasks.where((t) => t.allocatedTo == _session.userId && t.status == TaskStatus.inProgress).toList()
+          ..sort((a, b) => (a.due ?? DateTime(2100)).compareTo(b.due ?? DateTime(2100))))
+        : <TaskItem>[];
+    final runs = _session.hasFeature('checklists') ? _today : <ChecklistRun>[];
+    final cards = <Widget>[
+      for (final r in runs.take(4))
+        SummaryTaskCard(
+          icon: CupertinoIcons.checkmark_square,
+          title: r.meta.title,
+          pill: r.closed ? 'Выполнено' : 'Чеклист',
+          pillTone: r.closed ? Tone.green : Tone.neutral,
+          subtitle: r.meta.window,
+          progress: r.items.isEmpty ? null : r.doneCount / r.items.length,
+          onTap: () => pushPage(context, ChecklistRunScreen(name: r.name)),
+        ),
+      for (final t in tasks.take(6 - runs.take(4).length))
+        SummaryTaskCard(
+          icon: t.hasVoice ? CupertinoIcons.mic : CupertinoIcons.doc_text,
+          title: t.title,
+          pill: t.overdue ? 'Просрочено' : t.stage.label,
+          pillTone: t.overdue ? Tone.red : (t.stage == TaskStage.review ? Tone.violet : Tone.amber),
+          subtitle: t.due == null ? null : 'До ${Fmt.long(t.due)}',
+          progress: t.subtaskTotal == 0 ? null : t.subtaskDone / t.subtaskTotal,
+          onTap: () => showTaskSheet(context, t, _people),
+        ),
+    ];
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg,
       body: SafeArea(
         bottom: false,
-        child: Column(children: [
-          const PlanBanner(),
-          Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Column(children: [
-              _Header(score: Session.instance.hasFeature('points') ? _score?.value : null, unread: _unread.length),
-              const SizedBox(height: 16),
-              KpiStrip(
-                loading: current == null,
-                items: [
-                  ('Присутствие', '${current?.present ?? 0}'),
-                  ('Отсутствие', '${current?.absent ?? 0}'),
-                  ('Опоздание', (current?.lateMinutes ?? 0) < 60 ? '${current?.lateMinutes ?? 0} мин' : '${((current!.lateMinutes) / 60).toStringAsFixed(1)} ч'),
+        child: _error != null && _sheets.isEmpty
+            ? PageScroll(onRefresh: _load, children: [ErrorState(error: _error!, onRetry: _load)])
+            : PageScroll(
+                onRefresh: _load,
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+                children: [
+                  const PlanBanner(),
+                  _Header(
+                    dateLine: Fmt.todayLine(now),
+                    greeting: '${_greeting(now)}, ${_session.firstName}',
+                    unread: _unread.length,
+                  ),
+                  const SizedBox(height: 18),
+                  const Text('Сводка\nза сегодня', style: AppText.display),
+                  const SizedBox(height: 18),
+                  if (_loading)
+                    const Skeleton(height: 76, radius: AppRadius.card)
+                  else
+                    ClockCard(
+                      arrived: todayRecord?.firstIn,
+                      left: finished ? lastTime : null,
+                      actionLabel: !canCheckin
+                          ? null
+                          : onShift
+                              ? 'Уйти'
+                              : finished
+                                  ? 'Снова на работу'
+                                  : 'Отметиться',
+                      onAction: () => showCheckinSheet(context, onShift ? 'OUT' : 'IN'),
+                    ),
+                  const SizedBox(height: 12),
+                  if (_loading)
+                    const SkeletonCards(count: 2, height: 84)
+                  else
+                    TileGrid(children: [
+                      StatTile(
+                        value: todayRecord?.firstIn == null ? '– –' : Fmt.time(todayRecord!.firstIn),
+                        label: todayRecord?.lateMinutes != null && todayRecord!.lateMinutes > 0
+                            ? 'Пришёл · опоздание ${formatLate(todayRecord.lateMinutes)}'
+                            : 'Пришёл',
+                        icon: CupertinoIcons.arrow_down_left_square,
+                        muted: todayRecord?.firstIn == null,
+                      ),
+                      StatTile(
+                        value: finished ? Fmt.time(lastTime) : '– –',
+                        label: onShift ? 'На работе' : 'Ушёл',
+                        icon: CupertinoIcons.arrow_up_right_square,
+                        muted: !finished,
+                      ),
+                      StatTile(
+                        value: onTimePct == null ? '– –' : '$onTimePct%',
+                        label: 'Вовремя в этом месяце',
+                        icon: CupertinoIcons.checkmark_square,
+                        muted: onTimePct == null,
+                      ),
+                      StatTile(
+                        value: '${current?.present ?? 0}',
+                        unit: Fmt.plural(current?.present ?? 0, 'день', 'дня', 'дней'),
+                        label: 'На работе в этом месяце',
+                        icon: CupertinoIcons.calendar,
+                      ),
+                    ]),
+                  SummarySection(
+                    title: 'Статус заявок',
+                    onSeeAll: () => pushPage(context, const RequestsScreen()),
+                  ),
+                  RequestCounters(
+                    loading: _requests == null,
+                    total: _requests?.$1 ?? 0,
+                    approved: _requests?.$2 ?? 0,
+                    declined: _requests?.$3 ?? 0,
+                    onTap: () => pushPage(context, const RequestsScreen()),
+                  ),
+                  SummarySection(
+                    title: 'Задачи',
+                    onSeeAll: _session.hasFeature('tasks') ? () => ShellScope.maybeOf(context)?.goTo(ShellTab.tasks) : null,
+                  ),
+                  if (_loading)
+                    const SkeletonCards(count: 2, height: 120)
+                  else if (cards.isEmpty)
+                    SurfaceCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                      child: Row(children: [
+                        const Icon(CupertinoIcons.checkmark_seal, color: AppColors.green, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text('На сегодня задач нет', style: AppText.body.copyWith(color: AppColors.ink2))),
+                      ]),
+                    )
+                  else
+                    TileGrid(children: cards),
+                  SummarySection(
+                    title: 'Последние отметки',
+                    onSeeAll: () => pushPage(context, const CheckinHistoryScreen()),
+                  ),
+                  if (_loading)
+                    const SkeletonCards(count: 1, height: 140)
+                  else if (_recent.isEmpty)
+                    SurfaceCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                      child: Text('Отметок пока нет. Нажмите «Отметиться», когда придёте на работу.',
+                          style: AppText.body.copyWith(color: AppColors.ink2)),
+                    )
+                  else
+                    SurfaceCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                      child: Divided(children: [
+                        for (final l in _recent) CheckinLogTile(log: l, workStart: workStart),
+                      ]),
+                    ),
                 ],
               ),
-              UnderlineTabs(
-                labels: const ['Link Time', 'Статистика', 'Табель', 'Баллы'],
-                index: _tab,
-                onChanged: (i) => setState(() => _tab = i),
-              ),
-            ]),
-          ),
-          Expanded(
-            child: _error != null && _sheets.isEmpty
-                ? PageScroll(onRefresh: _load, children: [ErrorState(error: _error!, onRetry: _load)])
-                : _loading
-                    ? PageScroll(children: const [SizedBox(height: 12), SkeletonCards(count: 3, height: 90)])
-                    : AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 220),
-                        switchInCurve: Curves.easeOutQuart,
-                        transitionBuilder: (child, a) => FadeTransition(
-                          opacity: a,
-                          child: SlideTransition(
-                            position: Tween(begin: const Offset(0, 0.02), end: Offset.zero).animate(a),
-                            child: child,
-                          ),
-                        ),
-                        child: KeyedSubtree(
-                          key: ValueKey(_tab),
-                          child: switch (_tab) {
-                            0 => TimePanel(
-                                lastLog: _lastLog,
-                                today: todayRecord,
-                                workStart: MonthSheet.workStartOf(_shifts),
-                                workEnd: MonthSheet.workEndOf(_shifts),
-                                runs: _today,
-                                tasks: _tasks,
-                                people: _people,
-                                onRefresh: _load,
-                              ),
-                            1 => StatsPanel(yearSheets: _sheets, tasks: _tasks, runs: _yearRuns, onRefresh: _load),
-                            2 => TimesheetGridPanel(yearSheets: _sheets, onRefresh: _load),
-                            _ => Session.instance.hasFeature('points')
-                                ? PointsPanel(
-                                    score: _score,
-                                    achievements: _achievements,
-                                    month: current?.month ?? DateTime.now(),
-                                    onRefresh: _load,
-                                  )
-                                : PageScroll(children: const [PremiumNotice(title: 'Баллы')]),
-                          },
-                        ),
-                      ),
-          ),
-        ]),
       ),
     );
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.score, required this.unread});
+  const _Header({required this.dateLine, required this.greeting, required this.unread});
 
-  final int? score;
+  final String dateLine;
+  final String greeting;
   final int unread;
 
   @override
   Widget build(BuildContext context) {
     final s = Session.instance;
     return Row(children: [
-      Pressable(
-        onTap: () => pushPage(context, const ProfileScreen()),
-        scale: 0.92,
-        semanticLabel: 'Профиль',
-        child: AppAvatar(name: s.fullName, imageUrl: s.image, size: 54, border: false),
-      ),
-      const SizedBox(width: 14),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(s.fullName, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.cardTitle),
-          Text.rich(
-            TextSpan(children: [
-              if (s.department.isNotEmpty)
-                TextSpan(text: s.department, style: AppText.label.copyWith(color: AppColors.ink2, fontWeight: FontWeight.w600)),
-              if (s.department.isNotEmpty && s.designation.isNotEmpty) const TextSpan(text: ' | '),
-              TextSpan(text: s.designation.isNotEmpty ? s.designation : (s.department.isEmpty ? 'Сотрудник' : '')),
-            ]),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.label.copyWith(color: AppColors.ink3),
-          ),
-          const SizedBox(height: 8),
-          _PointsBar(score: score),
+          Text(dateLine, style: AppText.label.copyWith(color: AppColors.ink3)),
+          const SizedBox(height: 2),
+          Text(greeting, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.bodyStrong),
         ]),
       ),
-      const SizedBox(width: 12),
-      Align(
-        alignment: Alignment.topCenter,
-        child: CircleButton(
-          icon: CupertinoIcons.bell_fill,
-          label: unread > 0 ? 'Оповещения, новых: $unread' : 'Оповещения',
-          badge: unread > 0,
-          background: AppColors.charcoal,
-          foreground: Colors.white,
-          size: 36,
-          iconSize: 16,
-          onTap: () => ShellScope.maybeOf(context)?.goTo(ShellTab.inbox),
-        ),
+      CircleButton(
+        icon: CupertinoIcons.bell,
+        label: unread > 0 ? 'Оповещения, новых: $unread' : 'Оповещения',
+        badge: unread > 0,
+        size: 48,
+        iconSize: 20,
+        onTap: () => pushPage(context, const NoticesScreen()),
+      ),
+      const SizedBox(width: 10),
+      Pressable(
+        onTap: () => ShellScope.maybeOf(context)?.goTo(ShellTab.profile),
+        scale: 0.92,
+        semanticLabel: 'Профиль',
+        child: AppAvatar(name: s.fullName, imageUrl: s.image, size: 48, border: false),
       ),
     ]);
-  }
-}
-
-class _PointsBar extends StatelessWidget {
-  const _PointsBar({required this.score});
-
-  final int? score;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: score == null ? 'Баллы загружаются' : 'Баллы: $score из 100',
-      child: LayoutBuilder(builder: (context, c) {
-        return Container(
-          height: 14,
-          decoration: BoxDecoration(color: AppColors.chip, borderRadius: BorderRadius.circular(7)),
-          child: Stack(children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: (score ?? 0) / 100),
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeOutQuart,
-              builder: (_, v, _) => Container(
-                width: c.maxWidth * v,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(7),
-                  gradient: const LinearGradient(colors: [Color(0xFFE9D24A), Color(0xFF8BC34A), AppColors.green]),
-                ),
-              ),
-            ),
-            Center(
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(CupertinoIcons.circle_fill, size: 7, color: (score ?? 0) >= 55 ? Colors.white : AppColors.ink2),
-                const SizedBox(width: 4),
-                Text(score == null ? '—' : '$score',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: (score ?? 0) >= 55 ? Colors.white : AppColors.ink,
-                    )),
-              ]),
-            ),
-          ]),
-        );
-      }),
-    );
   }
 }

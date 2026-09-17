@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 
-import '../../core/checkin_photo.dart';
 import '../../core/api.dart';
 import '../../core/fmt.dart';
 import '../../core/theme.dart';
@@ -104,15 +103,7 @@ class _CheckinHistoryScreenState extends State<CheckinHistoryScreen> {
             ),
             SurfaceCard(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-              child: Divided(children: [for (final l in entry.value) CheckinRow(
-                    log: l,
-                    showDate: false,
-                    photo: _photos[l['name']],
-                    onAddPhoto: () async {
-                      final url = await addCheckinPhoto(context, l['name'].toString());
-                      if (url != null && mounted) setState(() => _photos[l['name'].toString()] = url);
-                    },
-                  )]),
+              child: Divided(children: [for (final l in entry.value) CheckinRow(log: l, showDate: false, photo: _photos[l['name']])]),
             ),
           ],
           if (_hasMore)

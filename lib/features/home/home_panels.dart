@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/media.dart';
-import '../../core/checkin_photo.dart';
 import '../../core/api.dart';
 import '../../core/chart.dart';
 import '../../core/forms.dart';
@@ -14,7 +12,6 @@ import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../data/checklists.dart';
-import '../../data/hr.dart';
 import '../../data/plans.dart';
 import '../../data/score.dart';
 import '../../data/tasks.dart';
@@ -229,7 +226,6 @@ class TimePanel extends StatelessWidget {
         Divided(
           children: [for (final r in rows) Reveal(index: i++, child: r)],
         ),
-        if (arrived != null) _ArrivalPhoto(key: ValueKey(lastLog?['time'])),
         if (runs.isEmpty && Session.instance.isManager && Session.instance.hasFeature('checklists'))
           Padding(
             padding: const EdgeInsets.only(top: 10, left: 4),
@@ -898,100 +894,6 @@ class PointsPanel extends StatelessWidget {
         const SizedBox(height: 14),
         Text('Баллы обновляются каждый месяц.', style: AppText.caption),
       ],
-    );
-  }
-}
-
-/// Photo from the workplace for today's latest arrival.
-class _ArrivalPhoto extends StatefulWidget {
-  const _ArrivalPhoto({super.key});
-
-  @override
-  State<_ArrivalPhoto> createState() => _ArrivalPhotoState();
-}
-
-class _ArrivalPhotoState extends State<_ArrivalPhoto> {
-  String? _checkin;
-  String? _url;
-  bool _loaded = false;
-  bool _busy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final arrivals = await Hr.todayArrivals();
-      if (arrivals.isEmpty) return;
-      final names = [for (final a in arrivals) a['name'].toString()];
-      final photos = await Hr.checkinPhotos(names);
-      if (!mounted) return;
-      setState(() {
-        _checkin = names.first;
-        _url = names
-            .map((n) => photos[n])
-            .firstWhere((u) => u != null, orElse: () => null);
-        _loaded = true;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _loaded = true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_loaded || _checkin == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: _url != null
-          ? Row(
-              children: [
-                CheckinThumb(url: _url!, size: 52),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('Фото с рабочего места', style: AppText.body),
-                ),
-                const Icon(
-                  CupertinoIcons.checkmark_alt,
-                  size: 18,
-                  color: AppColors.greenDeep,
-                ),
-              ],
-            )
-          : DashedBox(
-              height: 56,
-              onTap: _busy
-                  ? null
-                  : () async {
-                      setState(() => _busy = true);
-                      final url = await addCheckinPhoto(context, _checkin!);
-                      if (mounted)
-                        setState(() {
-                          _busy = false;
-                          _url = url ?? _url;
-                        });
-                    },
-              child: _busy
-                  ? const CupertinoActivityIndicator()
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          CupertinoIcons.camera,
-                          size: 18,
-                          color: AppColors.ink3,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Прикрепить фото с рабочего места',
-                          style: AppText.body.copyWith(color: AppColors.ink3),
-                        ),
-                      ],
-                    ),
-            ),
     );
   }
 }

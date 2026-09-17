@@ -4,121 +4,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../../core/api.dart';
-import '../../core/fmt.dart';
-import '../../core/media.dart';
 import '../../core/minimap.dart';
+import '../../core/selfie_camera.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../data/hr.dart';
-import '../attendance/checkin_history_screen.dart';
-
-class CheckinCard extends StatefulWidget {
-  const CheckinCard({super.key, required this.lastLog, required this.loading});
-
-  final Json? lastLog;
-  final bool loading;
-
-  @override
-  State<CheckinCard> createState() => _CheckinCardState();
-}
-
-class _CheckinCardState extends State<CheckinCard> {
-  late Timer _timer;
-  DateTime _now = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  bool get _onShift => widget.lastLog?['log_type'] == 'IN';
-
-  Future<void> _start() async {
-    final logType = _onShift ? 'OUT' : 'IN';
-    final done = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bg,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-      builder: (_) => _CheckinSheet(logType: logType),
-    );
-    if (done == true && mounted) {
-      showToast(context, logType == 'IN' ? 'Приход отмечен' : 'Уход отмечен');
-      Session.instance.notifyDataChanged();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final last = widget.lastLog;
-    final (statusText, tone) = switch (last?['log_type']) {
-      'IN' => ('На смене с ${Fmt.time(last!['time'])}', Tone.green),
-      'OUT' => ('Смена закрыта в ${Fmt.time(last!['time'])}', Tone.dark),
-      _ => ('Смена ещё не начата', Tone.neutral),
-    };
-    return SurfaceCard(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Сейчас', style: AppText.caption),
-              const SizedBox(height: 2),
-              Text(Fmt.clock(_now),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    height: 1.1,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -1,
-                    color: AppColors.ink,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  )),
-            ]),
-          ),
-          CircleButton(
-            icon: CupertinoIcons.clock,
-            label: 'История отметок',
-            background: AppColors.bg,
-            onTap: () => pushPage(context, const CheckinHistoryScreen()),
-          ),
-        ]),
-        const SizedBox(height: 10),
-        widget.loading && last == null
-            ? const Skeleton(height: 16, width: 160)
-            : Row(children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: tone == Tone.neutral ? AppColors.ink4 : tone.solid,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(statusText, style: AppText.label),
-              ]),
-        const SizedBox(height: 18),
-        PrimaryButton(
-          label: _onShift ? 'Отметить уход' : 'Отметить приход',
-          icon: _onShift ? CupertinoIcons.square_arrow_left : CupertinoIcons.square_arrow_right,
-          kind: _onShift ? ButtonKind.dark : ButtonKind.green,
-          onTap: widget.loading ? null : _start,
-        ),
-      ]),
-    );
-  }
-}
 
 class _CheckinSheet extends StatefulWidget {
   const _CheckinSheet({required this.logType});
@@ -130,16 +21,13 @@ class _CheckinSheet extends StatefulWidget {
 }
 
 class _CheckinSheetState extends State<_CheckinSheet> {
-  final DateTime _time = DateTime.now();
   Position? _position;
   String _locationText = 'Определяем местоположение…';
   bool _locating = true;
   bool _busy = false;
   String? _error;
   ShiftLocation? _office;
-  String? _checkinName;
-  PendingFile? _photo;
-  bool _uploading = false;
+  String _step = '';
 
   @override
   void initState() {
@@ -162,27 +50,6 @@ class _CheckinSheetState extends State<_CheckinSheet> {
   }
 
   String _meters(double m) => m < 1000 ? '${m.round()} м' : '${(m / 1000).toStringAsFixed(1)} км';
-
-  Future<void> _addPhoto() async {
-    final f = await pickAttachment(context);
-    if (f == null || _checkinName == null) return;
-    setState(() {
-      _photo = f;
-      _uploading = true;
-      _error = null;
-    });
-    try {
-      await Hr.attachCheckinPhoto(_checkinName!, f.bytes, f.name);
-      Session.instance.notifyDataChanged();
-    } catch (e) {
-      if (mounted) setState(() {
-        _photo = null;
-        _error = errorText(e);
-      });
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
-  }
 
   Future<void> _locate() async {
     try {
@@ -214,19 +81,42 @@ class _CheckinSheetState extends State<_CheckinSheet> {
     });
   }
 
+  /// Selfie first, then the check-in with the photo attached. No photo, no check-in,
+  /// unless the device has no camera at all (e.g. the simulator).
   Future<void> _submit() async {
+    final isIn = widget.logType == 'IN';
+    setState(() => _error = null);
+    final selfie = await takeSelfie(context, actionLabel: isIn ? 'Отметить приход' : 'Отметить уход');
+    if (!mounted) return;
+    if (selfie.outcome == SelfieOutcome.cancelled) return;
+    if (selfie.outcome == SelfieOutcome.denied) {
+      setState(() => _error = 'Без селфи отметиться нельзя. Разрешите доступ к камере в настройках iPhone.');
+      return;
+    }
     setState(() {
       _busy = true;
-      _error = null;
+      _step = 'Сохраняем отметку…';
     });
     try {
       final doc = await Hr.checkin(widget.logType, latitude: _position?.latitude, longitude: _position?.longitude);
+      final name = doc['name']?.toString();
+      if (selfie.bytes != null && name != null) {
+        if (mounted) setState(() => _step = 'Загружаем селфи…');
+        try {
+          await Hr.attachCheckinPhoto(name, selfie.bytes!, 'selfie.jpg');
+        } catch (e) {
+          if (mounted) showToast(context, 'Отметка сохранена, но селфи не загрузилось: ${errorText(e)}', error: true);
+        }
+      }
       Session.instance.notifyDataChanged();
-      if (mounted) setState(() => _checkinName = doc['name']?.toString());
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) setState(() => _error = errorText(e));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() {
+        _busy = false;
+        _step = '';
+      });
     }
   }
 
@@ -234,20 +124,15 @@ class _CheckinSheetState extends State<_CheckinSheet> {
   Widget build(BuildContext context) {
     final isIn = widget.logType == 'IN';
     final s = Session.instance;
-    final done = _checkinName != null;
     final d = _distance;
-    final title = done
-        ? (isIn ? 'Вы отметили приход в ${Fmt.time(_time)}' : 'Вы отметили уход в ${Fmt.time(_time)}')
-        : _locating
+    final title = _locating
             ? 'Проверяем ваше местоположение'
             : _position == null
                 ? 'Местоположение не определено'
                 : _outside
                     ? 'Вы далеко от офиса'
                     : 'Местоположение подтверждено';
-    final subtitle = done
-        ? 'Прикрепите фото с рабочего места, если его требует руководитель.'
-        : _locating
+    final subtitle = _locating
             ? 'Подождите, проверяем ваше местоположение…'
             : _position == null
                 ? _locationText
@@ -294,31 +179,19 @@ class _CheckinSheetState extends State<_CheckinSheet> {
             else
               const SizedBox(height: 18),
             if (_error != null) ...[InlineError(_error!), const SizedBox(height: 12)],
-            if (done) ...[
-              if (isIn)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: DashedBox(
-                    height: 72,
-                    onTap: _uploading || _photo != null ? null : _addPhoto,
-                    child: _uploading
-                        ? const CupertinoActivityIndicator()
-                        : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Icon(_photo == null ? CupertinoIcons.camera : CupertinoIcons.checkmark_alt,
-                                size: 20, color: _photo == null ? AppColors.ink3 : AppColors.greenDeep),
-                            const SizedBox(width: 8),
-                            Text(_photo == null ? 'Прикрепить фото' : 'Фото прикреплено',
-                                style: AppText.body.copyWith(color: _photo == null ? AppColors.ink3 : AppColors.greenDeep)),
-                          ]),
-                  ),
-                ),
-              PrimaryButton(label: 'Готово', onTap: _uploading ? null : () => Navigator.pop(context, true)),
-            ] else
-              PrimaryButton(
-                label: isIn ? 'Я на работе' : 'Завершить рабочий день',
-                loading: _busy,
-                onTap: (_locating && s.geolocationTracking) || _outside ? null : _submit,
-              ),
+            if (_busy && _step.isNotEmpty)
+              Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(_step, style: AppText.label)),
+            PrimaryButton(
+              label: isIn ? 'Сделать селфи и отметиться' : 'Сделать селфи и уйти',
+              icon: CupertinoIcons.camera,
+              loading: _busy,
+              onTap: (_locating && s.geolocationTracking) || _outside ? null : _submit,
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Text('Фото сохраняется вместе с отметкой и видно отделу кадров.',
+                  textAlign: TextAlign.center, style: AppText.caption),
+            ),
           ]),
         ),
       ]),
@@ -370,7 +243,7 @@ Future<bool> showCheckinSheet(BuildContext context, String logType) async {
     isScrollControlled: true,
     backgroundColor: AppColors.surface,
     clipBehavior: Clip.antiAlias,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (_) => _CheckinSheet(logType: logType),
   );
   if (done == true && context.mounted) {

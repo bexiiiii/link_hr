@@ -1,10 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../data/hr.dart';
 import 'api.dart';
-import 'media.dart';
-import 'session.dart';
 import 'theme.dart';
 import 'ui.dart';
 
@@ -38,21 +35,6 @@ void showPhoto(BuildContext context, String url) {
       ),
     ),
   );
-}
-
-/// Picks a photo and attaches it to a check-in. Returns the file URL.
-Future<String?> addCheckinPhoto(BuildContext context, String checkin) async {
-  final f = await pickAttachment(context);
-  if (f == null) return null;
-  try {
-    final url = await Hr.attachCheckinPhoto(checkin, f.bytes, f.name);
-    if (context.mounted) showToast(context, 'Фото прикреплено');
-    Session.instance.notifyDataChanged();
-    return url;
-  } catch (e) {
-    if (context.mounted) showToast(context, errorText(e), error: true);
-    return null;
-  }
 }
 
 class CheckinThumb extends StatelessWidget {

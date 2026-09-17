@@ -1,67 +1,93 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Palette follows the Kanji task-management reference: porcelain ground,
-/// white surfaces, emerald / violet / charcoal as the three status voices.
+/// Light green direction (DESIGN.md): near-white neutrals tinted toward the
+/// brand green, one deep green accent for primary actions and the active tab.
 abstract final class AppColors {
-  static const bg = Color(0xFFF5F6F8);
+  static const bg = Color(0xFFF4F5F4);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF7F8FA);
-  static const line = Color(0xFFE8EAEE);
+  static const surfaceAlt = Color(0xFFF7F8F7);
+  static const line = Color(0xFFE9EBEA);
 
-  static const ink = Color(0xFF1B1D23);
-  static const ink2 = Color(0xFF4F535D);
-  static const ink3 = Color(0xFF737884);
-  static const ink4 = Color(0xFFC3C6CD);
+  static const ink = Color(0xFF141816);
+  static const ink2 = Color(0xFF4A514D);
+  static const ink3 = Color(0xFF6E7571);
+  static const ink4 = Color(0xFFBFC5C2);
 
-  static const green = Color(0xFF34B35A);
-  static const greenDeep = Color(0xFF1F8A45);
-  static const greenSoft = Color(0xFFE8F6EC);
-  /// Primary accent: links, selection, switches. Kept under the old name so
-  /// every existing reference moves to the new palette.
-  static const violet = Color(0xFF2F6FED);
-  static const violetSoft = Color(0xFFEAF1FE);
-  /// Graphite used for primary buttons, bell, active navigation.
-  static const charcoal = Color(0xFF3D4047);
-  static const red = Color(0xFFE5484D);
-  static const redSoft = Color(0xFFFDECEC);
-  /// Lateness and days off.
-  static const amber = Color(0xFFE8832A);
-  static const amberSoft = Color(0xFFFFF2E5);
-  static const warn = Color(0xFFF2C94C);
-  static const warnSoft = Color(0xFFFFF8E1);
+  /// Brand green: primary buttons, active tab, clock button, links.
+  static const green = Color(0xFF0F8A62);
+  static const greenDeep = Color(0xFF0B6F4F);
+  static const greenSoft = Color(0xFFE6F4EE);
+  static const greenGlow = Color(0xFFBFE6D6);
+
+  /// Legacy accent name: every former blue/violet accent now resolves to the brand green.
+  static const violet = green;
+  static const violetSoft = greenSoft;
+
+  /// Legacy "graphite" name: dark ink for icons and strong text.
+  static const charcoal = Color(0xFF1F2522);
+
+  static const red = Color(0xFFD94545);
+  static const redSoft = Color(0xFFFCEBEB);
+  static const amber = Color(0xFFD9822B);
+  static const amberSoft = Color(0xFFFDF0E1);
+  static const warn = Color(0xFFE9B949);
+  static const warnSoft = Color(0xFFFDF6E3);
   static const plum = Color(0xFF7B5CD6);
   static const plumSoft = Color(0xFFF1ECFC);
 
-  static const chip = Color(0xFFEDEEF1);
-  static const chipDot = Color(0xFFCDD0D6);
+  static const chip = Color(0xFFEEF0EF);
+  static const chipDot = Color(0xFFCDD2CF);
+  static const camera = Color(0xFF0C0F0E);
 }
+
+const kFont = 'Onest';
 
 abstract final class AppText {
   static const display = TextStyle(
-      fontSize: 28, height: 1.15, fontWeight: FontWeight.w600, letterSpacing: -0.5, color: AppColors.ink);
+      fontFamily: kFont, fontSize: 32, height: 1.1, fontWeight: FontWeight.w600, letterSpacing: -0.6, color: AppColors.ink);
   static const title = TextStyle(
-      fontSize: 22, height: 1.2, fontWeight: FontWeight.w600, letterSpacing: -0.3, color: AppColors.ink);
-  static const heading = TextStyle(fontSize: 17, height: 1.3, fontWeight: FontWeight.w600, color: AppColors.ink);
-  static const cardTitle = TextStyle(fontSize: 15, height: 1.3, fontWeight: FontWeight.w600, color: AppColors.ink);
-  static const body = TextStyle(fontSize: 15, height: 1.4, fontWeight: FontWeight.w400, color: AppColors.ink);
-  static const bodyStrong = TextStyle(fontSize: 15, height: 1.4, fontWeight: FontWeight.w500, color: AppColors.ink);
-  static const label = TextStyle(fontSize: 13, height: 1.35, fontWeight: FontWeight.w400, color: AppColors.ink2);
-  static const caption = TextStyle(fontSize: 12, height: 1.3, fontWeight: FontWeight.w400, color: AppColors.ink3);
+      fontFamily: kFont, fontSize: 22, height: 1.2, fontWeight: FontWeight.w600, letterSpacing: -0.3, color: AppColors.ink);
+  static const heading =
+      TextStyle(fontFamily: kFont, fontSize: 18, height: 1.25, fontWeight: FontWeight.w600, color: AppColors.ink);
+  static const cardTitle =
+      TextStyle(fontFamily: kFont, fontSize: 16, height: 1.3, fontWeight: FontWeight.w500, color: AppColors.ink);
+  static const body = TextStyle(fontFamily: kFont, fontSize: 15, height: 1.45, fontWeight: FontWeight.w400, color: AppColors.ink);
+  static const bodyStrong =
+      TextStyle(fontFamily: kFont, fontSize: 15, height: 1.4, fontWeight: FontWeight.w500, color: AppColors.ink);
+  static const label = TextStyle(fontFamily: kFont, fontSize: 13, height: 1.35, fontWeight: FontWeight.w400, color: AppColors.ink2);
+  static const caption =
+      TextStyle(fontFamily: kFont, fontSize: 12, height: 1.3, fontWeight: FontWeight.w400, color: AppColors.ink3);
   static const number = TextStyle(
+    fontFamily: kFont,
     fontSize: 15,
     fontWeight: FontWeight.w500,
     color: AppColors.ink,
     fontFeatures: [FontFeature.tabularFigures()],
   );
+  static const clock = TextStyle(
+    fontFamily: kFont,
+    fontSize: 28,
+    height: 1.1,
+    fontWeight: FontWeight.w600,
+    color: AppColors.ink,
+    fontFeatures: [FontFeature.tabularFigures()],
+  );
 }
-
 
 abstract final class AppRadius {
-  static const card = 12.0;
-  static const tile = 12.0;
-  static const field = 8.0;
+  static const card = 18.0;
+  static const tile = 14.0;
+  static const field = 12.0;
+  static const pill = 999.0;
 }
+
+/// The one soft shadow used for cards; the nav pill and clock button use [AppShadow.float].
+abstract final class AppShadow {
+  static const card = [BoxShadow(color: Color(0x0A141816), blurRadius: 12, offset: Offset(0, 2))];
+  static const float = [BoxShadow(color: Color(0x1A141816), blurRadius: 24, offset: Offset(0, 8))];
+}
+
 enum Tone { green, violet, dark, red, amber, neutral }
 
 extension ToneColors on Tone {
@@ -86,11 +112,11 @@ extension ToneColors on Tone {
   Color get onSolid => this == Tone.neutral ? AppColors.ink2 : Colors.white;
 
   Color get ink => switch (this) {
-        Tone.green => const Color(0xFF1F8A45),
+        Tone.green => AppColors.greenDeep,
         Tone.violet => AppColors.violet,
         Tone.dark => AppColors.charcoal,
-        Tone.red => const Color(0xFFC2363B),
-        Tone.amber => const Color(0xFFB45E12),
+        Tone.red => const Color(0xFFB83636),
+        Tone.amber => const Color(0xFFA35F17),
         Tone.neutral => AppColors.ink2,
       };
 }
@@ -117,16 +143,17 @@ Tone toneForStatus(String? status) {
     case 'work from home':
     case 'half day':
     case 'partly claimed and returned':
-    case 'in progress':
     case 'черновик':
       return Tone.violet;
+    case 'in progress':
+      return Tone.amber;
     case 'rejected':
     case 'absent':
     case 'overdue':
+    case 'on hold':
       return Tone.red;
     case 'cancelled':
     case 'on leave':
-    case 'on hold':
     case 'inactive':
     case 'расторгнут':
     case 'отменен':
@@ -143,6 +170,7 @@ ThemeData buildTheme() {
     useMaterial3: true,
     brightness: Brightness.light,
     scaffoldBackgroundColor: AppColors.bg,
+    fontFamily: kFont,
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.violet,
       primary: AppColors.violet,
@@ -153,7 +181,10 @@ ThemeData buildTheme() {
     splashFactory: NoSplash.splashFactory,
     highlightColor: Colors.transparent,
     platform: TargetPlatform.iOS,
-    cupertinoOverrideTheme: const CupertinoThemeData(primaryColor: AppColors.violet),
+    cupertinoOverrideTheme: const CupertinoThemeData(
+      primaryColor: AppColors.green,
+      textTheme: CupertinoTextThemeData(textStyle: TextStyle(fontFamily: kFont, fontSize: 16, color: AppColors.ink)),
+    ),
     dividerTheme: const DividerThemeData(color: AppColors.line, thickness: 1, space: 1),
     textSelectionTheme: const TextSelectionThemeData(
       cursorColor: AppColors.violet,
