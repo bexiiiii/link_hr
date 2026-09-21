@@ -18,9 +18,7 @@ import '../../data/timesheet.dart';
 import '../achievements/achievements_screens.dart';
 import '../notices/notices_screens.dart';
 import '../shell.dart';
-import '../attendance/checkin_history_screen.dart';
 import '../checklists/checklists_screens.dart';
-import '../requests/requests_screen.dart';
 import '../tasks/task_sheet.dart';
 import 'checkin_card.dart';
 import 'summary_widgets.dart';
@@ -41,12 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<TaskItem> _tasks = [];
   List<ChecklistRun> _today = [];
   Json? _lastLog;
-  List<Json> _shifts = [];
   List<Notice> _unread = [];
   Map<String, PersonInfo> _people = {};
   List<Achievement> _achievements = [];
-  List<Json> _recent = [];
-  (int, int, int)? _requests;
   final Set<String> _shownNotices = {};
   bool _popupOpen = false;
 
@@ -84,9 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
         Hr.checkins(
           limit: 3,
         ).then<Object?>((v) => v).catchError((_) => <Json>[]),
-        Hr.shiftAssignments()
-            .then<Object?>((v) => v)
-            .catchError((_) => <Json>[]),
         Notices.mine(
           unreadOnly: true,
         ).then<Object?>((v) => v).catchError((_) => <Notice>[]),
@@ -100,11 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _sheets = sheets;
         _tasks = tasks;
         _today = today;
-        _recent = r[3] as List<Json>;
-        _lastLog = _recent.firstOrNull;
-        _shifts = r[4] as List<Json>;
-        _unread = r[5] as List<Notice>;
-        _people = r[6] as Map<String, PersonInfo>;
+        _lastLog = (r[3] as List<Json>).firstOrNull;
+        _unread = r[4] as List<Notice>;
+        _people = r[5] as Map<String, PersonInfo>;
         _achievements = Achievements.compute(
           sheets: sheets,
           tasks: tasks,
@@ -115,7 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _error = null;
       });
       _popups();
-      _loadRequests();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -138,11 +127,9 @@ class _HomeScreenState extends State<HomeScreen> {
         await showNoticeDialog(context, notice, _people);
       }
       final seen = await Achievements.seen();
-      final fresh =
-          _achievements
-              .where((a) => a.unlocked && !seen.contains(a.id))
-              .toList()
-            ..sort((a, b) => b.unlockedAt!.compareTo(a.unlockedAt!));
+      final fresh = _achievements
+          .where((a) => a.unlocked && !seen.contains(a.id))
+          .toList();
       if (fresh.isNotEmpty && mounted) {
         await Achievements.markSeen(fresh.map((a) => a.id));
         if (mounted) await showAchievementDialog(context, fresh.first);
@@ -150,26 +137,6 @@ class _HomeScreenState extends State<HomeScreen> {
     } finally {
       _popupOpen = false;
     }
-  }
-
-  /// My requests of every kind: leave, shift, attendance correction, expenses.
-  Future<void> _loadRequests() async {
-    final lists = await Future.wait([
-      Hr.leaves(limit: 200).catchError((_) => <Json>[]),
-      Hr.shiftRequests(limit: 200).catchError((_) => <Json>[]),
-      Hr.attendanceRequests(limit: 200).catchError((_) => <Json>[]),
-      Hr.expenseClaims(limit: 200).catchError((_) => <Json>[]),
-    ]);
-    var total = 0, approved = 0, declined = 0;
-    for (final row in lists.expand((l) => l)) {
-      total++;
-      final status = (row['approval_status'] ?? row['status'] ?? '').toString();
-      final docstatus = int.tryParse('${row['docstatus'] ?? 0}') ?? 0;
-      if (status == 'Approved' || (status.isEmpty && docstatus == 1))
-        approved++;
-      if (status == 'Rejected' || docstatus == 2) declined++;
-    }
-    if (mounted) setState(() => _requests = (total, approved, declined));
   }
 
   String _greeting(DateTime now) {
@@ -193,15 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final onShift = lastToday && _lastLog?['log_type'] == 'IN';
     final finished = lastToday && _lastLog?['log_type'] == 'OUT';
     final canCheckin = _session.checkinAllowed;
-    final workStart = MonthSheet.workStartOf(_shifts);
-    final onTime = current == null
-        ? 0
-        : current.count(DayMark.onTime) + current.count(DayMark.remote);
-    final late = current?.count(DayMark.late) ?? 0;
-    final onTimePct = onTime + late == 0
-        ? null
-        : (onTime * 100 / (onTime + late)).round();
-
     final tasks = _session.hasFeature('tasks')
         ? (_tasks
               .where(
@@ -216,28 +174,22 @@ class _HomeScreenState extends State<HomeScreen> {
             ))
         : <TaskItem>[];
     final runs = _session.hasFeature('checklists') ? _today : <ChecklistRun>[];
-    final cards = <Widget>[
-      for (final r in runs.take(4))
-        SummaryTaskCard(
-          icon: AppIcons.checkmarkSquare,
-          title: r.meta.title,
-          pill: r.closed ? 'Выполнено' : 'Чеклист',
-          pillTone: r.closed ? Tone.green : Tone.neutral,
-          subtitle: r.meta.window,
-          progress: r.items.isEmpty ? null : r.doneCount / r.items.length,
-          onTap: () => pushPage(context, ChecklistRunScreen(name: r.name)),
+    final upcoming = <(IconData, String, String, VoidCallback)>[
+      for (final r in runs.take(2))
+        (
+          AppIcons.checkmarkSquare,
+          r.meta.title,
+          r.closed ? 'Выполнено' : r.meta.window,
+          () => pushPage(context, ChecklistRunScreen(name: r.name)),
         ),
-      for (final t in tasks.take(6 - runs.take(4).length))
-        SummaryTaskCard(
-          icon: t.hasVoice ? AppIcons.mic : AppIcons.docText,
-          title: t.title,
-          pill: t.overdue ? 'Просрочено' : t.stage.label,
-          pillTone: t.overdue
-              ? Tone.red
-              : (t.stage == TaskStage.review ? Tone.violet : Tone.amber),
-          subtitle: t.due == null ? null : 'До ${Fmt.long(t.due)}',
-          progress: t.subtaskTotal == 0 ? null : t.subtaskDone / t.subtaskTotal,
-          onTap: () => showTaskSheet(context, t, _people),
+      for (final t in tasks.take(2 - runs.take(2).length))
+        (
+          t.hasVoice ? AppIcons.mic : AppIcons.docText,
+          t.title,
+          t.overdue
+              ? 'Просрочено'
+              : (t.due == null ? t.stage.label : 'До ${Fmt.long(t.due)}'),
+          () => showTaskSheet(context, t, _people),
         ),
     ];
 
@@ -260,9 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     greeting: '${_greeting(now)}, ${_session.firstName}',
                     unread: _unread.length,
                   ),
-                  const SizedBox(height: 18),
-                  const Text('Сводка\nза сегодня', style: AppText.display),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
+                  const Text('Сегодня', style: AppText.display),
+                  const SizedBox(height: 14),
                   if (_loading)
                     const Skeleton(height: 76, radius: AppRadius.card)
                   else
@@ -271,78 +223,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       left: finished ? lastTime : null,
                       actionLabel: !canCheckin
                           ? null
-                          : onShift
-                          ? 'Уйти'
-                          : finished
-                          ? 'Снова на работу'
-                          : 'Отметиться',
+                          : (onShift
+                                ? 'Уйти'
+                                : (finished
+                                      ? 'Снова на работу'
+                                      : 'Отметиться')),
                       onAction: () =>
                           showCheckinSheet(context, onShift ? 'OUT' : 'IN'),
                     ),
-                  const SizedBox(height: 12),
-                  if (_loading)
-                    const SkeletonCards(count: 2, height: 84)
-                  else
-                    TileGrid(
-                      children: [
-                        StatTile(
-                          value: todayRecord?.firstIn == null
-                              ? '– –'
-                              : Fmt.time(todayRecord!.firstIn),
-                          label:
-                              todayRecord?.lateMinutes != null &&
-                                  todayRecord!.lateMinutes > 0
-                              ? 'Пришёл · опоздание ${formatLate(todayRecord.lateMinutes)}'
-                              : 'Пришёл',
-                          icon: AppIcons.arrowDownLeftSquare,
-                          muted: todayRecord?.firstIn == null,
-                        ),
-                        StatTile(
-                          value: finished ? Fmt.time(lastTime) : '– –',
-                          label: onShift ? 'На работе' : 'Ушёл',
-                          icon: AppIcons.arrowUpRightSquare,
-                          muted: !finished,
-                        ),
-                        StatTile(
-                          value: onTimePct == null ? '– –' : '$onTimePct%',
-                          label: 'Вовремя в этом месяце',
-                          icon: AppIcons.checkmarkSquare,
-                          muted: onTimePct == null,
-                        ),
-                        StatTile(
-                          value: '${current?.present ?? 0}',
-                          unit: Fmt.plural(
-                            current?.present ?? 0,
-                            'день',
-                            'дня',
-                            'дней',
-                          ),
-                          label: 'На работе в этом месяце',
-                          icon: AppIcons.calendar,
-                        ),
-                      ],
-                    ),
                   SummarySection(
-                    title: 'Статус заявок',
-                    onSeeAll: () => pushPage(context, const RequestsScreen()),
-                  ),
-                  RequestCounters(
-                    loading: _requests == null,
-                    total: _requests?.$1 ?? 0,
-                    approved: _requests?.$2 ?? 0,
-                    declined: _requests?.$3 ?? 0,
-                    onTap: () => pushPage(context, const RequestsScreen()),
-                  ),
-                  SummarySection(
-                    title: 'Задачи',
+                    title: 'Ближайшие задачи',
                     onSeeAll: _session.hasFeature('tasks')
                         ? () =>
                               ShellScope.maybeOf(context)?.goTo(ShellTab.tasks)
                         : null,
                   ),
                   if (_loading)
-                    const SkeletonCards(count: 2, height: 120)
-                  else if (cards.isEmpty)
+                    const SkeletonCards(count: 1, height: 118)
+                  else if (upcoming.isEmpty)
                     SurfaceCard(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -352,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           const Icon(
                             AppIcons.checkmarkSeal,
-                            color: AppColors.green,
+                            color: AppColors.blue,
                             size: 22,
                           ),
                           const SizedBox(width: 12),
@@ -368,40 +266,78 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     )
                   else
-                    TileGrid(children: cards),
-                  SummarySection(
-                    title: 'Последние отметки',
-                    onSeeAll: () =>
-                        pushPage(context, const CheckinHistoryScreen()),
-                  ),
-                  if (_loading)
-                    const SkeletonCards(count: 1, height: 140)
-                  else if (_recent.isEmpty)
                     SurfaceCard(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 18,
-                      ),
-                      child: Text(
-                        'Отметок пока нет. Нажмите «Отметиться», когда придёте на работу.',
-                        style: AppText.body.copyWith(color: AppColors.ink2),
-                      ),
-                    )
-                  else
-                    SurfaceCard(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 2,
+                        vertical: 4,
                       ),
                       child: Divided(
                         children: [
-                          for (final l in _recent)
-                            CheckinLogTile(log: l, workStart: workStart),
+                          for (final item in upcoming)
+                            _UpcomingRow(
+                              icon: item.$1,
+                              title: item.$2,
+                              subtitle: item.$3,
+                              onTap: item.$4,
+                            ),
                         ],
                       ),
                     ),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+class _UpcomingRow extends StatelessWidget {
+  const _UpcomingRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      scale: 0.99,
+      semanticLabel: title,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 21, color: AppColors.blue),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bodyStrong,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.caption,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(AppIcons.chevronRight, size: 18, color: AppColors.ink4),
+          ],
+        ),
       ),
     );
   }

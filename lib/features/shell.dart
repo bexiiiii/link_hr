@@ -134,7 +134,8 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   }
 }
 
-/// Floating white pill with round icon buttons; the active tab is a filled green circle.
+/// A labelled navigation bar: the icon and its name stay together, so users do
+/// not have to memorize five unlabeled symbols.
 class _NavPill extends StatelessWidget {
   const _NavPill({
     required this.items,
@@ -149,18 +150,18 @@ class _NavPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(6),
+      width: 370,
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         boxShadow: AppShadow.float,
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
           for (var i = 0; i < items.length; i++)
-            Padding(
-              padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
+            Expanded(
               child: Semantics(
                 button: true,
                 selected: i == index,
@@ -171,16 +172,35 @@ class _NavPill extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutQuart,
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: i == index ? AppColors.blue : Colors.transparent,
-                    ),
-                    child: Icon(
-                      i == index ? items[i].$2 : items[i].$1,
-                      size: 23,
-                      color: i == index ? Colors.white : AppColors.ink3,
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          i == index ? items[i].$2 : items[i].$1,
+                          size: 22,
+                          color: i == index ? AppColors.blue : AppColors.ink3,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          switch (i) {
+                            0 => 'Главная',
+                            1 => 'Часы',
+                            2 => 'Задачи',
+                            3 => 'Ещё',
+                            _ => 'Профиль',
+                          },
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.caption.copyWith(
+                            fontSize: 10,
+                            color: i == index ? AppColors.blue : AppColors.ink3,
+                            fontWeight: i == index
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

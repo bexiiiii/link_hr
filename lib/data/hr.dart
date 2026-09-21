@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../core/api.dart';
 import '../core/fmt.dart';
 import '../core/session.dart';
@@ -61,8 +63,8 @@ abstract final class Hr {
     'device_id': 'Link iOS',
   });
 
-  /// Active shift location (office geofence) for the employee today, or null
-  /// when HR has not assigned one.
+  /// Active shift location (office geofence) for the employee today, or fallback
+  /// to company shift location if configured.
   static Future<ShiftLocation?> shiftLocation() async {
     final today = Fmt.iso(DateTime.now());
     final rows = await _api.list(
@@ -83,7 +85,19 @@ abstract final class Hr {
       return end == null ||
           !Fmt.dateOnly(end).isBefore(Fmt.dateOnly(DateTime.now()));
     }).toList();
-    if (active.isEmpty) return null;
+
+    String? locName;
+    if (active.isNotEmpty) {
+      locName = active.first['shift_location']?.toString();
+    } else {
+      // Fallback: check if there's any active Shift Location configured in the system
+      final allLocs = await _api.list('Shift Location', fields: ['name'], limit: 1);
+      if (allLocs.isNotEmpty) {
+        locName = allLocs.first['name']?.toString();
+      }
+    }
+    if (locName == null || locName.isEmpty) return null;
+
     final loc = await _api.list(
       'Shift Location',
       fields: [
@@ -93,7 +107,7 @@ abstract final class Hr {
         'latitude',
         'longitude',
       ],
-      filters: {'name': active.first['shift_location']},
+      filters: {'name': locName},
       limit: 1,
     );
     if (loc.isEmpty) return null;
@@ -104,6 +118,57 @@ abstract final class Hr {
       latitude: Fmt.number(l['latitude']).toDouble(),
       longitude: Fmt.number(l['longitude']).toDouble(),
     );
+  }
+
+  /// Updates Shift Location coordinates and radius on Frappe (requires HR Manager / Admin role).
+  static Future<void> updateShiftLocation({
+    required String name,
+    required double latitude,
+    required double longitude,
+    double? radius,
+  }) async {
+    await _api.call('frappe.client.set_value', {
+      'doctype': 'Shift Location',
+      'name': name,
+      'fieldname': {
+        'latitude': latitude,
+        'longitude': longitude,
+        if (radius != null) 'checkin_radius': radius,
+      },
+    });
+  }
+
+  /// Reverse geocodes lat/lon into a readable street/city address.
+  static Future<String?> reverseGeocode(double lat, double lon) async {
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lon&format=json&accept-language=ru',
+      );
+      final res = await http
+          .get(uri, headers: const {'User-Agent': 'LinkHR/1.0 (iOS)'})
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(res.bodyBytes)) as Map;
+        final addr = data['address'] as Map?;
+        if (addr != null) {
+          final road = addr['road'] ??
+              addr['street'] ??
+              addr['pedestrian'] ??
+              addr['suburb'] ??
+              '';
+          final house = addr['house_number'] ?? '';
+          final city = addr['city'] ?? addr['town'] ?? addr['state'] ?? '';
+          final parts = [
+            if (road.isNotEmpty) road,
+            if (house.isNotEmpty) house,
+            if (city.isNotEmpty) city,
+          ];
+          if (parts.isNotEmpty) return parts.join(', ');
+        }
+        return data['display_name']?.toString();
+      }
+    } catch (_) {}
+    return null;
   }
 
   static Future<String> attachCheckinPhoto(
@@ -603,4 +668,16 @@ class ShiftLocation {
   final double longitude;
 
   bool get hasPoint => latitude != 0 || longitude != 0;
+
+  ShiftLocation copyWith({
+    String? name,
+    double? radius,
+    double? latitude,
+    double? longitude,
+  }) => ShiftLocation(
+    name: name ?? this.name,
+    radius: radius ?? this.radius,
+    latitude: latitude ?? this.latitude,
+    longitude: longitude ?? this.longitude,
+  );
 }

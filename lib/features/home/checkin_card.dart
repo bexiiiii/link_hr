@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/app_icons.dart';
@@ -26,19 +26,49 @@ class _CheckinSheetState extends State<_CheckinSheet> {
   String _locationText = 'Определяем местоположение…';
   bool _locating = true;
   bool _busy = false;
+  bool _calibrating = false;
   String? _error;
   ShiftLocation? _office;
   String _step = '';
+  String? _userAddress;
+  String? _officeAddress;
 
   @override
   void initState() {
     super.initState();
-    _locate();
-    Hr.shiftLocation()
-        .then((o) {
-          if (mounted) setState(() => _office = o);
-        })
-        .catchError((_) {});
+    _initLocation();
+    _loadOffice();
+  }
+
+  Future<void> _loadOffice() async {
+    try {
+      final o = await Hr.shiftLocation();
+      if (!mounted) return;
+      setState(() => _office = o);
+      if (o != null && o.hasPoint) {
+        Hr.reverseGeocode(o.latitude, o.longitude).then((addr) {
+          if (mounted && addr != null) setState(() => _officeAddress = addr);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _initLocation() async {
+    // 1. Immediately read last known position for instant map rendering
+    try {
+      final last = await Geolocator.getLastKnownPosition();
+      if (last != null && mounted) {
+        setState(() {
+          _position = last;
+          _locationText = 'Уточняем GPS…';
+        });
+        Hr.reverseGeocode(last.latitude, last.longitude).then((addr) {
+          if (mounted && addr != null) setState(() => _userAddress = addr);
+        });
+      }
+    } catch (_) {}
+    // 2. Fetch fresh high-precision GPS fix
+    await _locate(fresh: true);
   }
 
   double? get _distance {
@@ -54,38 +84,64 @@ class _CheckinSheetState extends State<_CheckinSheet> {
 
   bool get _outside {
     final d = _distance;
-    return Session.instance.geolocationTracking &&
-        d != null &&
-        _office!.radius > 0 &&
-        d > _office!.radius;
+    if (!Session.instance.geolocationTracking ||
+        d == null ||
+        _office == null ||
+        _office!.radius <= 0) {
+      return false;
+    }
+    // Take indoor GPS accuracy margin into account
+    final acc = _position?.accuracy ?? 0;
+    final effectiveDist = math.max(0.0, d - acc);
+    return effectiveDist > _office!.radius;
   }
 
   String _meters(double m) =>
       m < 1000 ? '${m.round()} м' : '${(m / 1000).toStringAsFixed(1)} км';
 
-  Future<void> _locate() async {
+  Future<void> _locate({bool fresh = false}) async {
+    if (!mounted) return;
+    setState(() {
+      _locating = true;
+      if (fresh) _error = null;
+    });
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        _finishLocate(null, 'Службы геолокации выключены');
+        _finishLocate(null, 'Службы геолокации выключены на устройстве');
         return;
       }
       var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied)
+      if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+      }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        _finishLocate(null, 'Нет доступа к геолокации');
+        _finishLocate(
+          null,
+          'Нет доступа к геолокации. Разрешите доступ в настройках iPhone.',
+        );
         return;
       }
       final p = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
+          accuracy: LocationAccuracy.best,
+          timeLimit: Duration(seconds: 12),
         ),
       );
       _finishLocate(p, 'Местоположение определено');
+      Hr.reverseGeocode(p.latitude, p.longitude).then((addr) {
+        if (mounted && addr != null) setState(() => _userAddress = addr);
+      });
     } catch (_) {
-      _finishLocate(null, 'Не удалось определить местоположение');
+      // If fresh fix timed out but we have a cached position, keep it
+      if (_position != null) {
+        _finishLocate(_position, 'Использована последняя известная геопозиция');
+      } else {
+        _finishLocate(
+          null,
+          'Не удалось определить GPS координаты. Попробуйте еще раз.',
+        );
+      }
     }
   }
 
@@ -96,6 +152,51 @@ class _CheckinSheetState extends State<_CheckinSheet> {
       _locationText = text;
       _locating = false;
     });
+  }
+
+  Future<void> _calibrateOffice() async {
+    final p = _position;
+    final o = _office;
+    if (p == null) return;
+    final officeName = o?.name ?? 'дом офис';
+    final ok = await confirmAction(
+      context,
+      title: 'Калибровка офиса',
+      message:
+          'Установить текущую геопозицию (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)}) как координаты офиса «$officeName» с радиусом 300 м?',
+      confirmLabel: 'Установить',
+    );
+    if (!ok || !mounted) return;
+    setState(() => _calibrating = true);
+    try {
+      await Hr.updateShiftLocation(
+        name: officeName,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        radius: 300,
+      );
+      final updated = (o ??
+              ShiftLocation(
+                name: officeName,
+                radius: 300,
+                latitude: p.latitude,
+                longitude: p.longitude,
+              ))
+          .copyWith(latitude: p.latitude, longitude: p.longitude, radius: 300);
+      if (mounted) {
+        setState(() {
+          _office = updated;
+          _officeAddress = _userAddress;
+          _calibrating = false;
+        });
+        showToast(context, 'Координаты офиса успешно обновлены!');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _calibrating = false);
+        showToast(context, 'Ошибка обновления: ${errorText(e)}', error: true);
+      }
+    }
   }
 
   /// Selfie first, then the check-in with the photo attached. No photo means
@@ -165,22 +266,23 @@ class _CheckinSheetState extends State<_CheckinSheet> {
     final isIn = widget.logType == 'IN';
     final s = Session.instance;
     final d = _distance;
-    final title = _locating
+    final isManager = s.isManager;
+    final title = _locating && _position == null
         ? 'Проверяем ваше местоположение'
         : _position == null
         ? 'Местоположение не определено'
         : _outside
         ? 'Вы далеко от офиса'
         : 'Местоположение подтверждено';
-    final subtitle = _locating
+    final subtitle = _locating && _position == null
         ? 'Подождите, проверяем ваше местоположение…'
         : _position == null
         ? _locationText
         : d == null
-        ? 'Точность до ${_position!.accuracy.round()} м'
+        ? 'Офис не назначен · Точность GPS ±${_position!.accuracy.round()} м'
         : _outside
-        ? 'До «${_office!.name}» ${_meters(d)}. Отметиться можно в радиусе ${_meters(_office!.radius)}.'
-        : 'До «${_office!.name}» ${_meters(d)}, точность ${_position!.accuracy.round()} м';
+        ? 'До «${_office!.name}» ${_meters(d)}. Отметка доступна в радиусе ${_meters(_office!.radius)}.'
+        : 'В зоне офиса «${_office!.name}» (до центра ${_meters(d)})';
     return SafeArea(
       top: false,
       child: Column(
@@ -189,13 +291,19 @@ class _CheckinSheetState extends State<_CheckinSheet> {
         children: [
           Stack(
             children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: MiniMap(
-                  key: ValueKey(_position == null),
-                  latitude: _position?.latitude,
-                  longitude: _position?.longitude,
+              MiniMap(
+                key: ValueKey(
+                  '${_position?.latitude}_${_position?.longitude}_${_office?.latitude}_${_office?.radius}',
                 ),
+                userLat: _position?.latitude,
+                userLon: _position?.longitude,
+                userAccuracy: _position?.accuracy,
+                officeLat: _office?.latitude,
+                officeLon: _office?.longitude,
+                officeRadius: _office?.radius,
+                officeName: _office?.name,
+                onRefresh: _locating ? null : () => _locate(fresh: true),
+                isLocating: _locating,
               ),
               Positioned(
                 left: 12,
@@ -211,7 +319,7 @@ class _CheckinSheetState extends State<_CheckinSheet> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -223,18 +331,95 @@ class _CheckinSheetState extends State<_CheckinSheet> {
                     style: AppText.heading,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(subtitle, style: AppText.label),
-                if (_locating)
+                if (_locating && _position == null)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
                     child: Center(child: _Dots()),
                   )
-                else
-                  const SizedBox(height: 18),
+                else ...[
+                  const SizedBox(height: 14),
+                  // Location information details card
+                  SurfaceCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_userAddress != null || _position != null)
+                          _InfoRow(
+                            icon: AppIcons.locationSolid,
+                            label: 'Ваш адрес',
+                            value: _userAddress ??
+                                '${_position!.latitude.toStringAsFixed(5)}, ${_position!.longitude.toStringAsFixed(5)}',
+                          ),
+                        if (_office != null) ...[
+                          const SizedBox(height: 8),
+                          _InfoRow(
+                            icon: AppIcons.building2Fill,
+                            label: 'Офис',
+                            value: _officeAddress != null
+                                ? '«${_office!.name}» (${_officeAddress!})'
+                                : '«${_office!.name}» · радиус ${_meters(_office!.radius)}',
+                          ),
+                        ],
+                        if (_position != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                AppIcons.clock,
+                                size: 14,
+                                color: AppColors.ink3,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Точность GPS: ±${_position!.accuracy.round()} м',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.ink3,
+                                ),
+                              ),
+                              if (d != null) ...[
+                                const Text(
+                                  ' · ',
+                                  style: TextStyle(color: AppColors.ink3),
+                                ),
+                                Text(
+                                  'До офиса: ${_meters(d)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _outside
+                                        ? AppColors.amber
+                                        : AppColors.green,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
                 if (_error != null) ...[
                   InlineError(_error!),
                   const SizedBox(height: 12),
+                ],
+                if (isManager && _position != null && _office != null) ...[
+                  PrimaryButton(
+                    label: '📍 Установить моё местоположение как офис',
+                    kind: ButtonKind.soft,
+                    loading: _calibrating,
+                    height: 40,
+                    onTap: _calibrateOffice,
+                  ),
+                  const SizedBox(height: 10),
                 ],
                 if (_busy && _step.isNotEmpty)
                   Padding(
@@ -247,14 +432,15 @@ class _CheckinSheetState extends State<_CheckinSheet> {
                       : 'Сделать селфи и уйти',
                   icon: AppIcons.camera,
                   loading: _busy,
-                  onTap: (_locating && s.geolocationTracking) || _outside
+                  onTap: (_locating && _position == null && s.geolocationTracking) ||
+                          (_outside && !isManager)
                       ? null
                       : _submit,
                 ),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
-                    'Селфи сохранится вместе с отметкой.',
+                    'Селфи и GPS координаты сохранятся вместе с отметкой.',
                     textAlign: TextAlign.center,
                     style: AppText.caption,
                   ),
@@ -264,6 +450,52 @@ class _CheckinSheetState extends State<_CheckinSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 14, color: AppColors.ink3),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.ink3,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

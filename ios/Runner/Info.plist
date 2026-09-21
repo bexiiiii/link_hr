@@ -37,6 +37,8 @@
 	<string>Используется для быстрой биометрической авторизации в Link HR</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Используется для определения местоположения сотрудника при чекине на рабочем месте</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Используется для определения местоположения сотрудника при чекине на рабочем месте</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Используется для записи голосового описания задач</string>
 	<key>NSPhotoLibraryUsageDescription</key>
