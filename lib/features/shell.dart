@@ -99,7 +99,6 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
     return ShellScope(
       goTo: _go,
       child: Scaffold(
@@ -123,10 +122,8 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
             Positioned(
               left: 0,
               right: 0,
-              bottom: bottomInset > 0 ? bottomInset - 6 : 14,
-              child: Center(
-                child: _NavPill(items: _icons, index: _index, onTap: _go),
-              ),
+              bottom: 0,
+              child: _NavPill(items: _icons, index: _index, onTap: _go),
             ),
           ],
         ),
@@ -135,8 +132,8 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   }
 }
 
-/// A labelled navigation bar: the icon and its name stay together, so users do
-/// not have to memorize five unlabeled symbols.
+/// A clear, full-width iOS bottom bar. Icons and labels stay together so users
+/// never have to memorise five unlabeled symbols.
 class _NavPill extends StatelessWidget {
   const _NavPill({
     required this.items,
@@ -150,13 +147,13 @@ class _NavPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     return Container(
-      width: 370,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(8, 8, 8, bottomInset > 0 ? bottomInset : 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        boxShadow: AppShadow.float,
+        border: const Border(top: BorderSide(color: AppColors.line)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.max,
@@ -173,7 +170,7 @@ class _NavPill extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutQuart,
-                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [

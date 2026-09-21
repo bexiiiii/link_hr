@@ -1,47 +1,55 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Light-blue direction: clean white surfaces and one reliable blue action.
-/// Legacy token names intentionally resolve to blue so every existing feature
-/// keeps the same visual language without scattered one-off colors.
+/// Reference direction: quiet iOS-like white surfaces, near-black type and a
+/// single orange action colour.  The old public token names remain so feature
+/// screens do not drift into one-off palettes while they are being simplified.
 abstract final class AppColors {
-  static const bg = Color(0xFFF5F8FC);
+  static const bg = Color(0xFFF7F7F8);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF0F5FB);
-  static const line = Color(0xFFE1E9F2);
+  static const surfaceAlt = Color(0xFFF1F2F4);
+  static const line = Color(0xFFE8E9EC);
 
-  static const ink = Color(0xFF122033);
-  static const ink2 = Color(0xFF43546A);
-  static const ink3 = Color(0xFF66788E);
-  static const ink4 = Color(0xFFB8C5D3);
+  static const ink = Color(0xFF17181A);
+  static const ink2 = Color(0xFF575A60);
+  static const ink3 = Color(0xFF8E9198);
+  static const ink4 = Color(0xFFC7C9CE);
 
-  /// Brand blue (Telegram-like): primary buttons, active tab, check-in and links.
-  static const blue = Color(0xFF3390EC);
-  static const blueDeep = Color(0xFF2481CC);
-  static const blueSoft = Color(0xFFE8F3FD);
-  static const blueGlow = Color(0xFFCFE6FB);
+  /// Primary action — the saturated orange in the supplied mobile references.
+  static const blue = Color(0xFFFF9400);
+  static const blueDeep = Color(0xFFE68100);
+  static const blueSoft = Color(0xFFFFF0DC);
+  static const blueGlow = Color(0xFFFFD8A0);
 
+  /// Existing feature actions use these legacy aliases and now inherit orange.
   static const green = blue;
   static const greenDeep = blueDeep;
   static const greenSoft = blueSoft;
   static const greenGlow = blueGlow;
-  static const violet = blue;
-  static const violetSoft = blueSoft;
+
+  /// Cool blue remains a secondary information colour (map, calendar, links).
+  static const violet = Color(0xFF3478F6);
+  static const violetSoft = Color(0xFFEAF1FF);
+
+  /// Semantic status colours are deliberately independent from primary action.
+  static const success = Color(0xFF16B978);
+  static const successDeep = Color(0xFF0B9B60);
+  static const successSoft = Color(0xFFE2F8EE);
 
   /// Legacy "graphite" name: dark ink for icons and strong text.
-  static const charcoal = Color(0xFF1B2B40);
+  static const charcoal = Color(0xFF1C1D20);
 
-  static const red = Color(0xFFD94545);
-  static const redSoft = Color(0xFFFCEBEB);
-  static const amber = Color(0xFFD9822B);
-  static const amberSoft = Color(0xFFFDF0E1);
-  static const warn = Color(0xFFE9B949);
-  static const warnSoft = Color(0xFFFDF6E3);
+  static const red = Color(0xFFEF4444);
+  static const redSoft = Color(0xFFFFE8E8);
+  static const amber = Color(0xFFF0A13A);
+  static const amberSoft = Color(0xFFFFF0D8);
+  static const warn = Color(0xFFEAB308);
+  static const warnSoft = Color(0xFFFFF8D6);
   static const plum = blue;
   static const plumSoft = blueSoft;
 
-  static const chip = Color(0xFFEAF0F7);
-  static const chipDot = Color(0xFFC8D3E0);
+  static const chip = Color(0xFFF0F1F3);
+  static const chipDot = Color(0xFFD0D2D7);
   static const camera = Color(0xFF0C0F0E);
 }
 
@@ -134,7 +142,7 @@ abstract final class AppRadius {
 abstract final class AppShadow {
   static const card = <BoxShadow>[];
   static const float = [
-    BoxShadow(color: Color(0x1A122033), blurRadius: 16, offset: Offset(0, 6)),
+    BoxShadow(color: Color(0x12000000), blurRadius: 18, offset: Offset(0, 7)),
   ];
 }
 
@@ -142,7 +150,7 @@ enum Tone { green, violet, dark, red, amber, neutral }
 
 extension ToneColors on Tone {
   Color get solid => switch (this) {
-    Tone.green => AppColors.greenDeep,
+    Tone.green => AppColors.successDeep,
     Tone.violet => AppColors.violet,
     Tone.dark => AppColors.charcoal,
     Tone.red => AppColors.red,
@@ -151,7 +159,7 @@ extension ToneColors on Tone {
   };
 
   Color get soft => switch (this) {
-    Tone.green => AppColors.greenSoft,
+    Tone.green => AppColors.successSoft,
     Tone.violet => AppColors.violetSoft,
     Tone.dark => AppColors.chip,
     Tone.red => AppColors.redSoft,
@@ -162,7 +170,7 @@ extension ToneColors on Tone {
   Color get onSolid => this == Tone.neutral ? AppColors.ink2 : Colors.white;
 
   Color get ink => switch (this) {
-    Tone.green => AppColors.greenDeep,
+    Tone.green => AppColors.successDeep,
     Tone.violet => AppColors.violet,
     Tone.dark => AppColors.charcoal,
     Tone.red => const Color(0xFFB83636),
@@ -222,9 +230,9 @@ ThemeData buildTheme() {
     scaffoldBackgroundColor: AppColors.bg,
     fontFamily: kFont,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.violet,
-      primary: AppColors.violet,
-      secondary: AppColors.green,
+      seedColor: AppColors.blue,
+      primary: AppColors.blue,
+      secondary: AppColors.success,
       surface: AppColors.surface,
       error: AppColors.red,
     ),
@@ -232,7 +240,7 @@ ThemeData buildTheme() {
     highlightColor: Colors.transparent,
     platform: TargetPlatform.iOS,
     cupertinoOverrideTheme: const CupertinoThemeData(
-      primaryColor: AppColors.green,
+      primaryColor: AppColors.blue,
       textTheme: CupertinoTextThemeData(
         textStyle: TextStyle(
           fontFamily: kFont,
@@ -247,8 +255,8 @@ ThemeData buildTheme() {
       space: 1,
     ),
     textSelectionTheme: const TextSelectionThemeData(
-      cursorColor: AppColors.violet,
-      selectionHandleColor: AppColors.violet,
+      cursorColor: AppColors.blue,
+      selectionHandleColor: AppColors.blue,
     ),
   );
   return base.copyWith(

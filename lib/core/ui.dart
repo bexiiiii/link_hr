@@ -916,7 +916,7 @@ class PrimaryButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 22),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
+            borderRadius: BorderRadius.circular(AppRadius.field),
             border: kind == ButtonKind.outline
                 ? Border.all(color: AppColors.green, width: 1.2)
                 : null,
