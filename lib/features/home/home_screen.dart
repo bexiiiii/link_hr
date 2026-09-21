@@ -4,6 +4,7 @@ import '../../core/app_icons.dart';
 
 import '../../core/premium.dart';
 import '../../core/api.dart';
+import '../../core/app_language.dart';
 import '../../core/fmt.dart';
 import '../../core/people.dart';
 import '../../core/session.dart';
@@ -16,6 +17,7 @@ import '../../data/score.dart';
 import '../../data/tasks.dart';
 import '../../data/timesheet.dart';
 import '../achievements/achievements_screens.dart';
+import '../employees/team_attendance_screen.dart';
 import '../notices/notices_screens.dart';
 import '../shell.dart';
 import '../checklists/checklists_screens.dart';
@@ -231,6 +233,51 @@ class _HomeScreenState extends State<HomeScreen> {
                       onAction: () =>
                           showCheckinSheet(context, onShift ? 'OUT' : 'IN'),
                     ),
+                  if (_session.isHr) ...[
+                    const SizedBox(height: 12),
+                    SurfaceCard(
+                      onTap: () =>
+                          pushPage(context, const TeamAttendanceScreen()),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            AppIcons.clock,
+                            size: 22,
+                            color: AppColors.blue,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  tx('Команда сегодня', 'Команда бүгін'),
+                                  style: AppText.bodyStrong,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  tx(
+                                    'Приходы, уходы и текущий статус',
+                                    'Келу, кету және ағымдағы мәртебе',
+                                  ),
+                                  style: AppText.caption,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            AppIcons.chevronRight,
+                            size: 16,
+                            color: AppColors.ink4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   SummarySection(
                     title: 'Ближайшие задачи',
                     onSeeAll: _session.hasFeature('tasks')

@@ -37,27 +37,20 @@ class _TeamMapScreenState extends State<TeamMapScreen> {
     try {
       final results = await Future.wait<Object?>([
         Hr.teamLocationsToday(),
-        Hr.employees(refresh: true),
         Hr.shiftLocation().catchError((_) => null),
       ]);
-      final people = {
-        for (final person in results[1] as List<Json>)
-          person['name']?.toString() ?? '': person,
-      };
       final markers = (results[0] as List<Json>).map((row) {
-        final person =
-            people[row['employee']?.toString()] ?? const <String, dynamic>{};
         return TeamMapMarker(
           latitude: Fmt.number(row['latitude']).toDouble(),
           longitude: Fmt.number(row['longitude']).toDouble(),
-          name: (person['employee_name'] ?? row['employee']).toString(),
-          imageUrl: person['image']?.toString(),
+          name: (row['employee_name'] ?? row['employee']).toString(),
+          imageUrl: row['image']?.toString(),
         );
       }).toList();
       if (!mounted) return;
       setState(() {
         _markers = markers;
-        _office = results[2] as ShiftLocation?;
+        _office = results[1] as ShiftLocation?;
         _loading = false;
       });
     } catch (e) {

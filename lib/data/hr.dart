@@ -232,34 +232,22 @@ abstract final class Hr {
     );
   }
 
-  /// Current GPS positions for the HR map. Frappe permission checks are kept
-  /// on the server and a person disappears after their latest OUT check-in.
+  /// Role-protected HR overview supplied by the Link backend. It carries only
+  /// the current day's first IN, final OUT and the last GPS-bearing IN, so the
+  /// app does not need broad raw Employee Checkin read permission.
+  static Future<List<Json>> teamAttendanceForDay(DateTime day) async => _rows(
+    ((await _api.call('link.link_hr.api.team_attendance.get', {
+          'date': Fmt.iso(day),
+        }))
+        as Map?)?['items'],
+  );
+
   static Future<List<Json>> teamLocationsToday() async {
-    final start = Fmt.dateOnly(DateTime.now());
-    final rows = await _api.list(
-      'Employee Checkin',
-      fields: ['employee', 'log_type', 'time', 'latitude', 'longitude'],
-      filters: [
-        [
-          'time',
-          'between',
-          [Fmt.iso(start), Fmt.iso(start.add(const Duration(days: 1)))],
-        ],
-      ],
-      orderBy: 'time desc',
-      limit: 2000,
-    );
-    final latest = <String, Json>{};
-    for (final row in rows) {
-      final employee = row['employee']?.toString() ?? '';
-      if (employee.isNotEmpty && !latest.containsKey(employee)) {
-        latest[employee] = row;
-      }
-    }
-    return latest.values.where((row) {
+    final rows = await teamAttendanceForDay(DateTime.now());
+    return rows.where((row) {
       final latitude = Fmt.number(row['latitude']).toDouble();
       final longitude = Fmt.number(row['longitude']).toDouble();
-      return row['log_type'] == 'IN' && latitude != 0 && longitude != 0;
+      return row['status'] == 'present' && latitude != 0 && longitude != 0;
     }).toList();
   }
 

@@ -12,6 +12,7 @@ import '../attendance/checkin_history_screen.dart';
 import '../checklists/checklists_screens.dart';
 import '../documents/documents_screen.dart';
 import '../employees/employees_screen.dart';
+import '../employees/team_attendance_screen.dart';
 import '../employees/team_map_screen.dart';
 import '../finance/finance_screen.dart';
 import '../finance/salary_slips_screen.dart';
@@ -34,6 +35,13 @@ class ServicesScreen extends StatelessWidget {
           tx('Сотрудники', 'Қызметкерлер'),
           tx('Список и данные команды', 'Команда тізімі мен деректері'),
           () => pushPage(context, const EmployeesScreen()),
+        ),
+      if (Session.instance.isHr)
+        (
+          AppIcons.clock,
+          tx('Команда сегодня', 'Команда бүгін'),
+          tx('Приходы, уходы и статусы', 'Келу, кету және мәртебелер'),
+          () => pushPage(context, const TeamAttendanceScreen()),
         ),
       if (Session.instance.isHr)
         (
