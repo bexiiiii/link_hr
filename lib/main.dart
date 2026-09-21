@@ -14,7 +14,6 @@ Future<void> main() async {
   await initializeDateFormatting('ru');
   Intl.defaultLocale = 'ru';
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-  await Session.instance.restore();
   runApp(const LinkApp());
 }
 
@@ -48,13 +47,27 @@ class RootGate extends StatefulWidget {
 
 class _RootGateState extends State<RootGate> with WidgetsBindingObserver {
   final _session = Session.instance;
+  bool _starting = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (_session.phase != SessionPhase.signedOut) {
-      _session.refresh().catchError((_) {});
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    try {
+      await _session.restore().timeout(const Duration(seconds: 6));
+      if (_session.phase != SessionPhase.signedOut) {
+        _session.refresh().catchError((_) {});
+      }
+    } catch (_) {
+      // The sign-in screen remains available even if local iOS storage is slow.
+    } finally {
+      if (mounted) {
+        setState(() => _starting = false);
+      }
     }
   }
 
@@ -79,15 +92,17 @@ class _RootGateState extends State<RootGate> with WidgetsBindingObserver {
     return ListenableBuilder(
       listenable: _session,
       builder: (context, _) {
-        final Widget screen = switch (_session.phase) {
-          SessionPhase.signedOut => const LoginScreen(),
-          SessionPhase.loading => const BootScreen(),
-          SessionPhase.noEmployee => const NoEmployeeScreen(),
-          SessionPhase.ready =>
-            _session.biometricLock && !_session.unlocked
-                ? const LockScreen()
-                : const Shell(),
-        };
+        final Widget screen = _starting
+            ? const BootScreen()
+            : switch (_session.phase) {
+                SessionPhase.signedOut => const LoginScreen(),
+                SessionPhase.loading => const BootScreen(),
+                SessionPhase.noEmployee => const NoEmployeeScreen(),
+                SessionPhase.ready =>
+                  _session.biometricLock && !_session.unlocked
+                      ? const LockScreen()
+                      : const Shell(),
+              };
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 240),
           switchInCurve: Curves.easeOutQuart,
