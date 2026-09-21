@@ -11,10 +11,11 @@ import 'features/shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('ru');
   Intl.defaultLocale = 'ru';
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
   runApp(const LinkApp());
+  // Locale data is not allowed to delay the first Flutter frame on iOS.
+  initializeDateFormatting('ru');
 }
 
 class LinkApp extends StatelessWidget {
