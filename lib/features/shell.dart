@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/app_icons.dart';
+import '../core/app_language.dart';
 
 import '../core/premium.dart';
 import '../core/motion.dart';
@@ -45,12 +46,12 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   int _index = 0;
   final _visited = <int>{0};
 
-  static const _items = [
-    (AppIcons.house, AppIcons.houseFill, 'Главная'),
-    (AppIcons.clock, AppIcons.clockFill, 'Посещаемость'),
-    (AppIcons.squareList, AppIcons.squareListFill, 'Задачи'),
-    (AppIcons.folder, AppIcons.folderFill, 'Сервисы'),
-    (AppIcons.gear, AppIcons.gearSolid, 'Профиль и настройки'),
+  static const _icons = [
+    (AppIcons.house, AppIcons.houseFill),
+    (AppIcons.clock, AppIcons.clockFill),
+    (AppIcons.squareList, AppIcons.squareListFill),
+    (AppIcons.folder, AppIcons.folderFill),
+    (AppIcons.gear, AppIcons.gearSolid),
   ];
 
   @override
@@ -105,7 +106,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
         backgroundColor: AppColors.bg,
         body: Stack(
           children: [
-            for (var i = 0; i < _items.length; i++)
+            for (var i = 0; i < _icons.length; i++)
               Offstage(
                 offstage: i != _index,
                 child: TickerMode(
@@ -124,7 +125,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
               right: 0,
               bottom: bottomInset > 0 ? bottomInset - 6 : 14,
               child: Center(
-                child: _NavPill(items: _items, index: _index, onTap: _go),
+                child: _NavPill(items: _icons, index: _index, onTap: _go),
               ),
             ),
           ],
@@ -143,7 +144,7 @@ class _NavPill extends StatelessWidget {
     required this.onTap,
   });
 
-  final List<(IconData, IconData, String)> items;
+  final List<(IconData, IconData)> items;
   final int index;
   final ValueChanged<int> onTap;
 
@@ -165,7 +166,7 @@ class _NavPill extends StatelessWidget {
               child: Semantics(
                 button: true,
                 selected: i == index,
-                label: items[i].$3,
+                label: _label(i),
                 child: Pressable(
                   onTap: () => onTap(i),
                   scale: 0.9,
@@ -184,11 +185,11 @@ class _NavPill extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           switch (i) {
-                            0 => 'Главная',
-                            1 => 'Часы',
-                            2 => 'Задачи',
-                            3 => 'Ещё',
-                            _ => 'Профиль',
+                            0 => tx('Главная', 'Басты'),
+                            1 => tx('Часы', 'Уақыт'),
+                            2 => tx('Задачи', 'Тапсырма'),
+                            3 => tx('Ещё', 'Тағы'),
+                            _ => tx('Профиль', 'Профиль'),
                           },
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -210,4 +211,12 @@ class _NavPill extends StatelessWidget {
       ),
     );
   }
+
+  String _label(int i) => switch (i) {
+    0 => tx('Главная', 'Басты'),
+    1 => tx('Посещаемость', 'Қатысу'),
+    2 => tx('Задачи', 'Тапсырмалар'),
+    3 => tx('Сервисы', 'Қызметтер'),
+    _ => tx('Профиль и настройки', 'Профиль және баптаулар'),
+  };
 }

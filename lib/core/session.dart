@@ -7,6 +7,10 @@ import 'api.dart';
 
 enum SessionPhase { signedOut, loading, ready, noEmployee }
 
+/// The server remains the source of truth: this only presents capabilities the
+/// signed-in Frappe role already has permission to use.
+enum WorkspaceRole { employee, hr }
+
 class Session extends ChangeNotifier {
   Session._();
 
@@ -70,9 +74,12 @@ class Session extends ChangeNotifier {
   String? get image => (employee?['image'] ?? user?['user_image'])?.toString();
   String get designation => employee?['designation']?.toString() ?? '';
   String get department => employee?['department']?.toString() ?? '';
-  bool get isManager => roles.any(
+  bool get isHr => roles.any(
     (r) => const {'HR Manager', 'HR User', 'System Manager'}.contains(r),
   );
+  bool get isManager => isHr;
+  WorkspaceRole get workspaceRole =>
+      isHr ? WorkspaceRole.hr : WorkspaceRole.employee;
   List<String> get roles =>
       (user?['roles'] as List? ?? const []).map((e) => e.toString()).toList();
   bool get checkinAllowed => hr['allow_employee_checkin_from_mobile_app'] != 0;

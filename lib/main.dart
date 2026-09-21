@@ -5,36 +5,53 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
 import 'core/session.dart';
+import 'core/app_language.dart';
 import 'core/theme.dart';
 import 'features/auth/auth_screens.dart';
 import 'features/shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Intl.defaultLocale = 'ru';
+  Intl.defaultLocale = AppLanguageController.instance.current.code;
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
   runApp(const LinkApp());
   // Locale data is not allowed to delay the first Flutter frame on iOS.
   initializeDateFormatting('ru');
+  initializeDateFormatting('kk');
 }
 
-class LinkApp extends StatelessWidget {
+class LinkApp extends StatefulWidget {
   const LinkApp({super.key});
 
   @override
+  State<LinkApp> createState() => _LinkAppState();
+}
+
+class _LinkAppState extends State<LinkApp> {
+  @override
+  void initState() {
+    super.initState();
+    // A saved language must never delay the first native frame.
+    AppLanguageController.instance.restore();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Link',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      locale: const Locale('ru'),
-      supportedLocales: const [Locale('ru'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      home: const RootGate(),
+    return ListenableBuilder(
+      listenable: AppLanguageController.instance,
+      builder: (context, _) => MaterialApp(
+        title: 'Link',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(),
+        locale: Locale(AppLanguageController.instance.current.code),
+        supportedLocales: const [Locale('ru'), Locale('kk')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        home: const RootGate(),
+      ),
     );
   }
 }

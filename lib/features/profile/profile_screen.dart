@@ -4,6 +4,7 @@ import 'package:local_auth/local_auth.dart';
 import '../../core/app_icons.dart';
 
 import '../../core/api.dart';
+import '../../core/app_language.dart';
 import '../../core/forms.dart';
 import '../../core/fmt.dart';
 import '../../core/session.dart';
@@ -373,6 +374,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _pickLanguage() async {
+    final picked = await pickAction(
+      context,
+      title: tx('Язык приложения', 'Қолданба тілі'),
+      actions: [
+        SheetAction(AppLanguage.russian.code, 'Русский'),
+        SheetAction(AppLanguage.kazakh.code, 'Қазақша'),
+      ],
+    );
+    if (picked == null) return;
+    await AppLanguageController.instance.set(
+      AppLanguage.values.firstWhere((language) => language.code == picked),
+    );
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = Session.instance;
@@ -389,6 +406,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             value: s.biometricLock,
             enabled: _supported,
             onChanged: _toggleLock,
+          ),
+          const SizedBox(height: 24),
+          FieldLabel(tx('Язык', 'Тіл')),
+          _Group(
+            children: [
+              _Row(
+                icon: AppIcons.gear,
+                tone: Tone.violet,
+                label: tx(
+                  'Язык: ${AppLanguageController.instance.isKazakh ? 'Қазақша' : 'Русский'}',
+                  'Тіл: ${AppLanguageController.instance.isKazakh ? 'Қазақша' : 'Русский'}',
+                ),
+                onTap: _pickLanguage,
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           const FieldLabel('Аккаунт'),

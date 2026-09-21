@@ -5,6 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'app_icons.dart';
 import 'theme.dart';
+import 'ui.dart';
+
+/// A current team position from Employee Checkin. The server decides whether
+/// the active HR role can read these entries.
+class TeamMapMarker {
+  const TeamMapMarker({
+    required this.latitude,
+    required this.longitude,
+    required this.name,
+    this.imageUrl,
+  });
+
+  final double latitude;
+  final double longitude;
+  final String name;
+  final String? imageUrl;
+}
 
 /// Interactive OpenStreetMap view supporting:
 /// - User live location (Apple-style blue pulsing dot + accuracy halo)
@@ -26,6 +43,7 @@ class MiniMap extends StatelessWidget {
     this.height = 240,
     this.onRefresh,
     this.isLocating = false,
+    this.team = const [],
   });
 
   /// Backward-compatible alias for user location
@@ -44,13 +62,15 @@ class MiniMap extends StatelessWidget {
   final double height;
   final VoidCallback? onRefresh;
   final bool isLocating;
+  final List<TeamMapMarker> team;
 
   @override
   Widget build(BuildContext context) {
     final uLat = userLat ?? latitude;
     final uLon = userLon ?? longitude;
     final hasUser = uLat != null && uLon != null;
-    final hasOffice = officeLat != null &&
+    final hasOffice =
+        officeLat != null &&
         officeLon != null &&
         (officeLat != 0 || officeLon != 0);
 
@@ -117,9 +137,9 @@ class MiniMap extends StatelessWidget {
             final r = lat * math.pi / 180;
             final py =
                 ((1 - math.log(math.tan(r) + 1 / math.cos(r)) / math.pi) /
-                    2 *
-                    n) *
-                tile -
+                        2 *
+                        n) *
+                    tile -
                 top;
             return Offset(px, py);
           }
@@ -241,8 +261,10 @@ class MiniMap extends StatelessWidget {
           Widget? userMarker;
           if (hasUser) {
             final uPos = toScreen(uLat, uLon);
-            final accPx =
-                ((userAccuracy ?? 15) / metersPerPx).clamp(10.0, 48.0);
+            final accPx = ((userAccuracy ?? 15) / metersPerPx).clamp(
+              10.0,
+              48.0,
+            );
             userMarker = Stack(
               children: [
                 Positioned(
@@ -285,18 +307,54 @@ class MiniMap extends StatelessWidget {
             );
           }
 
+          final teamMarkers = <Widget>[
+            for (final person in team)
+              Positioned(
+                left: toScreen(person.latitude, person.longitude).dx - 18,
+                top: toScreen(person.latitude, person.longitude).dy - 18,
+                child: IgnorePointer(
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: AppAvatar(
+                      name: person.name,
+                      imageUrl: person.imageUrl,
+                      size: 32,
+                      border: false,
+                    ),
+                  ),
+                ),
+              ),
+          ];
+
           Widget? statusChip;
           if (hasUser && hasOffice) {
-            final d =
-                Geolocator.distanceBetween(uLat, uLon, officeLat!, officeLon!);
-            final inZone = (officeRadius ?? 0) > 0 &&
+            final d = Geolocator.distanceBetween(
+              uLat,
+              uLon,
+              officeLat!,
+              officeLon!,
+            );
+            final inZone =
+                (officeRadius ?? 0) > 0 &&
                 d <= (officeRadius! + (userAccuracy ?? 0));
             statusChip = Positioned(
               left: 12,
               bottom: 8,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: inZone
                       ? const Color(0xE6E8F5E9)
@@ -326,8 +384,9 @@ class MiniMap extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color:
-                            inZone ? AppColors.green : const Color(0xFFB76E00),
+                        color: inZone
+                            ? AppColors.green
+                            : const Color(0xFFB76E00),
                       ),
                     ),
                   ],
@@ -346,6 +405,7 @@ class MiniMap extends StatelessWidget {
                 if (officeCircle != null) officeCircle,
                 if (officeMarker != null) officeMarker,
                 if (userMarker != null) userMarker,
+                ...teamMarkers,
                 if (!hasUser && !hasOffice)
                   Center(
                     child: Transform.translate(

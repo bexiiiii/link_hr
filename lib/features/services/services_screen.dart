@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import '../../core/app_icons.dart';
+import '../../core/app_language.dart';
 
 import '../../core/premium.dart';
+import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../achievements/achievements_screens.dart';
@@ -9,6 +11,8 @@ import '../analysis/analysis_screen.dart';
 import '../attendance/checkin_history_screen.dart';
 import '../checklists/checklists_screens.dart';
 import '../documents/documents_screen.dart';
+import '../employees/employees_screen.dart';
+import '../employees/team_map_screen.dart';
 import '../finance/finance_screen.dart';
 import '../finance/salary_slips_screen.dart';
 import '../leave/leave_screen.dart';
@@ -24,6 +28,20 @@ class ServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <(IconData, String, String?, VoidCallback)>[
+      if (Session.instance.isHr)
+        (
+          AppIcons.person,
+          tx('Сотрудники', 'Қызметкерлер'),
+          tx('Список и данные команды', 'Команда тізімі мен деректері'),
+          () => pushPage(context, const EmployeesScreen()),
+        ),
+      if (Session.instance.isHr)
+        (
+          AppIcons.location,
+          tx('Карта команды', 'Команда картасы'),
+          tx('Текущие GPS-отметки', 'Ағымдағы GPS белгілері'),
+          () => pushPage(context, const TeamMapScreen()),
+        ),
       (
         AppIcons.squareSplit2x2Fill,
         'Доска',

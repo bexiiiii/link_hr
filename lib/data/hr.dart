@@ -91,7 +91,11 @@ abstract final class Hr {
       locName = active.first['shift_location']?.toString();
     } else {
       // Fallback: check if there's any active Shift Location configured in the system
-      final allLocs = await _api.list('Shift Location', fields: ['name'], limit: 1);
+      final allLocs = await _api.list(
+        'Shift Location',
+        fields: ['name'],
+        limit: 1,
+      );
       if (allLocs.isNotEmpty) {
         locName = allLocs.first['name']?.toString();
       }
@@ -151,7 +155,8 @@ abstract final class Hr {
         final data = jsonDecode(utf8.decode(res.bodyBytes)) as Map;
         final addr = data['address'] as Map?;
         if (addr != null) {
-          final road = addr['road'] ??
+          final road =
+              addr['road'] ??
               addr['street'] ??
               addr['pedestrian'] ??
               addr['suburb'] ??
@@ -225,6 +230,37 @@ abstract final class Hr {
       orderBy: 'time desc',
       limit: 20,
     );
+  }
+
+  /// Current GPS positions for the HR map. Frappe permission checks are kept
+  /// on the server and a person disappears after their latest OUT check-in.
+  static Future<List<Json>> teamLocationsToday() async {
+    final start = Fmt.dateOnly(DateTime.now());
+    final rows = await _api.list(
+      'Employee Checkin',
+      fields: ['employee', 'log_type', 'time', 'latitude', 'longitude'],
+      filters: [
+        [
+          'time',
+          'between',
+          [Fmt.iso(start), Fmt.iso(start.add(const Duration(days: 1)))],
+        ],
+      ],
+      orderBy: 'time desc',
+      limit: 2000,
+    );
+    final latest = <String, Json>{};
+    for (final row in rows) {
+      final employee = row['employee']?.toString() ?? '';
+      if (employee.isNotEmpty && !latest.containsKey(employee)) {
+        latest[employee] = row;
+      }
+    }
+    return latest.values.where((row) {
+      final latitude = Fmt.number(row['latitude']).toDouble();
+      final longitude = Fmt.number(row['longitude']).toDouble();
+      return row['log_type'] == 'IN' && latitude != 0 && longitude != 0;
+    }).toList();
   }
 
   static Future<Map<String, String>> calendarEvents(
