@@ -17,14 +17,21 @@ class BrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.blue,
-        borderRadius: BorderRadius.circular(size * 0.26),
+    return Semantics(
+      image: true,
+      label: 'Link',
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(size * 0.22),
+          child: Image.asset(
+            'assets/brand/link-mark.png',
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
       ),
-      child: Icon(AppIcons.link, size: size * 0.54, color: Colors.white),
     );
   }
 }
