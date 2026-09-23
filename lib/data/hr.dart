@@ -242,6 +242,14 @@ abstract final class Hr {
         as Map?)?['items'],
   );
 
+  static Future<List<Json>> teamAttendanceForMonth(DateTime month) async =>
+      _rows(
+        ((await _api.call('link.link_hr.api.team_attendance.monthly', {
+              'month': Fmt.iso(month).substring(0, 7),
+            }))
+            as Map?)?['items'],
+      );
+
   static Future<List<Json>> teamLocationsToday() async {
     final rows = await teamAttendanceForDay(DateTime.now());
     return rows.where((row) {

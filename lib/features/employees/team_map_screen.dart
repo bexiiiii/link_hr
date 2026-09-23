@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/api.dart';
@@ -19,21 +21,35 @@ class TeamMapScreen extends StatefulWidget {
 
 class _TeamMapScreenState extends State<TeamMapScreen> {
   List<TeamMapMarker> _markers = const [];
+  List<Json> _locations = const [];
   Object? _error;
   bool _loading = true;
   ShiftLocation? _office;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _load(quiet: true),
+    );
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load({bool quiet = false}) async {
+    if (!quiet) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final results = await Future.wait<Object?>([
         Hr.teamLocationsToday(),
@@ -50,8 +66,10 @@ class _TeamMapScreenState extends State<TeamMapScreen> {
       if (!mounted) return;
       setState(() {
         _markers = markers;
+        _locations = results[0] as List<Json>;
         _office = results[1] as ShiftLocation?;
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (mounted) {
@@ -87,7 +105,7 @@ class _TeamMapScreenState extends State<TeamMapScreen> {
         title: tx('Карта команды', 'Команда картасы'),
         actions: [
           CircleButton(
-            icon: AppIcons.arrowRight,
+            icon: AppIcons.clock,
             label: tx('Обновить', 'Жаңарту'),
             onTap: _loading ? null : _load,
           ),
@@ -97,14 +115,14 @@ class _TeamMapScreenState extends State<TeamMapScreen> {
         onRefresh: _load,
         children: [
           Text(
-            tx('Кто сейчас на работе', 'Қазір жұмыстағылар'),
+            tx('Команда в реальном времени', 'Команда нақты уақытта'),
             style: AppText.heading,
           ),
           const SizedBox(height: 4),
           Text(
             tx(
-              'Точки показываются по последней отметке прихода с GPS за сегодня.',
-              'Нүктелер бүгінгі GPS-пен тіркелген соңғы келу белгісінен көрсетіледі.',
+              'Последние GPS-отметки обновляются каждые 30 секунд.',
+              'Соңғы GPS белгілері әр 30 секунд сайын жаңартылады.',
             ),
             style: AppText.caption,
           ),
@@ -137,11 +155,68 @@ class _TeamMapScreenState extends State<TeamMapScreen> {
             ),
           if (!_loading && _error == null && _markers.isNotEmpty) ...[
             const SizedBox(height: 18),
-            Text(
-              '${tx('На карте', 'Картада')}: ${_markers.length}',
-              style: AppText.label,
+            SectionHeader(
+              tx('Сейчас на работе', 'Қазір жұмыста'),
+              actionLabel: '${tx('На карте', 'Картада')} ${_markers.length}',
+            ),
+            SurfaceCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Divided(
+                children: [
+                  for (final row in _locations.where(
+                    (item) => item['status']?.toString() == 'present',
+                  ))
+                    _LiveEmployeeRow(row: row),
+                ],
+              ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveEmployeeRow extends StatelessWidget {
+  const _LiveEmployeeRow({required this.row});
+  final Json row;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = (row['employee_name'] ?? row['employee']).toString();
+    final subtitle = [row['designation'], row['department']]
+        .where((value) => value != null && value.toString().trim().isNotEmpty)
+        .join(' · ');
+    final event = Fmt.parse(row['last_event_time']);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          AppAvatar(name: name, imageUrl: row['image']?.toString(), size: 42),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: AppText.bodyStrong),
+                if (subtitle.isNotEmpty) Text(subtitle, style: AppText.caption),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              StatusPill(
+                null,
+                label: tx('На работе', 'Жұмыста'),
+                tone: Tone.green,
+              ),
+              if (event != null) ...[
+                const SizedBox(height: 4),
+                Text(Fmt.time(event), style: AppText.caption),
+              ],
+            ],
+          ),
         ],
       ),
     );

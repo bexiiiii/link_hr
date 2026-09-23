@@ -1,25 +1,24 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Reference direction: quiet iOS-like white surfaces, near-black type and a
-/// single orange action colour.  The old public token names remain so feature
-/// screens do not drift into one-off palettes while they are being simplified.
+/// High-contrast iOS product language from the September references: neutral
+/// surfaces, near-black controls and lime green only for work actions/state.
 abstract final class AppColors {
-  static const bg = Color(0xFFF7F7F8);
+  static const bg = Color(0xFFF4F4F3);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF1F2F4);
-  static const line = Color(0xFFE8E9EC);
+  static const surfaceAlt = Color(0xFFECECEA);
+  static const line = Color(0xFFE2E2DF);
 
-  static const ink = Color(0xFF17181A);
-  static const ink2 = Color(0xFF575A60);
-  static const ink3 = Color(0xFF8E9198);
-  static const ink4 = Color(0xFFC7C9CE);
+  static const ink = Color(0xFF171815);
+  static const ink2 = Color(0xFF4F514B);
+  static const ink3 = Color(0xFF777A72);
+  static const ink4 = Color(0xFFAFB1AA);
 
-  /// Primary action — the saturated orange in the supplied mobile references.
-  static const blue = Color(0xFFFF9400);
-  static const blueDeep = Color(0xFFE68100);
-  static const blueSoft = Color(0xFFFFF0DC);
-  static const blueGlow = Color(0xFFFFD8A0);
+  /// Legacy `blue` is the product action token used by existing screens.
+  static const blue = Color(0xFF67C746);
+  static const blueDeep = Color(0xFF4EAA31);
+  static const blueSoft = Color(0xFFE8F7E2);
+  static const blueGlow = Color(0xFFCDEFC1);
 
   /// Existing feature actions use these legacy aliases and now inherit orange.
   static const green = blue;
@@ -27,29 +26,31 @@ abstract final class AppColors {
   static const greenSoft = blueSoft;
   static const greenGlow = blueGlow;
 
-  /// Cool blue remains a secondary information colour (map, calendar, links).
-  static const violet = Color(0xFF3478F6);
-  static const violetSoft = Color(0xFFEAF1FF);
+  /// Secondary data series and informational state.
+  static const violet = Color(0xFF2D82F3);
+  static const violetSoft = Color(0xFFE8F1FE);
+  static const purple = Color(0xFF8D63E8);
+  static const purpleSoft = Color(0xFFF0EAFE);
 
   /// Semantic status colours are deliberately independent from primary action.
-  static const success = Color(0xFF16B978);
-  static const successDeep = Color(0xFF0B9B60);
-  static const successSoft = Color(0xFFE2F8EE);
+  static const success = Color(0xFF67C746);
+  static const successDeep = Color(0xFF418F2A);
+  static const successSoft = Color(0xFFE8F7E2);
 
   /// Legacy "graphite" name: dark ink for icons and strong text.
-  static const charcoal = Color(0xFF1C1D20);
+  static const charcoal = Color(0xFF242522);
 
-  static const red = Color(0xFFEF4444);
-  static const redSoft = Color(0xFFFFE8E8);
-  static const amber = Color(0xFFF0A13A);
-  static const amberSoft = Color(0xFFFFF0D8);
+  static const red = Color(0xFFF03A47);
+  static const redSoft = Color(0xFFFDE8EA);
+  static const amber = Color(0xFFFF7418);
+  static const amberSoft = Color(0xFFFFF0E7);
   static const warn = Color(0xFFEAB308);
   static const warnSoft = Color(0xFFFFF8D6);
   static const plum = blue;
   static const plumSoft = blueSoft;
 
-  static const chip = Color(0xFFF0F1F3);
-  static const chipDot = Color(0xFFD0D2D7);
+  static const chip = Color(0xFFECECEA);
+  static const chipDot = Color(0xFFC8CAC3);
   static const camera = Color(0xFF0C0F0E);
 }
 
@@ -58,7 +59,7 @@ const kFont = 'Onest';
 abstract final class AppText {
   static const display = TextStyle(
     fontFamily: kFont,
-    fontSize: 32,
+    fontSize: 30,
     height: 1.1,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.6,
@@ -66,7 +67,7 @@ abstract final class AppText {
   );
   static const title = TextStyle(
     fontFamily: kFont,
-    fontSize: 22,
+    fontSize: 24,
     height: 1.2,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.3,
@@ -74,7 +75,7 @@ abstract final class AppText {
   );
   static const heading = TextStyle(
     fontFamily: kFont,
-    fontSize: 18,
+    fontSize: 19,
     height: 1.25,
     fontWeight: FontWeight.w600,
     color: AppColors.ink,
@@ -83,14 +84,14 @@ abstract final class AppText {
     fontFamily: kFont,
     fontSize: 16,
     height: 1.3,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     color: AppColors.ink,
   );
   static const body = TextStyle(
     fontFamily: kFont,
     fontSize: 15,
     height: 1.45,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     color: AppColors.ink,
   );
   static const bodyStrong = TextStyle(
@@ -132,8 +133,8 @@ abstract final class AppText {
 }
 
 abstract final class AppRadius {
-  static const card = 18.0;
-  static const tile = 14.0;
+  static const card = 16.0;
+  static const tile = 12.0;
   static const field = 12.0;
   static const pill = 999.0;
 }
@@ -142,7 +143,7 @@ abstract final class AppRadius {
 abstract final class AppShadow {
   static const card = <BoxShadow>[];
   static const float = [
-    BoxShadow(color: Color(0x12000000), blurRadius: 18, offset: Offset(0, 7)),
+    BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 3)),
   ];
 }
 

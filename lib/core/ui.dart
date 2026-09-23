@@ -381,7 +381,7 @@ class CountChip extends StatelessWidget {
         height: 38,
         padding: const EdgeInsets.only(left: 6, right: 14),
         decoration: BoxDecoration(
-          color: selected ? tone.solid : AppColors.chip,
+          color: selected ? AppColors.charcoal : AppColors.chip,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -393,7 +393,7 @@ class CountChip extends StatelessWidget {
               height: 26,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selected ? Colors.white : AppColors.chipDot,
+                color: selected ? AppColors.green : AppColors.chipDot,
                 shape: BoxShape.circle,
               ),
               child: Text(
@@ -401,7 +401,7 @@ class CountChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: selected ? tone.solid : Colors.white,
+                  color: selected ? AppColors.charcoal : Colors.white,
                 ),
               ),
             ),
@@ -621,49 +621,27 @@ class ScreenHeader extends StatelessWidget {
         ),
       );
     }
-    final side = actions.length <= 1 ? 64.0 : 16.0 + 52.0 * actions.length;
-    return SizedBox(
-      height: 64,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Row(
         children: [
-          SizedBox(
-            width: side,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: CircleButton(
-                  icon: AppIcons.chevronLeft,
-                  label: 'Назад',
-                  size: 44,
-                  iconSize: 18,
-                  onTap: () => Navigator.of(context).maybePop(),
-                ),
-              ),
-            ),
+          CircleButton(
+            icon: AppIcons.chevronLeft,
+            label: 'Назад',
+            size: 44,
+            iconSize: 18,
+            onTap: () => Navigator.of(context).maybePop(),
           ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
-              textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.heading.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 19,
-              ),
+              style: AppText.heading.copyWith(fontSize: 20),
             ),
           ),
-          SizedBox(
-            width: side,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                for (final a in actions)
-                  Padding(padding: const EdgeInsets.only(right: 16), child: a),
-              ],
-            ),
-          ),
+          for (final a in actions) ...[const SizedBox(width: 8), a],
         ],
       ),
     );
@@ -711,7 +689,7 @@ class PageScroll extends StatelessWidget {
     super.key,
     required this.children,
     this.onRefresh,
-    this.padding = const EdgeInsets.fromLTRB(20, 4, 20, 120),
+    this.padding = const EdgeInsets.fromLTRB(18, 4, 18, 120),
     this.controller,
   });
 
@@ -896,12 +874,12 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = switch (kind) {
-      ButtonKind.dark => (AppColors.green, Colors.white),
+      ButtonKind.dark => (AppColors.charcoal, Colors.white),
       ButtonKind.violet => (AppColors.green, Colors.white),
       ButtonKind.green => (AppColors.green, Colors.white),
       ButtonKind.danger => (AppColors.redSoft, const Color(0xFFB83636)),
       ButtonKind.soft => (AppColors.greenSoft, AppColors.greenDeep),
-      ButtonKind.outline => (AppColors.surface, AppColors.green),
+      ButtonKind.outline => (AppColors.surface, AppColors.ink),
     };
     final disabled = onTap == null && !loading;
     return Pressable(
@@ -918,7 +896,7 @@ class PrimaryButton extends StatelessWidget {
             color: bg,
             borderRadius: BorderRadius.circular(AppRadius.field),
             border: kind == ButtonKind.outline
-                ? Border.all(color: AppColors.green, width: 1.2)
+                ? Border.all(color: AppColors.ink, width: 1.2)
                 : null,
           ),
           child: Row(
@@ -1155,7 +1133,7 @@ class SegmentTabs extends StatelessWidget {
       child: CupertinoSlidingSegmentedControl<int>(
         groupValue: index,
         backgroundColor: AppColors.chip,
-        thumbColor: AppColors.surface,
+        thumbColor: AppColors.charcoal,
         padding: const EdgeInsets.all(4),
         onValueChanged: (v) {
           if (v != null) onChanged(v);
@@ -1169,7 +1147,7 @@ class SegmentTabs extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: i == index ? FontWeight.w600 : FontWeight.w500,
-                  color: i == index ? AppColors.ink : AppColors.ink3,
+                  color: i == index ? Colors.white : AppColors.ink3,
                 ),
               ),
             ),

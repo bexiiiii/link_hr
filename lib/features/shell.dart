@@ -170,14 +170,24 @@ class _NavPill extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutQuart,
-                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    padding: const EdgeInsets.only(top: 0, bottom: 2),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: i == index ? 28 : 0,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: AppColors.green,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
                         Icon(
                           i == index ? items[i].$2 : items[i].$1,
                           size: 22,
-                          color: i == index ? AppColors.blue : AppColors.ink3,
+                          color: i == index ? AppColors.ink : AppColors.ink3,
                         ),
                         const SizedBox(height: 3),
                         Text(
@@ -192,7 +202,7 @@ class _NavPill extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AppText.caption.copyWith(
                             fontSize: 10,
-                            color: i == index ? AppColors.blue : AppColors.ink3,
+                            color: i == index ? AppColors.ink : AppColors.ink3,
                             fontWeight: i == index
                                 ? FontWeight.w600
                                 : FontWeight.w400,
