@@ -113,9 +113,8 @@ class DropdownPill extends StatelessWidget {
             height: 30,
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.line),
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -229,17 +228,14 @@ class TagChip extends StatelessWidget {
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: selected ? tone.soft : AppColors.surface,
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(
-          color: selected ? color.withValues(alpha: 0.35) : AppColors.line,
-        ),
+        color: selected ? AppColors.charcoal : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 15, color: color),
+            Icon(icon, size: 15, color: selected ? Colors.white : color),
             const SizedBox(width: 6),
           ],
           Text(
@@ -247,7 +243,7 @@ class TagChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: color,
+              color: selected ? Colors.white : color,
             ),
           ),
         ],
@@ -340,7 +336,7 @@ class NavRow extends StatelessWidget {
       scale: 0.99,
       semanticLabel: title,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11),
+        padding: const EdgeInsets.symmetric(vertical: 13),
         child: Row(
           children: [
             IconBadge(icon: icon, tone: tone, size: 36),
@@ -374,7 +370,7 @@ class GroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(4, 24, 4, 10),
-    child: Text(text, style: AppText.label),
+    padding: const EdgeInsets.fromLTRB(2, 26, 2, 12),
+    child: Text(text, style: AppText.sectionTitle),
   );
 }

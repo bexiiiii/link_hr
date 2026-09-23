@@ -72,9 +72,49 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
         children: [
           CupertinoSearchTextField(
             placeholder: tx('Поиск сотрудника', 'Қызметкерді іздеу'),
+            backgroundColor: AppColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(AppRadius.field),
             onChanged: (v) => setState(() => _query = v),
           ),
           const SizedBox(height: 16),
+          if (!_loading && _error == null) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _DirectoryMetric(
+                    value: '${_people.length}',
+                    label: tx('В команде', 'Командада'),
+                    color: AppColors.greenSoft,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _DirectoryMetric(
+                    value:
+                        '${_people.map((e) => e['department']).where((e) => e != null && e.toString().isNotEmpty).toSet().length}',
+                    label: tx('Отделов', 'Бөлімдер'),
+                    color: AppColors.blueSoft,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    tx('Вся команда', 'Барлық команда'),
+                    style: AppText.sectionTitle,
+                  ),
+                ),
+                Text(
+                  '${rows.length}',
+                  style: AppText.label.copyWith(color: AppColors.ink3),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           if (_loading)
             const SkeletonCards(count: 6, height: 66)
           else if (_error != null)
@@ -106,6 +146,35 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
       ),
     );
   }
+}
+
+class _DirectoryMetric extends StatelessWidget {
+  const _DirectoryMetric({
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  final String value;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(AppRadius.tile),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: AppText.title),
+        const SizedBox(height: 3),
+        Text(label, style: AppText.caption.copyWith(color: AppColors.ink2)),
+      ],
+    ),
+  );
 }
 
 class _EmployeeRow extends StatelessWidget {

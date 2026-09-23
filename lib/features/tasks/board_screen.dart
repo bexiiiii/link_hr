@@ -185,6 +185,34 @@ class _BoardScreenState extends State<BoardScreen> {
     }
   }
 
+  Future<void> _editTask(TaskItem task) async {
+    final saved = await pushPage<bool>(context, TaskFormScreen(task: task));
+    if (saved == true && mounted) {
+      Session.instance.notifyDataChanged();
+      await _load();
+    }
+  }
+
+  Future<void> _deleteTask(TaskItem task) async {
+    final confirmed = await confirmAction(
+      context,
+      title: 'Удалить задачу?',
+      message: task.title,
+      confirmLabel: 'Удалить',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    try {
+      await Tasks.delete(task.name);
+      if (!mounted) return;
+      setState(() => _tasks.removeWhere((item) => item.name == task.name));
+      Session.instance.notifyDataChanged();
+      showToast(context, 'Задача удалена');
+    } catch (error) {
+      if (mounted) showToast(context, errorText(error), error: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final visible = _visible;
@@ -334,11 +362,39 @@ class _BoardScreenState extends State<BoardScreen> {
                                 ]
                               : [
                                   for (final task in selectedTasks)
-                                    TaskCard(
-                                      task: task,
-                                      directory: directory,
-                                      onTap: () =>
-                                          showTaskSheet(context, task, _people),
+                                    Dismissible(
+                                      key: ValueKey('swipe-${task.name}'),
+                                      direction: DismissDirection.horizontal,
+                                      confirmDismiss: (direction) async {
+                                        if (direction ==
+                                            DismissDirection.startToEnd) {
+                                          await _editTask(task);
+                                        } else {
+                                          await _deleteTask(task);
+                                        }
+                                        return false;
+                                      },
+                                      background: const _SwipeAction(
+                                        icon: AppIcons.pencil,
+                                        label: 'Изменить',
+                                        color: AppColors.green,
+                                        alignment: Alignment.centerLeft,
+                                      ),
+                                      secondaryBackground: const _SwipeAction(
+                                        icon: AppIcons.trash,
+                                        label: 'Удалить',
+                                        color: AppColors.red,
+                                        alignment: Alignment.centerRight,
+                                      ),
+                                      child: TaskCard(
+                                        task: task,
+                                        directory: directory,
+                                        onTap: () => showTaskSheet(
+                                          context,
+                                          task,
+                                          _people,
+                                        ),
+                                      ),
                                     ),
                                 ],
                         ),
@@ -557,6 +613,46 @@ class _BoardScreenState extends State<BoardScreen> {
       ),
     );
   }
+}
+
+class _SwipeAction extends StatelessWidget {
+  const _SwipeAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.alignment,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 22),
+    alignment: alignment,
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(AppRadius.card),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.white, size: 21),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Bubble extends StatelessWidget {

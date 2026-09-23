@@ -67,9 +67,8 @@ class _FieldBox extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 46),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: enabled ? AppColors.surface : AppColors.surfaceAlt,
+          color: enabled ? AppColors.surfaceAlt : AppColors.line,
           borderRadius: BorderRadius.circular(AppRadius.field),
-          border: Border.all(color: AppColors.line),
         ),
         child: child,
       ),
@@ -86,13 +85,13 @@ InputDecoration fieldDecoration({String? hint, Widget? suffix}) {
     hintText: hint,
     hintStyle: AppText.body.copyWith(color: AppColors.ink3),
     filled: true,
-    fillColor: AppColors.surface,
+    fillColor: AppColors.surfaceAlt,
     isDense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-    border: border(AppColors.line),
-    enabledBorder: border(AppColors.line),
-    disabledBorder: border(AppColors.line),
-    focusedBorder: border(AppColors.violet, 1.5),
+    border: border(Colors.transparent),
+    enabledBorder: border(Colors.transparent),
+    disabledBorder: border(Colors.transparent),
+    focusedBorder: border(AppColors.charcoal, 1.4),
     suffixIcon: suffix,
   );
 }
@@ -150,7 +149,7 @@ class AppTextField extends StatelessWidget {
           onChanged: onChanged,
           onSubmitted: onSubmitted,
           style: AppText.body,
-          cursorColor: AppColors.violet,
+          cursorColor: AppColors.charcoal,
           decoration: fieldDecoration(hint: hint, suffix: suffix),
         ),
       ],
@@ -175,7 +174,7 @@ Future<DateTime?> pickDate(
       height: 340,
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
         top: false,

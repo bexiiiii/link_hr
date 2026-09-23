@@ -378,10 +378,12 @@ class _HomeHero extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 26),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.hero, AppColors.hero2],
+        color: Color(0xA6172819),
+        backgroundBlendMode: BlendMode.multiply,
+        image: DecorationImage(
+          image: AssetImage('assets/backgrounds/home-green.png'),
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
         ),
       ),
       child: Column(

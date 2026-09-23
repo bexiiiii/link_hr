@@ -82,6 +82,14 @@ abstract final class AppText {
     fontWeight: FontWeight.w700,
     color: AppColors.ink,
   );
+  static const sectionTitle = TextStyle(
+    fontFamily: kFont,
+    fontSize: 20,
+    height: 1.2,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.35,
+    color: AppColors.ink,
+  );
   static const cardTitle = TextStyle(
     fontFamily: kFont,
     fontSize: 16,

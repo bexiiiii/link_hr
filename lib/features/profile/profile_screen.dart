@@ -63,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.bg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (c) => ConstrainedBox(
         constraints: BoxConstraints(
@@ -200,18 +200,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onRefresh: _load,
         children: [
           const SizedBox(height: 8),
-          Center(
-            child: AppAvatar(name: s.fullName, imageUrl: s.image, size: 76),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.hero, AppColors.hero2],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.card),
+            ),
+            child: Row(
+              children: [
+                AppAvatar(name: s.fullName, imageUrl: s.image, size: 68),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.fullName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.title.copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        subtitle.isEmpty ? 'Сотрудник' : subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.caption.copyWith(
+                          color: Colors.white.withValues(alpha: 0.68),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.green,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'АКТИВНЫЙ СОТРУДНИК',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: .35,
+                            color: AppColors.charcoal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 14),
-          Text(s.fullName, textAlign: TextAlign.center, style: AppText.title),
-          const SizedBox(height: 4),
-          Text(
-            subtitle.isEmpty ? 'Сотрудник' : subtitle,
-            textAlign: TextAlign.center,
-            style: AppText.label.copyWith(color: AppColors.ink3),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           if (_error != null) ...[
             ErrorState(error: _error!, onRetry: _load),
             const SizedBox(height: 16),

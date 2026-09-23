@@ -263,7 +263,27 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             onChanged: (v) => setState(() => _query = v),
           ),
-          const SizedBox(height: 12),
+          SectionHeader('Разделы', actionLabel: 'Все ›'),
+          SizedBox(
+            height: 112,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: KzDoc.values.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final kind = KzDoc.values[index];
+                return _DocumentTypeTile(
+                  kind: kind,
+                  count: _data[kind]?.length ?? 0,
+                  selected: _type == kind,
+                  onTap: () =>
+                      setState(() => _type = _type == kind ? null : kind),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               DropdownPill(
@@ -346,6 +366,59 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ),
     );
   }
+}
+
+class _DocumentTypeTile extends StatelessWidget {
+  const _DocumentTypeTile({
+    required this.kind,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final KzDoc kind;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Pressable(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: 140,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.charcoal : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadow.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            kind.icon,
+            size: 24,
+            color: selected ? AppColors.green : kind.tone.ink,
+          ),
+          const Spacer(),
+          Text(
+            kind.plural,
+            style: AppText.label.copyWith(
+              color: selected ? Colors.white : AppColors.ink,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            '$count',
+            style: AppText.caption.copyWith(
+              color: selected ? Colors.white60 : AppColors.ink3,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _DocRow extends StatelessWidget {

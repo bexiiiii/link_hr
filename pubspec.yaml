@@ -74,6 +74,7 @@ flutter:
 
   assets:
     - assets/brand/link-mark.png
+    - assets/backgrounds/home-green.png
 
   fonts:
     - family: Onest
