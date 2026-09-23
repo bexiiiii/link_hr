@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 /// High-contrast iOS product language from the September references: neutral
 /// surfaces, near-black controls and lime green only for work actions/state.
 abstract final class AppColors {
-  static const bg = Color(0xFFF4F4F3);
+  static const bg = Color(0xFFF7F7F5);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFECECEA);
-  static const line = Color(0xFFE2E2DF);
+  static const surfaceAlt = Color(0xFFF0F0ED);
+  static const line = Color(0xFFE8E8E4);
 
   static const ink = Color(0xFF171815);
   static const ink2 = Color(0xFF4F514B);
@@ -38,7 +38,9 @@ abstract final class AppColors {
   static const successSoft = Color(0xFFE8F7E2);
 
   /// Legacy "graphite" name: dark ink for icons and strong text.
-  static const charcoal = Color(0xFF242522);
+  static const charcoal = Color(0xFF292B27);
+  static const hero = Color(0xFF203525);
+  static const hero2 = Color(0xFF355D36);
 
   static const red = Color(0xFFF03A47);
   static const redSoft = Color(0xFFFDE8EA);
@@ -59,25 +61,25 @@ const kFont = 'Onest';
 abstract final class AppText {
   static const display = TextStyle(
     fontFamily: kFont,
-    fontSize: 30,
-    height: 1.1,
-    fontWeight: FontWeight.w600,
-    letterSpacing: -0.6,
+    fontSize: 34,
+    height: 1.05,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -1.1,
     color: AppColors.ink,
   );
   static const title = TextStyle(
     fontFamily: kFont,
-    fontSize: 24,
-    height: 1.2,
-    fontWeight: FontWeight.w600,
-    letterSpacing: -0.3,
+    fontSize: 28,
+    height: 1.1,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.7,
     color: AppColors.ink,
   );
   static const heading = TextStyle(
     fontFamily: kFont,
     fontSize: 19,
     height: 1.25,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     color: AppColors.ink,
   );
   static const cardTitle = TextStyle(
@@ -133,15 +135,17 @@ abstract final class AppText {
 }
 
 abstract final class AppRadius {
-  static const card = 16.0;
-  static const tile = 12.0;
-  static const field = 12.0;
+  static const card = 22.0;
+  static const tile = 16.0;
+  static const field = 14.0;
   static const pill = 999.0;
 }
 
 /// The one soft shadow used for cards; the nav pill and clock button use [AppShadow.float].
 abstract final class AppShadow {
-  static const card = <BoxShadow>[];
+  static const card = [
+    BoxShadow(color: Color(0x0D000000), blurRadius: 18, offset: Offset(0, 5)),
+  ];
   static const float = [
     BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 3)),
   ];

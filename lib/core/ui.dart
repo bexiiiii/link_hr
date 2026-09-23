@@ -223,7 +223,7 @@ class CircleButton extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: background,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(13),
                   boxShadow: background == AppColors.surface
                       ? AppShadow.card
                       : null,
@@ -605,7 +605,7 @@ class ScreenHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!showBack) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
         child: Row(
           children: [
             Expanded(
@@ -613,7 +613,7 @@ class ScreenHeader extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.title.copyWith(fontSize: 24),
+                style: AppText.title,
               ),
             ),
             for (final a in actions) ...[const SizedBox(width: 8), a],

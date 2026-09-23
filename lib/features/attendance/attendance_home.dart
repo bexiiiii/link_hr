@@ -499,7 +499,6 @@ class _ClockButtonState extends State<_ClockButton>
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
-    const size = 188.0;
     return Semantics(
       button: true,
       enabled: enabled,
@@ -511,71 +510,76 @@ class _ClockButtonState extends State<_ClockButton>
                 widget.onTap!();
               }
             : null,
-        scale: 0.95,
+        scale: 0.98,
         child: AnimatedBuilder(
           animation: _pulse,
-          builder: (_, child) {
+          builder: (_, _) {
             final t = Curves.easeInOut.transform(_pulse.value);
             return Container(
-              width: size + 44,
-              height: size + 44,
-              alignment: Alignment.center,
+              width: double.infinity,
+              constraints: const BoxConstraints(maxWidth: 420, minHeight: 112),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (enabled ? AppColors.greenGlow : AppColors.chip)
-                    .withValues(alpha: 0.45 + 0.35 * t),
+                color: enabled ? AppColors.charcoal : AppColors.ink4,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.green.withValues(
+                      alpha: enabled ? 0.08 + 0.08 * t : 0,
+                    ),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-              child: Container(
-                width: size + 12 + 8 * t,
-                height: size + 12 + 8 * t,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: (enabled ? AppColors.greenGlow : AppColors.chip)
-                      .withValues(alpha: 0.9),
-                ),
-                child: child,
+              child: Row(
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: enabled ? AppColors.green : AppColors.ink3,
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                    child: Icon(
+                      widget.out
+                          ? AppIcons.handRaised
+                          : AppIcons.handPointRight,
+                      color: AppColors.charcoal,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.out
+                              ? 'Смена активна'
+                              : 'Учёт рабочего времени',
+                          style: AppText.caption.copyWith(
+                            color: Colors.white60,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.label,
+                          style: AppText.heading.copyWith(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    AppIcons.chevronRight,
+                    color: Colors.white70,
+                    size: 20,
+                  ),
+                ],
               ),
             );
           },
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: enabled
-                  ? (widget.out ? AppColors.greenDeep : AppColors.green)
-                  : AppColors.ink4,
-              boxShadow: enabled
-                  ? [
-                      BoxShadow(
-                        color: AppColors.green.withValues(alpha: 0.35),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  widget.out ? AppIcons.handRaised : AppIcons.handPointRight,
-                  color: Colors.white,
-                  size: 40,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  widget.label,
-                  textAlign: TextAlign.center,
-                  style: AppText.bodyStrong.copyWith(
-                    color: Colors.white,
-                    fontSize: 17,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

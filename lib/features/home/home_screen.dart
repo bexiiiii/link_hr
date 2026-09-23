@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_icons.dart';
 
-import '../../core/premium.dart';
 import '../../core/api.dart';
 import '../../core/app_language.dart';
 import '../../core/fmt.dart';
@@ -201,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: AppColors.hero,
       body: SafeArea(
         bottom: false,
         child: _error != null && _sheets.isEmpty
@@ -211,93 +210,134 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             : PageScroll(
                 onRefresh: _load,
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+                padding: EdgeInsets.zero,
                 children: [
-                  const PlanBanner(),
-                  _Header(
+                  _HomeHero(
                     dateLine: Fmt.todayLine(now),
                     greeting: '${_greeting(now)}, ${_session.firstName}',
                     unread: _unread.length,
+                    now: now,
+                    onShift: onShift,
+                    finished: finished,
+                    arrived: todayRecord?.firstIn,
+                    left: finished ? lastTime : null,
+                    team: _teamToday,
                   ),
-                  const SizedBox(height: 20),
-                  const Text('Сегодня', style: AppText.display),
-                  const SizedBox(height: 14),
-                  if (_loading)
-                    const Skeleton(height: 76, radius: AppRadius.card)
-                  else
-                    ClockCard(
-                      arrived: todayRecord?.firstIn,
-                      left: finished ? lastTime : null,
-                      actionLabel: !canCheckin
-                          ? null
-                          : (onShift
-                                ? 'Уйти'
-                                : (finished
-                                      ? 'Снова на работу'
-                                      : 'Отметиться')),
-                      onAction: () =>
-                          showCheckinSheet(context, onShift ? 'OUT' : 'IN'),
-                    ),
-                  if (_session.isHr) ...[
-                    const SizedBox(height: 12),
-                    _HrTodayCard(
-                      rows: _teamToday,
-                      onTap: () =>
-                          pushPage(context, const TeamAttendanceScreen()),
-                    ),
-                  ],
-                  SummarySection(
-                    title: 'Ближайшие задачи',
-                    onSeeAll: _session.hasFeature('tasks')
-                        ? () =>
-                              ShellScope.maybeOf(context)?.goTo(ShellTab.tasks)
-                        : null,
-                  ),
-                  if (_loading)
-                    const SkeletonCards(count: 1, height: 118)
-                  else if (upcoming.isEmpty)
-                    SurfaceCard(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 18,
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(18, 22, 18, 128),
+                    decoration: const BoxDecoration(
+                      color: AppColors.bg,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(30),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            AppIcons.checkmarkSeal,
-                            color: AppColors.blue,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'На сегодня задач нет',
-                              style: AppText.body.copyWith(
-                                color: AppColors.ink2,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _session.isHr
+                                    ? tx(
+                                        'Посещаемость сегодня',
+                                        'Бүгінгі қатысу',
+                                      )
+                                    : tx('Рабочая неделя', 'Жұмыс аптасы'),
+                                style: AppText.heading,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    SurfaceCard(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: Divided(
-                        children: [
-                          for (final item in upcoming)
-                            _UpcomingRow(
-                              icon: item.$1,
-                              title: item.$2,
-                              subtitle: item.$3,
-                              onTap: item.$4,
+                            if (_session.isHr)
+                              Pressable(
+                                onTap: () => pushPage(
+                                  context,
+                                  const TeamAttendanceScreen(),
+                                ),
+                                child: Text(
+                                  tx('Все отчёты ›', 'Барлық есептер ›'),
+                                  style: AppText.label.copyWith(
+                                    color: AppColors.ink,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _HomeBars(
+                          team: _teamToday,
+                          sheet: current,
+                          isHr: _session.isHr,
+                        ),
+                        const SizedBox(height: 18),
+                        if (_loading)
+                          const Skeleton(height: 92, radius: AppRadius.card)
+                        else
+                          ClockCard(
+                            arrived: todayRecord?.firstIn,
+                            left: finished ? lastTime : null,
+                            actionLabel: !canCheckin
+                                ? null
+                                : (onShift
+                                      ? tx('Завершить день', 'Күнді аяқтау')
+                                      : (finished
+                                            ? tx('Вернуться', 'Қайта оралу')
+                                            : tx(
+                                                'Начать день',
+                                                'Күнді бастау',
+                                              ))),
+                            onAction: () => showCheckinSheet(
+                              context,
+                              onShift ? 'OUT' : 'IN',
                             ),
-                        ],
-                      ),
+                          ),
+                        SummarySection(
+                          title: tx('Ближайшие задачи', 'Жақын тапсырмалар'),
+                          onSeeAll: _session.hasFeature('tasks')
+                              ? () => ShellScope.maybeOf(
+                                  context,
+                                )?.goTo(ShellTab.tasks)
+                              : null,
+                        ),
+                        if (_loading)
+                          const SkeletonCards(count: 1, height: 118)
+                        else if (upcoming.isEmpty)
+                          SurfaceCard(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  AppIcons.checkmarkSeal,
+                                  color: AppColors.greenDeep,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  tx(
+                                    'На сегодня задач нет',
+                                    'Бүгін тапсырма жоқ',
+                                  ),
+                                  style: AppText.body,
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          SurfaceCard(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Divided(
+                              children: [
+                                for (final item in upcoming)
+                                  _UpcomingRow(
+                                    icon: item.$1,
+                                    title: item.$2,
+                                    subtitle: item.$3,
+                                    onTap: item.$4,
+                                  ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
+                  ),
                 ],
               ),
       ),
@@ -305,95 +345,113 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// The HR landing block is intentionally one calm, useful overview rather
-/// than an extra list of technical dashboard tiles. Values come from the same
-/// permission-protected feed as the team attendance screen.
-class _HrTodayCard extends StatelessWidget {
-  const _HrTodayCard({required this.rows, required this.onTap});
+class _HomeHero extends StatelessWidget {
+  const _HomeHero({
+    required this.dateLine,
+    required this.greeting,
+    required this.unread,
+    required this.now,
+    required this.onShift,
+    required this.finished,
+    required this.arrived,
+    required this.left,
+    required this.team,
+  });
 
-  final List<Json> rows;
-  final VoidCallback onTap;
+  final String dateLine;
+  final String greeting;
+  final int unread;
+  final DateTime now;
+  final bool onShift;
+  final bool finished;
+  final DateTime? arrived;
+  final DateTime? left;
+  final List<Json> team;
 
   @override
   Widget build(BuildContext context) {
-    final present = rows.where((row) => row['status'] == 'present').length;
-    final left = rows.where((row) => row['status'] == 'left').length;
-    final absent = rows.where((row) => row['status'] == 'absent').length;
-    return Pressable(
-      onTap: onTap,
-      semanticLabel: tx('Команда сегодня', 'Команда бүгін'),
+    final session = Session.instance;
+    final present = team.where((row) => row['status'] == 'present').length;
+    final leftCount = team.where((row) => row['status'] == 'left').length;
+    final missing = team.where((row) => row['status'] == 'absent').length;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 26),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.hero, AppColors.hero2],
+        ),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                tx('Команда сегодня', 'Команда бүгін'),
-                style: AppText.heading,
-              ),
-              const Spacer(),
-              Text(
-                tx('Открыть', 'Ашу'),
-                style: AppText.label.copyWith(
-                  color: AppColors.blue,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 2),
-              const Icon(
-                AppIcons.chevronRight,
-                size: 16,
-                color: AppColors.blue,
-              ),
-            ],
+          _Header(
+            dateLine: dateLine,
+            greeting: greeting,
+            unread: unread,
+            light: true,
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _HrMetric(
-                  value: rows.length,
-                  label: tx('Всего', 'Барлығы'),
-                  icon: AppIcons.person3,
-                  background: AppColors.violetSoft,
-                  foreground: AppColors.violet,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HrMetric(
-                  value: present,
-                  label: tx('На работе', 'Жұмыста'),
-                  icon: AppIcons.building2Fill,
-                  background: AppColors.successSoft,
-                  foreground: AppColors.successDeep,
-                ),
-              ),
-            ],
+          const SizedBox(height: 30),
+          Text(
+            session.isHr
+                ? tx('Сейчас на работе', 'Қазір жұмыста')
+                : onShift
+                ? tx('Рабочий день идёт', 'Жұмыс күні жүріп жатыр')
+                : finished
+                ? tx('Рабочий день завершён', 'Жұмыс күні аяқталды')
+                : tx('Сегодня', 'Бүгін'),
+            style: AppText.label.copyWith(color: Colors.white70),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
+          Text(
+            session.isHr ? '$present' : Fmt.time(now),
+            style: AppText.display.copyWith(
+              color: Colors.white,
+              fontSize: 48,
+              letterSpacing: -1.8,
+            ),
+          ),
+          const SizedBox(height: 24),
           Row(
-            children: [
-              Expanded(
-                child: _HrMetric(
-                  value: left,
-                  label: tx('Ушли', 'Кетті'),
-                  icon: AppIcons.arrowUpRight,
-                  background: AppColors.amberSoft,
-                  foreground: AppColors.amber,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HrMetric(
-                  value: absent,
-                  label: tx('Нет отметки', 'Белгі жоқ'),
-                  icon: AppIcons.personCropCircleBadgeExclam,
-                  background: AppColors.redSoft,
-                  foreground: AppColors.red,
-                ),
-              ),
-            ],
+            children: session.isHr
+                ? [
+                    Expanded(
+                      child: _HeroStat(
+                        label: tx('Всего', 'Барлығы'),
+                        value: '${team.length}',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _HeroStat(
+                        label: tx('Ушли', 'Кетті'),
+                        value: '$leftCount',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _HeroStat(
+                        label: tx('Без отметки', 'Белгі жоқ'),
+                        value: '$missing',
+                      ),
+                    ),
+                  ]
+                : [
+                    Expanded(
+                      child: _HeroStat(
+                        label: tx('Приход', 'Келу'),
+                        value: arrived == null ? '—' : Fmt.time(arrived),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _HeroStat(
+                        label: tx('Уход', 'Кету'),
+                        value: left == null ? '—' : Fmt.time(left),
+                      ),
+                    ),
+                  ],
           ),
         ],
       ),
@@ -401,39 +459,124 @@ class _HrTodayCard extends StatelessWidget {
   }
 }
 
-class _HrMetric extends StatelessWidget {
-  const _HrMetric({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.background,
-    required this.foreground,
-  });
-
-  final int value;
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({required this.label, required this.value});
   final String label;
-  final IconData icon;
-  final Color background;
-  final Color foreground;
+  final String value;
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: background,
-      borderRadius: BorderRadius.circular(AppRadius.tile),
+      color: Colors.white.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: foreground),
-        const SizedBox(height: 12),
-        Text('$value', style: AppText.title.copyWith(color: AppColors.ink)),
-        const SizedBox(height: 2),
-        Text(label, style: AppText.caption.copyWith(color: AppColors.ink2)),
+        Text(
+          label,
+          maxLines: 1,
+          style: AppText.caption.copyWith(color: Colors.white60),
+        ),
+        const SizedBox(height: 8),
+        Text(value, style: AppText.heading.copyWith(color: Colors.white)),
       ],
     ),
   );
+}
+
+class _HomeBars extends StatelessWidget {
+  const _HomeBars({
+    required this.team,
+    required this.sheet,
+    required this.isHr,
+  });
+  final List<Json> team;
+  final MonthSheet? sheet;
+  final bool isHr;
+
+  @override
+  Widget build(BuildContext context) {
+    final today = Fmt.dateOnly(DateTime.now());
+    final values = isHr
+        ? <(String, double, Color)>[
+            (
+              tx('В офисе', 'Кеңседе'),
+              team.where((r) => r['status'] == 'present').length.toDouble(),
+              AppColors.green,
+            ),
+            (
+              tx('Ушли', 'Кетті'),
+              team.where((r) => r['status'] == 'left').length.toDouble(),
+              AppColors.amber,
+            ),
+            (
+              tx('Нет', 'Жоқ'),
+              team.where((r) => r['status'] == 'absent').length.toDouble(),
+              AppColors.red,
+            ),
+          ]
+        : <(String, double, Color)>[
+            for (var i = 6; i >= 0; i--)
+              () {
+                final day = today.subtract(Duration(days: i));
+                final record = sheet?.days
+                    .where((r) => r.date == day)
+                    .firstOrNull;
+                return (Fmt.dayMonth(day), record?.hours ?? 0, AppColors.green);
+              }(),
+          ];
+    final maxValue = values.fold<double>(
+      1,
+      (max, item) => item.$2 > max ? item.$2 : max,
+    );
+    return SurfaceCard(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+      child: SizedBox(
+        height: 146,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (final item in values)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        Fmt.decimal(item.$2),
+                        style: AppText.caption.copyWith(color: AppColors.ink2),
+                      ),
+                      const SizedBox(height: 5),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 450),
+                        height: 18 + 76 * (item.$2 / maxValue),
+                        decoration: BoxDecoration(
+                          color: item.$2 == maxValue
+                              ? item.$3
+                              : AppColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        item.$1,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.caption.copyWith(fontSize: 9),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _UpcomingRow extends StatelessWidget {
@@ -494,11 +637,13 @@ class _Header extends StatelessWidget {
     required this.dateLine,
     required this.greeting,
     required this.unread,
+    this.light = false,
   });
 
   final String dateLine;
   final String greeting;
   final int unread;
+  final bool light;
 
   @override
   Widget build(BuildContext context) {
@@ -511,14 +656,21 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 dateLine,
-                style: AppText.label.copyWith(color: AppColors.ink3),
+                style: AppText.label.copyWith(
+                  color: light ? Colors.white60 : AppColors.ink3,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 greeting,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.bodyStrong,
+                style: AppText.bodyStrong.copyWith(
+                  color: light ? Colors.white : AppColors.ink,
+                ),
+                // The dark analytical hero carries the identity of the home.
+                // Other contexts keep the standard ink colour.
+                textAlign: TextAlign.left,
               ),
             ],
           ),
@@ -529,6 +681,10 @@ class _Header extends StatelessWidget {
           badge: unread > 0,
           size: 48,
           iconSize: 20,
+          background: light
+              ? Colors.white.withValues(alpha: 0.12)
+              : AppColors.surface,
+          foreground: light ? Colors.white : AppColors.ink,
           onTap: () => pushPage(context, const NoticesScreen()),
         ),
         const SizedBox(width: 10),

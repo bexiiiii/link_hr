@@ -55,6 +55,7 @@ class _BoardScreenState extends State<BoardScreen> {
   Object? _error;
   bool _mine = true;
   String? _person;
+  BoardColumn _selectedColumn = BoardColumn.today;
 
   final _recorder = VoiceRecorder();
   Timer? _ticker;
@@ -200,6 +201,11 @@ class _BoardScreenState extends State<BoardScreen> {
       ))
         _counterpart(t),
     }.toList();
+    final selectedTasks = columns[_selectedColumn]!;
+    final directory = {
+      for (final entry in _people.entries)
+        entry.key: (entry.value.name, entry.value.image),
+    };
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -210,50 +216,41 @@ class _BoardScreenState extends State<BoardScreen> {
             Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Доска',
-                              style: AppText.title.copyWith(fontSize: 22),
-                            ),
+                            const Text('Задачи', style: AppText.title),
+                            const SizedBox(height: 3),
                             Text(
                               _mine ? 'Назначенные мне' : 'Поставленные мной',
-                              style: AppText.label.copyWith(
-                                color: AppColors.ink3,
-                              ),
+                              style: AppText.caption,
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        margin: const EdgeInsets.only(top: 6),
-                        padding: const EdgeInsets.fromLTRB(14, 4, 4, 4),
+                        padding: const EdgeInsets.fromLTRB(12, 2, 3, 2),
                         decoration: BoxDecoration(
-                          color: AppColors.bg,
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
+                            Text(
                               'Мне',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                              style: AppText.label.copyWith(
+                                color: AppColors.ink,
                               ),
                             ),
-                            const SizedBox(width: 6),
                             CupertinoSwitch(
                               value: _mine,
-                              activeTrackColor: AppColors.violet,
-                              onChanged: (v) => setState(() {
-                                _mine = v;
+                              activeTrackColor: AppColors.charcoal,
+                              onChanged: (value) => setState(() {
+                                _mine = value;
                                 _person = null;
                               }),
                             ),
@@ -263,56 +260,58 @@ class _BoardScreenState extends State<BoardScreen> {
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: 60,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
-                    children: [
-                      for (final (i, id) in counterparts.indexed)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Reveal(
-                            index: i,
-                            scale: true,
-                            child: Pressable(
-                              onTap: () => setState(
-                                () => _person = _person == id ? null : id,
-                              ),
-                              scale: 0.9,
-                              semanticLabel:
-                                  'Фильтр: ${People.resolve(_people, id).name}',
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: _person == id
-                                        ? AppColors.violet
-                                        : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: AppAvatar(
-                                  name: People.resolve(_people, id).name,
-                                  imageUrl: People.resolve(_people, id).image,
-                                  size: 38,
-                                  border: false,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: SegmentTabs(
+                    labels: [
+                      for (final column in BoardColumn.values) column.title,
                     ],
+                    index: BoardColumn.values.indexOf(_selectedColumn),
+                    onChanged: (index) => setState(
+                      () => _selectedColumn = BoardColumn.values[index],
+                    ),
                   ),
                 ),
+                if (counterparts.isNotEmpty)
+                  SizedBox(
+                    height: 62,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
+                      itemCount: counterparts.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 7),
+                      itemBuilder: (context, index) {
+                        final id = counterparts[index];
+                        final person = People.resolve(_people, id);
+                        return Pressable(
+                          onTap: () => setState(
+                            () => _person = _person == id ? null : id,
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: _person == id
+                                  ? AppColors.green
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: AppAvatar(
+                              name: person.name,
+                              imageUrl: person.image,
+                              size: 40,
+                              border: false,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 Expanded(
                   child: _loading
                       ? const Padding(
-                          padding: EdgeInsets.all(20),
-                          child: SkeletonCards(count: 3, height: 140),
+                          padding: EdgeInsets.all(18),
+                          child: SkeletonCards(count: 3, height: 138),
                         )
                       : _error != null
                       ? PageScroll(
@@ -321,25 +320,27 @@ class _BoardScreenState extends State<BoardScreen> {
                             ErrorState(error: _error!, onRetry: _load),
                           ],
                         )
-                      : Column(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  _quadrant(BoardColumn.week, columns),
-                                  _quadrant(BoardColumn.today, columns),
+                      : PageScroll(
+                          onRefresh: _load,
+                          padding: const EdgeInsets.fromLTRB(18, 8, 18, 110),
+                          children: selectedTasks.isEmpty
+                              ? [
+                                  EmptyState(
+                                    icon: AppIcons.checkmarkSeal,
+                                    title: 'Здесь пока пусто',
+                                    message:
+                                        'Задачи этого раздела появятся здесь.',
+                                  ),
+                                ]
+                              : [
+                                  for (final task in selectedTasks)
+                                    TaskCard(
+                                      task: task,
+                                      directory: directory,
+                                      onTap: () =>
+                                          showTaskSheet(context, task, _people),
+                                    ),
                                 ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  _quadrant(BoardColumn.backlog, columns),
-                                  _quadrant(BoardColumn.done, columns),
-                                ],
-                              ),
-                            ),
-                          ],
                         ),
                 ),
               ],

@@ -172,11 +172,55 @@ class ServicesScreen extends StatelessWidget {
       ),
       body: PageScroll(
         children: [
+          Pressable(
+            onTap: () => pushPage(context, const SearchScreen()),
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(AppRadius.field),
+              ),
+              child: Row(
+                children: [
+                  const Icon(AppIcons.search, size: 19, color: AppColors.ink3),
+                  const SizedBox(width: 10),
+                  Text(
+                    tx('Поиск по разделам', 'Бөлімдер бойынша іздеу'),
+                    style: AppText.body.copyWith(color: AppColors.ink4),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SectionHeader(
+            tx('Разделы', 'Бөлімдер'),
+            actionLabel: tx('Все ›', 'Барлығы ›'),
+          ),
+          SizedBox(
+            height: 118,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: items.take(5).length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _ServiceTile(
+                  icon: item.$1,
+                  title: item.$2,
+                  tone: index,
+                  onTap: item.$4,
+                );
+              },
+            ),
+          ),
+          SectionHeader(tx('Рабочие инструменты', 'Жұмыс құралдары')),
           SurfaceCard(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Divided(
               children: [
-                for (final (icon, title, subtitle, onTap) in items)
+                for (final (icon, title, subtitle, onTap) in items.skip(5))
                   _ServiceRow(
                     icon: icon,
                     title: title,
@@ -187,6 +231,68 @@ class ServicesScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ServiceTile extends StatelessWidget {
+  const _ServiceTile({
+    required this.icon,
+    required this.title,
+    required this.tone,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final int tone;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = <Color>[
+      AppColors.green,
+      AppColors.red,
+      AppColors.purple,
+      AppColors.amber,
+      AppColors.violet,
+    ];
+    final color = colors[tone % colors.length];
+    return Pressable(
+      onTap: onTap,
+      child: Container(
+        width: 132,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          boxShadow: AppShadow.card,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const Spacer(),
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.label.copyWith(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
